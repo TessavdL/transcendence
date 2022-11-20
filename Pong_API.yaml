@@ -17,7 +17,7 @@ paths:
   /players:
     post:
       tags:
-        - player
+        - Player
       summary: Add player to the game.
       description: This allows you to add a single player.
       operationId: addPlayer
@@ -31,14 +31,15 @@ paths:
 
       responses:
         '201':
-          description: The player has been created.
+          description: The player has been created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/player'
+
     get:
       tags:
-        - player
+        - Player
       summary: Returns all the players.
       description: This allows get all players.
       operationId: getPlayers
@@ -51,11 +52,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/players'
 
+  /players/login:
+    get:
+      tags:
+        - Player
+      summary: Logs player into the game
+      description: ''
+      operationId: loginPlayer
+      parameters:
+        - name: username
+          in: query
+          description: The user name for login
+          required: false
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: The password for login in clear text
+          required: false
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          description: Invalid username/password supplied
 
   /players/{playerId}:
     put:
       tags:
-        - player
+        - Player
       summary: Update an existing player.
       description: This allows you to update a single player.
       operationId: updatePlayer
@@ -77,10 +119,14 @@ paths:
       responses:
         '204':
           description: The player has been updated.
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Player not found
 
     get:
       tags:
-        - player
+        - Player
       summary: Find player by id.
       description: This allows you to get a single player.
       operationId: getPlayerById
@@ -99,11 +145,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/player'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Player not found
 
   /players/{playerId}/uploadAvatar:
     post:
       tags:
-        - player
+        - Player
       summary: Upload a player avatar.
       description: This allows to upload an image avatar for the player.
       operationId: uploadAvatar
@@ -126,12 +176,13 @@ paths:
       responses:
         '204':
           description: The image has been upload.
-
+        '415':
+          description: Unsupported media type.
 
   /players/{playerId}/friends:
     post:
       tags:
-        - player
+        - Player
       summary: Add friend.
       description: This allows to add a friend to a player.
       operationId: addFriend
@@ -148,17 +199,58 @@ paths:
           schema:
             type: integer
             format: int64
-      #check this requestBody
-      requestBody:
-        description: This is the friend object.
-        content:
-          'application/json':
-            schema:
-              $ref: '#/components/schemas/player' #maybe we need to create another db
 
       responses:
         '201':
-          description: The image has been upload.
+          description: Friend added successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/players'
+
+#todo: complete this
+  /players/achievements:
+    get:
+      tags:
+        - Achievements
+      summary: Show all the player achievements.
+      description: This allows to get all the achievements for a player.
+      operationId: getAchievements
+
+      responses:
+        '200':
+          description: Successful return of achievements.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/achievements'
+
+  /players/{playerId}/achievements:
+    get:
+      tags:
+        - Achievements
+      summary: Show the achievements for a single player.
+      description: This allows to get  the achievements for a single player.
+      operationId: getAchievementsByPlayerId
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+
+      responses:
+        '200':
+          description: Successful return of achievements.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/achievement'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Player not found
 
 components:
   schemas:
@@ -177,10 +269,31 @@ components:
           type: integer
         username:
           type: string
+        email:
+          type: string
         avatar:
-          type: string # url image
+          type: string
         authentication:
           readOnly: true
           type: boolean
         friends:
           type: array
+
+    achievement:
+      type: object
+      properties:
+        playerId:
+          type: integer
+        username:
+          type: string
+        achievementName:
+          type: string
+        gameScore:
+          type: integer
+      items:
+        $ref: '#/components/schemas/achievement'
+
+    achievements:
+      type: array
+      items:
+        $ref: '#/components/schemas/achievement'
