@@ -52,47 +52,47 @@ paths:
               schema:
                 $ref: '#/components/schemas/players'
 
-  /players/login:
-    get:
-      tags:
-        - Player
-      summary: Logs player into the game
-      description: ''
-      operationId: loginPlayer
-      parameters:
-        - name: username
-          in: query
-          description: The user name for login
-          required: false
-          schema:
-            type: string
-        - name: password
-          in: query
-          description: The password for login in clear text
-          required: false
-          schema:
-            type: string
+  # /players/login:
+  #   get:
+  #     tags:
+  #       - Player
+  #     summary: Logs player into the game
+  #     description: ''
+  #     operationId: loginPlayer
+  #     parameters:
+  #       - name: username
+  #         in: query
+  #         description: The user name for login
+  #         required: false
+  #         schema:
+  #           type: string
+  #       - name: password
+  #         in: query
+  #         description: The password for login in clear text
+  #         required: false
+  #         schema:
+  #           type: string
 
-      responses:
-        '200':
-          description: successful operation
-          headers:
-            X-Rate-Limit:
-              description: calls per hour allowed by the user
-              schema:
-                type: integer
-                format: int32
-            X-Expires-After:
-              description: date in UTC when token expires
-              schema:
-                type: string
-                format: date-time
-          content:
-            application/json:
-              schema:
-                type: string
-        '400':
-          description: Invalid username/password supplied
+  #     responses:
+  #       '200':
+  #         description: successful operation
+  #         headers:
+  #           X-Rate-Limit:
+  #             description: calls per hour allowed by the user
+  #             schema:
+  #               type: integer
+  #               format: int32
+  #           X-Expires-After:
+  #             description: date in UTC when token expires
+  #             schema:
+  #               type: string
+  #               format: date-time
+  #         content:
+  #           application/json:
+  #             schema:
+  #               type: string
+  #       '400':
+  #         description: Invalid username/password supplied
 
   /players/{playerId}:
     put:
@@ -271,10 +271,61 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/player' #todo check this schema
+                $ref: '#/components/schemas/chatRoom' #todo check this schema
         '403':
           description: Access denied
 
+    get:
+      tags:
+        - Chat
+      summary: Find all the chats associated to a playerId.
+      description: This allows to retrieve all the chats from a single player.
+      operationId: getChatsByPlayerId
+      parameters:
+        - name: chatId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+
+      responses:
+        '200':
+          description: Successful return of player.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/chatRoom'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Chat not found
+
+  /players/{playerId}/chats/{chatId}/messages:
+    post:
+      tags:
+        - Chat
+      summary: Create a message.
+      description: ""
+      operationId: createMessage
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Message created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/chatRoom' #todo check this schema
+        '403':
+          description: Access denied
+
+# https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations/{conversation_id}/messages
 components:
   schemas:
     players:
@@ -292,11 +343,17 @@ components:
           type: integer
         username:
           type: string
+        #todo: tbd,depending of 2FA
         email:
           type: string
-        avatar:
-          type: string
-        authentication:
+        #todo: check avatar
+        # avatar:
+        #     type: string
+        #     format: binary
+        hasCustomAvatar:
+          readOnly: true
+          type: boolean
+        2fAuthentic:
           readOnly: true
           type: boolean
 
@@ -318,3 +375,56 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/achievement'
+
+    chatRoom:
+      type: object
+      required:
+        - channelOwner
+      properties:
+        chatRoomId:
+          readOnly: true
+          type: integer
+        channelOwner:
+          type: integer
+        channelAdmins:
+          type: array
+          items:
+            $ref: '#/components/schemas/players' #check this
+        membersId:
+          type: array
+          items:
+            $ref: '#/components/schemas/players' #check this
+        privacy:
+          type: string
+          enum:
+            - public
+            - private
+            - protected
+      items:
+        $ref: '#/components/schemas/chatRoom'
+
+    chat:
+      type: object
+      properties:
+        playerId:
+          readOnly: true
+          type: integer
+
+    message:
+      type: object
+      required:
+        - playerId
+        - chatId
+      properties:
+        playerId:
+          type: integer
+        chatId:
+          type: integer
+        message:
+          type: string
+
+
+
+# https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations
+# https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations/{conversation_id}
+# https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations/{conversation_id}/messages
