@@ -208,7 +208,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/players'
 
-#todo: complete this
   /players/achievements:
     get:
       tags:
@@ -252,6 +251,30 @@ paths:
         '404':
           description: Player not found
 
+  /players/{playerId}/chats:
+    post:
+      tags:
+        - Chat
+      summary: Create a chat.
+      description: ""
+      operationId: createChat
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '201':
+          description: Chat created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/player' #todo check this schema
+        '403':
+          description: Access denied
+
 components:
   schemas:
     players:
@@ -276,8 +299,6 @@ components:
         authentication:
           readOnly: true
           type: boolean
-        friends:
-          type: array
 
     achievement:
       type: object
