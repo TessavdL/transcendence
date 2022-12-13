@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
-  title: Trascendence
-  description: Web project at CODAM school.
+  title: Pong API
+  description: Trascendence web project at CODAM school.
   version: 1.0.0
 
 servers:
@@ -179,6 +179,34 @@ paths:
         '415':
           description: Unsupported media type.
 
+    put:
+      tags:
+        - Player
+      summary: Update a player avatar.
+      description: This allows to update an image avatar for the player.
+      operationId: updateAvatar
+      parameters:
+        - name: playerId
+          in: path
+          description: ID of player to update
+          required: true
+          schema:
+            type: integer
+            format: int64
+
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+
+      responses:
+        '200':
+          description: The image has been upload.
+        '415':
+          description: Unsupported media type.
+
   /players/{playerId}/friends:
     post:
       tags:
@@ -207,6 +235,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/players'
+
+
+  /players/{playerId}/games:
+    get:
+      tags:
+        - Player
+      summary: Find game by playerId.
+      description: This allows you to get a single player.
+      operationId: getPlayerById
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+
+      responses:
+        '200':
+          description: Successful return of player.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/player'
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Player not found
 
   /players/achievements:
     get:
@@ -251,10 +307,49 @@ paths:
         '404':
           description: Player not found
 
+  /channels:
+    post:
+      tags:
+        - Channels
+      summary: Add channel.
+      description: This allows you to add a channel.
+      operationId: addChannel
+
+      requestBody:
+        description: This is the channel object.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/channels'
+
+      responses:
+        '201':
+          description: The player has been created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/channels'
+
+
+    get:
+      tags:
+        - Channels
+      summary: Returns all the channels.
+      description: This allows get all channels.
+      operationId: getChannels
+
+      responses:
+        '200':
+          description: Successful list of channels.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/channels'
+
   /players/{playerId}/chats:
     post:
       tags:
-        - Chat
+        - Chats
       summary: Create a chat.
       description: ""
       operationId: createChat
@@ -271,13 +366,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/chatRoom' #todo check this schema
+                $ref: '#/components/schemas/channels' #todo check this schema
         '403':
           description: Access denied
 
     get:
       tags:
-        - Chat
+        - Chats
       summary: Find all the chats associated to a playerId.
       description: This allows to retrieve all the chats from a single player.
       operationId: getChatsByPlayerId
@@ -295,7 +390,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/chatRoom'
+                $ref: '#/components/schemas/channels'
         '400':
           description: Invalid ID supplied
         '404':
@@ -304,7 +399,7 @@ paths:
   /players/{playerId}/chats/{chatId}/messages:
     post:
       tags:
-        - Chat
+        - Chats
       summary: Create a message.
       description: ""
       operationId: createMessage
@@ -321,11 +416,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/chatRoom' #todo check this schema
+                $ref: '#/components/schemas/channels' #todo check this schema
         '403':
           description: Access denied
 
 # https://app.chatwoot.com/api/v1/accounts/{account_id}/conversations/{conversation_id}/messages
+
+
+
 components:
   schemas:
     players:
@@ -376,13 +474,13 @@ components:
       items:
         $ref: '#/components/schemas/achievement'
 
-    chatRoom:
+    channels:
       type: object
-      required:
-        - channelOwner
       properties:
-        chatRoomId:
+        channelId:
           readOnly: true
+          type: integer
+        channelName:
           type: integer
         channelOwner:
           type: integer
@@ -390,7 +488,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/players' #check this
-        membersId:
+        channelMembers:
           type: array
           items:
             $ref: '#/components/schemas/players' #check this
@@ -401,7 +499,7 @@ components:
             - private
             - protected
       items:
-        $ref: '#/components/schemas/chatRoom'
+        $ref: '#/components/schemas/channels'
 
     chat:
       type: object
@@ -420,8 +518,11 @@ components:
           type: integer
         chatId:
           type: integer
-        message:
+        content:
           type: string
+        dateCreated:
+          type: string
+          format: date
 
 
 
