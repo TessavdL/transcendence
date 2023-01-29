@@ -17,6 +17,23 @@ services:
       - data:/var/lib/postgresql/data
     ports:
       - 5432:5432
+  
+  
+  frontend:
+    container_name: ft_transcendence_frontend
+    # Specify the directory where dockerfile is located.
+    build:
+      context: ./frontend
+    volumes:
+      - ./frontend:/app/
+      - ./upload:/upload/
+      - frontend_node_module:/app/node_modules
+    ports:
+      - "8080:8080"
+    # Link to containers in another service and also express dependency between services in the same way as depends_on.
+    links:
+      - backend
+
 
 #  db:
 #    image: mysql:5.7.22
