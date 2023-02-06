@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+    ports:
+      - 5432:5432
+    volumes:
+      - ./database_data:/var/lib/postgresql/data
+    networks:
+      - transcendence
+
+  back_end:
+    depends_on:
+      - db
+    image: back_end
+    build:
+      dockerfile: ./back_end/Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./back_end/app/:/app/
+    networks:
+      - transcendence
+
+  front_end:
+    depends_on:
+      - db
+    image: front_end
+    build:
+      dockerfile: ./front_end/Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./front_end/app:/app
+    networks:
+      - transcendence
+
+networks:
+  transcendence:
