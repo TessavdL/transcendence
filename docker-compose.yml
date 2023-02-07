@@ -2,8 +2,14 @@ version: "3.8"
 
 services:
   db:
+    container_name: db
     image: postgres
     restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_HOST=${POSTGRES_HOST}
     ports:
       - 5432:5432
     volumes:
@@ -12,8 +18,9 @@ services:
       - transcendence
 
   back_end:
+    container_name: back_end
     depends_on:
-      - db
+      - postgres
     image: back_end
     build:
       dockerfile: ./back_end/Dockerfile
@@ -25,8 +32,9 @@ services:
       - transcendence
 
   front_end:
+    container_name: front_end
     depends_on:
-      - db
+      - postgres
     image: front_end
     build:
       dockerfile: ./front_end/Dockerfile
