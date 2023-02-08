@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CreateMessageDto } from './dto/create-message.dto';
+// without Message it can no longer find the name
 import { Message } from './entities/message.entity';
+// import { UserMessage } from '@prisma/client';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class MessagesService {
-	messages: Message[] = [];
+	constructor(private prisma: PrismaService) {}
 	clientToUser = {};
 
 	identify(name: string, clientId: string) {
@@ -16,15 +19,24 @@ export class MessagesService {
 		return this.clientToUser[clientId];
 	}
 	
-	create(createMessageDto: CreateMessageDto) {
-		const message = {...createMessageDto};
-		this.messages.push(createMessageDto);
-		console.log(message);
+	async create(createMessageDto: CreateMessageDto) {
+		const message = createMessageDto;
+
+		const userMessage = await this.prisma.userMessage.create({
+			data: {
+				name: createMessageDto.name,
+				text: createMessageDto.text,
+			}
+		});
+
+		// console.log(message);
 		return message;
 	}
 
-	findAll() {
-		return this.messages;
+	async findAll() {
+		const allUserMessages = await this.prisma.userMessage.findMany();
+		// console.log(allUserMessages);
+		return allUserMessages;
 	}
 
 	join() {

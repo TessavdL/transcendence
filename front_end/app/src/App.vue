@@ -31,7 +31,7 @@ onBeforeMount(() => {
 	});
 });
 
-// names of everyone that has joined so far in the ()
+// to do names of everyone that has joined so far in the ()
 const join = () => {
 	socket.emit('join', { name: name.value } ,() => {
 		console.log(`${name.value} has joined the room`)

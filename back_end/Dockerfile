@@ -23,4 +23,5 @@ FROM node:latest
 USER node
 WORKDIR /app
 RUN chown node:node ./
-CMD npm install && npm run start:dev
+EXPOSE 3001
+CMD npm install && npx prisma generate && npm run start:dev

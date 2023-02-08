@@ -36,6 +36,7 @@ export class MessagesGateway {
 		@MessageBody('name') name: string,
 		@ConnectedSocket() client: Socket,
 	)	{
+		console.log(name, client.id);
 		return this.messagesService.identify(name, client.id);
 	}
 
