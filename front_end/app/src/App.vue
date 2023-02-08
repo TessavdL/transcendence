@@ -61,6 +61,8 @@ const emitTyping = () => {
 			<form @submit.prevent = "join">
 				<label style="margin: 10px">Name</label>
 				<input v-model="name" />
+				<!-- <label style="margin: 10px">Password</label> -->
+				<!-- <input v-model="password" /> -->
 				<button style='margin: 10px' type="submit">Send</button>
 			</form>
 		</div>

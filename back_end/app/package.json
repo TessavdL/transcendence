@@ -9,7 +9,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-	"prisma:dev": "npx prisma migrate dev --name dev",
+    "prisma:dev": "npx prisma migrate dev --name dev",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -29,6 +29,8 @@
     "@nestjs/platform-socket.io": "^9.2.1",
     "@nestjs/websockets": "^9.2.1",
     "@prisma/client": "^4.9.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.13.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0"
   },
