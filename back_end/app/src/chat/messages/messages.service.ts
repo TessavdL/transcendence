@@ -20,7 +20,7 @@ export class MessagesService {
 	}
 	
 	async create(createMessageDto: CreateMessageDto) {
-		const message = {...createMessageDto};
+		const message = createMessageDto;
 
 		const userMessage = await this.prisma.userMessage.create({
 			data: {
