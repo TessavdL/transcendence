@@ -1,19 +1,25 @@
-import { Body, Controller, Get, Post, Request, Response } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Request, Response, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthDto } from './dto'; 
+import { AuthGuard42 } from './guards';
 
 @Controller('auth')
 export class AuthController {
 	constructor (private authService: AuthService) {}
 
-	@Post('login')
-	login (@Body() dto: AuthDto) {
-		console.log({dto})
-		return (this.authService.login(dto));
+	@UseGuards(AuthGuard42)
+	@Get('login')
+	async login (@Request() req) {
+		console.log("In login");
+		return req.user;
 	}
 
-	@Post('register')
-	register (@Body() dto: AuthDto) {
-		return (this.authService.register(dto));
+	@UseGuards(AuthGuard42)
+	@Get('callback')
+	handle_intra_return(@Query() req) {
+		console.log("In callback");
+		console.log(req);
+		return req;
 	}
 }

@@ -25,6 +25,7 @@ services:
       dockerfile: ./back_end/Dockerfile
     ports:
       - "3001:3001"
+      - "5555:5555"
     volumes:
       - ./back_end/app/:/app/
     networks:

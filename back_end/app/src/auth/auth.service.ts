@@ -7,35 +7,30 @@ import { AuthDto } from './dto';
 export class AuthService {
 	constructor(private prisma: PrismaService) {}
 
-	async login (dto: AuthDto) {
-		const user = await this.prisma.user.findUnique({
+	async findOrCreate(profile: any) {
+		let user = await this.prisma.user.findUnique({
 			where: {
-				name: dto.name,
-			},
+				intraId: profile.intraid,
+			}
 		})
-		if (!user)
-			throw new ForbiddenException('Wrong Username');
-		if (user.password !== dto.password)
-			throw new ForbiddenException('Wrong Password');
+
+		if (!user) {
+			user = await this.createUser(profile);
+		}
+		if (!user) {
+			console.log("user still no exists");
+		}
 		return (user);
 	}
 
-	async register (dto: AuthDto) {
-		try {
-			const user = await this.prisma.user.create({
-				data: {
-					name: dto.name,
-					password: dto.password,
-				}
-			})
-			return (user);
-		}
-		catch (error) {
-			if (error instanceof PrismaClientKnownRequestError) {
-				if (error.code === 'P2002')
-					throw new ForbiddenException('Credentials taken');
+	async createUser(profile: any) {
+		const user = await this.prisma.user.create({
+			data: {
+				name: profile.username,
+				intraId: profile.intraid,
+				intraName: profile.username,
 			}
-			throw error;
-		}
+		})
+		return (user);
 	}
 }
