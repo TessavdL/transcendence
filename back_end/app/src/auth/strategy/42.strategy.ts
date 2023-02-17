@@ -1,8 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { PassportStrategy } from "@nestjs/passport";
+import { User } from "@prisma/client";
 import { Strategy } from "passport-42";
-// import { PrismaService } from "src/prisma/prisma.service";
 import { AuthService } from "../auth.service";
 
 @Injectable()
@@ -19,38 +19,13 @@ export class Strategy42 extends PassportStrategy(Strategy) {
 		});
 	}
 
-	async validate(accessToken: string, refreshToken: string, profile): Promise<any> {
-		// console.log("do we get here");
-		// console.log(profile.username);
-		// console.log(profile.intraid);
-		
-		// const user = await this.prisma.user.findUnique({
-		// 	where: {
-		// 		intraId: profile.intraid,
-		// 	}
-		// })
-		// if (!user)
-		// {
-		// 	console.log("we're creating a user")
-		// 	try {
-		// 		this.prisma.user.create({
-		// 			data: {
-		// 				name: profile.username,
-		// 				intraId: profile.intraid,
-		// 				intraName: profile.username,
-		// 			}
-		// 		});
-		// 	}
-		// 	catch (s :any) {
-		// 		console.log("any");
-		// 		console.log(s);
-		// 	}
-		// }
-		// console.log("returning user");
-		// if (!user) {
-		// 	console.log("oops no user");
-		// }
-		const user = await this.authService.findOrCreate(profile)
+	async validate(accessToken: string, refreshToken: string, profile: any): Promise<User> {
+		console.log(profile.intraid, profile.username);
+		const user = await this.authService.validateUser(profile);
+
+		if (!user){
+			throw new UnauthorizedException();
+		}
 		return (user);
 	}
 }

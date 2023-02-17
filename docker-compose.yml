@@ -19,7 +19,7 @@ services:
   back_end:
     container_name: back_end
     depends_on:
-      - postgres
+      - db
     image: back_end
     build:
       dockerfile: ./back_end/Dockerfile
@@ -34,7 +34,7 @@ services:
   front_end:
     container_name: front_end
     depends_on:
-      - postgres
+      - db
     image: front_end
     build:
       dockerfile: ./front_end/Dockerfile
