@@ -15,15 +15,15 @@ export class AuthController {
 
 	@UseGuards(AuthGuard42)
 	@Get('callback')
-	handle_intra_return(@Request() req) {
+	handleIntraReturn(@Request() req) {
 		const user: User = req.user;
 		console.log(`Hello ${user.intraName}, you have logged in!`);
-		return user;
+		return this.authService.signToken(user);
 	}
 
-	// jwt guard
+	@UseGuards()
 	@Get('protected')
-	print_hello_world() {
+	printHelloWorld() {
 		return ("Hello World!");
 	}
 }
