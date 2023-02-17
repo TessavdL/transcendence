@@ -1,4 +1,5 @@
-import { Controller, Get, Query, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { AuthService } from './auth.service';
 import { AuthGuard42 } from './guards';
 
@@ -9,15 +10,20 @@ export class AuthController {
 	@UseGuards(AuthGuard42)
 	@Get('login')
 	async login (@Request() req) {
-		console.log("In login");
 		return req.user;
 	}
 
 	@UseGuards(AuthGuard42)
 	@Get('callback')
-	handle_intra_return(@Query() req) {
-		console.log("In callback");
-		console.log(req);
-		return req;
+	handle_intra_return(@Request() req) {
+		const user: User = req.user;
+		console.log(`Hello ${user.intraName}, you have logged in!`);
+		return user;
+	}
+
+	// jwt guard
+	@Get('protected')
+	print_hello_world() {
+		return ("Hello World!");
 	}
 }
