@@ -11,15 +11,23 @@ export class AuthService {
 	async validateUser(profile: any): Promise<User> | null  {
 		let user: User;
 
-		user = await this.prisma.user.findUnique({
-			where: {
-				intraName: profile.username,
-			}
-		});
-
+		user = await this.findUserById(profile.intraid);
 		if (!user) {
 			return (this.createUser(profile));
 		}
+
+		return (user);
+	}
+
+	async findUserById(id: number): Promise<User> | null {
+		let user: User;
+		
+		user = await this.prisma.user.findUnique({
+			where: {
+				intraId: id
+			}
+		});
+
 		return (user);
 	}
 
@@ -33,6 +41,7 @@ export class AuthService {
 				intraName: profile.username,
 			}
 		});
+
 		return (user);
 	}
 
