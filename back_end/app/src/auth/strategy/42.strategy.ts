@@ -6,7 +6,7 @@ import { Strategy } from "passport-42";
 import { AuthService } from "../auth.service";
 
 @Injectable()
-export class Strategy42 extends PassportStrategy(Strategy) {
+export class Strategy42 extends PassportStrategy(Strategy, '42') {
 	constructor(config: ConfigService, private authService: AuthService) {
 		super ({
 			clientID: config.get('42_OAUTH_UID'),

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import { Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -12,6 +13,7 @@ export class AuthService {
 		let user: User;
 
 		user = await this.findUserById(profile.intraid);
+
 		if (!user) {
 			return (this.createUser(profile));
 		}
@@ -43,6 +45,14 @@ export class AuthService {
 		});
 
 		return (user);
+	}
+
+	async setBearerToken(user: User, @Res({ passthrough:true }) res: Response) {
+		console.log(`Hello ${user.intraName}, you have logged in!`);
+		
+		const token = await this.signToken(user);
+		
+		res.cookie('jwt', token.access_token, { httpOnly:true, domain:'localhost' });
 	}
 
 	async signToken(user: User): Promise<{access_token: string}> {

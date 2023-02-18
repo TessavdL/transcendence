@@ -1,7 +1,9 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Request, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
+import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard42 } from './guards';
+import { JwtAuthGuard } from './guards';
 
 @Controller('auth')
 export class AuthController {
@@ -15,13 +17,12 @@ export class AuthController {
 
 	@UseGuards(AuthGuard42)
 	@Get('callback')
-	handleIntraReturn(@Request() req) {
+	async handleIntraReturn(@Request() req, @Res({ passthrough:true }) res: Response) {
 		const user: User = req.user;
-		console.log(`Hello ${user.intraName}, you have logged in!`);
-		return this.authService.signToken(user);
+		return (this.authService.setBearerToken(user, res));
 	}
 
-	@UseGuards()
+	@UseGuards(JwtAuthGuard)
 	@Get('protected')
 	printHelloWorld() {
 		return ("Hello World!");
