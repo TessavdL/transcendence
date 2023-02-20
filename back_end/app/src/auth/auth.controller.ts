@@ -1,4 +1,4 @@
-import { Controller, Get, Request, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Redirect, Request, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -11,20 +11,21 @@ export class AuthController {
 
 	@UseGuards(AuthGuard42)
 	@Get('login')
-	async login (@Request() req) {
+	async login (@Request() req): Promise<any> {
 		return req.user;
 	}
 
 	@UseGuards(AuthGuard42)
 	@Get('callback')
-	async handleIntraReturn(@Request() req, @Res({ passthrough:true }) res: Response) {
+	async handleIntraReturn(@Request() req, @Res({ passthrough:true }) res: Response): Promise<void> {
 		const user: User = req.user;
 		return (this.authService.setBearerToken(user, res));
 	}
 
 	@UseGuards(JwtAuthGuard)
-	@Get('protected')
-	printHelloWorld() {
-		return ("Hello World!");
+	@Get('welcome')
+	printWelcomeMessage(@Request() req): string {
+		const user: User = req.user;
+		return (this.authService.printWelcomeMessage(user));
 	}
 }

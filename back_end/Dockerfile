@@ -24,4 +24,7 @@ USER node
 WORKDIR /app
 RUN chown node:node ./
 EXPOSE 3001
-CMD npm install && npx prisma generate && npm run start:dev
+CMD npm install && \
+    npx prisma generate && \
+    npx prisma migrate dev --name dev && \
+    npm run start:dev

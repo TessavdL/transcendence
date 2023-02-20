@@ -47,12 +47,13 @@ export class AuthService {
 		return (user);
 	}
 
-	async setBearerToken(user: User, @Res({ passthrough:true }) res: Response) {
+	async setBearerToken(user: User, @Res({ passthrough:true }) res: Response): Promise<void> {
 		console.log(`Hello ${user.intraName}, you have logged in!`);
 		
 		const token = await this.signToken(user);
 		
 		res.cookie('jwt', token.access_token, { httpOnly:true, domain:'localhost' });
+		res.redirect('http://localhost:3001/auth/welcome');
 	}
 
 	async signToken(user: User): Promise<{access_token: string}> {
@@ -64,5 +65,9 @@ export class AuthService {
 				secret:	this.config.get('JWT_SECRET'),
 			})
 		};
+	}
+
+	printWelcomeMessage(user: User): string {
+		return (`Hello ${user.intraName}, you have logged in!`);
 	}
 }
