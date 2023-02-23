@@ -1,9 +1,8 @@
-import { Controller, Get, Redirect, Request, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Request, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard42 } from './guards';
-import { JwtAuthGuard } from './guards';
 
 @Controller('auth')
 export class AuthController {
@@ -20,12 +19,5 @@ export class AuthController {
 	async handleIntraReturn(@Request() req, @Res({ passthrough:true }) res: Response): Promise<void> {
 		const user: User = req.user;
 		return (this.authService.setBearerToken(user, res));
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Get('welcome')
-	printWelcomeMessage(@Request() req): string {
-		const user: User = req.user;
-		return (this.authService.printWelcomeMessage(user));
 	}
 }

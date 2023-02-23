@@ -10,9 +10,7 @@ export class AuthService {
 	constructor(private config: ConfigService, private prisma: PrismaService, private jwtService: JwtService) {}
 
 	async validateUser(profile: any): Promise<User> | null  {
-		let user: User;
-
-		user = await this.findUserById(profile.intraid);
+		const user: User = await this.findUserById(profile.intraid);
 
 		if (!user) {
 			return (this.createUser(profile));
@@ -22,9 +20,7 @@ export class AuthService {
 	}
 
 	async findUserById(id: number): Promise<User> | null {
-		let user: User;
-		
-		user = await this.prisma.user.findUnique({
+		const user: User = await this.prisma.user.findUnique({
 			where: {
 				intraId: id
 			}
@@ -34,9 +30,7 @@ export class AuthService {
 	}
 
 	async createUser(profile: any): Promise<User> | null {
-		let user: User;
-
-		user = await this.prisma.user.create({
+		const user: User = await this.prisma.user.create({
 			data: {
 				name: profile.username,
 				intraId: profile.intraid,
@@ -53,7 +47,7 @@ export class AuthService {
 		const token = await this.signToken(user);
 		
 		res.cookie('jwt', token.access_token, { httpOnly:true, domain:'localhost' });
-		res.redirect('http://localhost:3001/auth/welcome');
+		res.redirect('http://localhost:5173');
 	}
 
 	async signToken(user: User): Promise<{access_token: string}> {
@@ -65,9 +59,5 @@ export class AuthService {
 				secret:	this.config.get('JWT_SECRET'),
 			})
 		};
-	}
-
-	printWelcomeMessage(user: User): string {
-		return (`Hello ${user.intraName}, you have logged in!`);
 	}
 }
