@@ -60,4 +60,12 @@ export class AuthService {
 			})
 		};
 	}
+
+	logout(user: User, @Res({ passthrough:true }) res: Response) {
+		console.log(`Hello ${user.intraName}, you are logged out!`);
+
+		res.cookie('jwt', '', { httpOnly:true, domain:'localhost' });
+		// TO DO: needs to redirect to login page
+		res.redirect('http://localhost:5173');
+	}
 }
