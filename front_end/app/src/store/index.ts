@@ -56,7 +56,6 @@ const storeUser = createStore({
                         commit("setAuthenticated");
                         commit("updateId", response.data.id);
                         commit("updateUserName", response.data.name);
-                        console.log("test");
                         // if (
                         //     response.data.isTwoFactorAuthEnabled &&
                         //     !response.data.isTwoFactorAuthenticated

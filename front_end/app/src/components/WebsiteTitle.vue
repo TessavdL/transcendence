@@ -4,9 +4,8 @@
         <div v-if="isUserLogIn">
             <NavMenu />
         </div>
-        <NavMenu />
         <div><Toast /></div>
-
+        <div><ConfirmDialog /></div>
     </div>
     
 </template>
@@ -27,10 +26,6 @@ const confirm = useConfirm();
 const socket: Socket = inject("socketioInstance") as Socket;
 const router = useRouter()
 const isUserLogIn = computed(() => {
-  // if (storeUser.state.isAuthenticated === false) {
-  //   storeUser.dispatch("login");
-  // }
-  console.log(storeUser.state.isAuthenticated);
   return storeUser.state.isAuthenticated;
 });
 
