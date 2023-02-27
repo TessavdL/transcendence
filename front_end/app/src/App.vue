@@ -6,11 +6,14 @@
 
 </template>
 
+<script lang="ts">
+import WebsiteTitle from "./components/WebsiteTitle.vue";
+export default { components: { WebsiteTitle } };
+</script>
+
 <script setup lang="ts">
-// import { RouterView } from 'vue-router';
 import { provide } from "vue";
 import SocketioService from "./services/socketio.service";
-import WebsiteTitle from "./components/WebsiteTitle.vue";
 
 // create a socket instance for connecting client
 const socket = SocketioService.setupSocketConnection();
@@ -37,6 +40,10 @@ body {
   font-family: var(--font-family);
   font-weight: 400;
   color: var(--text-color);
+  background-image: url('./assets/design_photos/home_bg.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
 }
 
 @keyframes p-progress-spinner-color {
