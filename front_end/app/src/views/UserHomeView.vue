@@ -14,28 +14,5 @@
 import Button from "primevue/button";
 import { useRouter } from "vue-router";
 import Navbar from "@/components/Navbar.vue";
-import axios from "axios";
 
-methods: {
-    getUser()
-}
-
-async function getUser(): Promise<any> {
-    try {
-        await axios.get("http://localhost:3001/user", {
-        withCredentials: true,
-        // also works without adding header so maybe just leave it out
-        // headers: {
-        //     'Access-Control-Allow-Origin': 'http://localhost:3001',
-        // },
-    })
-    .then(function(response) {
-        console.log(response.data);
-    })
-    console.log("done");
-}
-catch (error) {
-    console.error(error);
-}
-}
 </script>
