@@ -49,22 +49,26 @@ const storeUser = createStore({
         async login({ commit }) {
             if (storeUser.getters.isAuthenticated === false) {
                 await axios
-                    .get("http://localhost:3001/auth/status", {
+                    .get("http://localhost:3001/user", {
                         withCredentials: true,
                     })
                     .then(async (response) => {
-                        if (
-                            response.data.isTwoFactorAuthEnabled &&
-                            !response.data.isTwoFactorAuthenticated
-                        ) {
-                            router.push({ name: "2fAuthenticate" });
-                        } else {
-                            commit("setAuthenticated");
-                            commit("updateId", response.data.id);
-                            commit("updateUserAvatar", response.data.avatar);
-                            commit("updateTwoFactor", response.data.isTwoFactorAuthEnabled);
-                            commit("updateUserName", response.data.username);
-                        }
+                        commit("setAuthenticated");
+                        commit("updateId", response.data.id);
+                        commit("updateUserName", response.data.name);
+                        console.log("test");
+                        // if (
+                        //     response.data.isTwoFactorAuthEnabled &&
+                        //     !response.data.isTwoFactorAuthenticated
+                        // ) {
+                        //     router.push({ name: "2fAuthenticate" });
+                        // } else {
+                        //     commit("setAuthenticated");
+                        //     commit("updateId", response.data.id);
+                        //     commit("updateUserAvatar", response.data.avatar);
+                        //     commit("updateTwoFactor", response.data.isTwoFactorAuthEnabled);
+                        //     commit("updateUserName", response.data.name);
+                        // }
                     })
                     .catch(() => {
                         console.log("user is not unauthorized");

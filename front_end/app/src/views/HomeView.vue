@@ -1,6 +1,6 @@
 <template>
   <div class="home">
-    <Navbar />
+    <!-- <Navbar /> -->
     <div v-if="storeUser.state.isAuthenticated" />
     <div v-else>
       <LogInButton />
@@ -11,5 +11,5 @@
 <script setup lang="ts">
 import storeUser from "@/store";
 import LogInButton from "@/components/LogInButton.vue";
-import Navbar from "@/components/navbar.vue";
+import NavMenu from "@/components/NavMenu.vue";
 </script>
