@@ -11,5 +11,5 @@
 <script setup lang="ts">
 import storeUser from "@/store";
 import LogInButton from "@/components/LogInButton.vue";
-import Navbar from "@/components/navbar.vue";
+import Navbar from "@/components/Navbar.vue";
 </script>
