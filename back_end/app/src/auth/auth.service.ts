@@ -66,6 +66,6 @@ export class AuthService {
 
 		res.cookie('jwt', '', { httpOnly:true, domain:'localhost' });
 		// TO DO: needs to redirect to login page
-		res.redirect('http://localhost:5173');
+		// res.redirect('http://localhost:5173');
 	}
 }

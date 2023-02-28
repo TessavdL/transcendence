@@ -31,7 +31,7 @@ const MenuItems = ref([
             {
                 items: [
                     { label: "View My Profile", to: { name: "Profile" } },
-                    { label: "Log Out", },
+                    { label: "Log Out", to: { name: "Logout" } },
                 ],
             },
         ],
