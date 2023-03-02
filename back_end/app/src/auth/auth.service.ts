@@ -37,9 +37,14 @@ export class AuthService {
 				intraName: profile.username,
 			}
 		});
+        addUserToAllOtherUsers(user.intraId);
 
 		return (user);
 	}
+
+    async addUserToAllOtherUsers(intraId: number) {
+        const userlist 
+    }
 
 	async setBearerToken(user: User, @Res({ passthrough:true }) res: Response): Promise<void> {
 		console.log(`Hello ${user.intraName}, you have logged in!`);

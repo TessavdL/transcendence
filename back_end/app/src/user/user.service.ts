@@ -10,20 +10,21 @@ export class UserService {
 	async createUserElement(user: User): Promise<userElement> {
 		let singleElement: userElement = {
 			avatar: "thisimage.png",
-			username: "itsme",
+			username: user.name,
 			activityStatus: ActivityStatus.ONLINE,
 			blockedState: false,
 			friendState: FriendState.FRIENDS,
 		}
+
 		return (singleElement);
 	}
-	
+
 	async getUserElements(user: User): Promise<userElement[]> {
 		const userlist: User[] = await this.getUserListExceptSelf(user);
 		let userElementList: userElement[] = [];
 
 		for (let it: number = 0; userlist[it]; ++it) {
-			userElementList.push(await this.createUserElement(user));
+			userElementList.push(await this.createUserElement(userlist[it]));
 		}
 
 		return (userElementList);
@@ -38,7 +39,6 @@ export class UserService {
 			}
 		});
  
-		console.log(userlist);
 		return (userlist);
 	}
 }
