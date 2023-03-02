@@ -12,7 +12,8 @@ import { ChatModule } from './chat/chat.module';
 	PrismaModule, 
 	ConfigModule.forRoot({
 		isGlobal: true,
-	}), UserModule,
+	}),
+	UserModule,
   ],
 })	
 export class AppModule {}

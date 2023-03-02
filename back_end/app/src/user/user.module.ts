@@ -4,9 +4,10 @@ import { AuthService } from 'src/auth/auth.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { SocketclientModule } from './socketclient/socketclient.module';
 
 @Module({
-  imports: [],
+  imports: [SocketclientModule],
   controllers: [UserController],
   providers: [AuthService, JwtService, UserService, JwtStrategy],
   exports: [UserService]

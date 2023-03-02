@@ -6,15 +6,15 @@ import {
   type OnGatewayInit,
   WebSocketGateway,
   WebSocketServer,
-  WsException,
+  SubscribeMessage,
   } from '@nestjs/websockets';
-import { HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';
-import { ConfigService } from '@nestjs/config';
 import { User } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
-  
+import { AuthService } from 'src/auth/auth.service';
+import { SocketClientService } from 'src/user/socketclient/socketclient.service';
+
 @WebSocketGateway({
   cors: {
     origin: 'localhost:5173',
@@ -26,11 +26,11 @@ export class ChatGateway
   {
   constructor(
     private readonly jwtStrategy: JwtStrategy,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly socketClientService: SocketClientService,
+    private readonly authService: AuthService,
   ) {}
   private readonly logger: Logger = new Logger('WebsocketGateway');
-  
+
   @WebSocketServer()
   server: Server;
 
@@ -43,49 +43,30 @@ export class ChatGateway
     @MessageBody() data: string,
   ): Promise<string> | null {
     try {
-      const token: string = this.getToken(client);
+      const token: string = this.authService.getToken(client);
 
-      const payload: { name: string, sub: number} = await this.verifyToken(token);
+      const payload: { name: string, sub: number} = await this.authService.verifyToken(token);
     
       const user: User = await this.jwtStrategy.validate(payload);
+
+      this.socketClientService.updateOrCreateclient(client.id, user.intraId);
 
       this.logger.log(`Client connected. Username: ${user.name}. Id: ${client.id}`);
       return (data);
     }
     catch (error) {
+      this.logger.error(error);
       client.disconnect();
-      return (null)
-    }
-  }
-
-  getToken(client: Socket): string {
-    try {
-      const token = client.handshake.headers.cookie.split(';').find((cookie: string) => cookie.startsWith('jwt=')).split('=')[1];
-      return (token);
-    }
-    catch (error) {
-      this.logger.error('Could not find jwt token in cookie');
-      throw new Error(error);
-    }
-  }
-
-  async verifyToken(token: string): Promise<{ name: string, sub: number }> {
-    try {
-      const secret: string = this.configService.get('JWT_SECRET');
-
-      const payload: any = await this.jwtService.verify(token, {secret: secret, clockTolerance: 100});
-
-      const name: string = payload.name;
-      const sub: number = payload.sub;
-      return { name, sub };
-    }
-    catch (error) {
-      this.logger.error('Token is invalid')
-      throw new Error(error);
+      return (null);
     }
   }
 
   handleDisconnect(@ConnectedSocket() client: Socket): void {
-  this.logger.log(`Client disconnected: ${client.id}`);
+    this.logger.log(`Client disconnected: ${client.id}`);
   }
+
+  @SubscribeMessage('events')
+	handleEvent(@MessageBody() data: string): string {
+      return data;
+    }
 }
