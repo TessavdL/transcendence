@@ -1,6 +1,5 @@
 <template>
     <div>
-        <img class="title" src="@/assets/title.png">
         <div v-if="isUserLogIn">
             <NavMenu />
         </div>

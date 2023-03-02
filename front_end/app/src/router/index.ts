@@ -6,7 +6,7 @@ import GameView from "@/views/GameView.vue";
 import ChatView from "@/views/ChatView.vue";
 import ProfileView from "@/views/ProfileView.vue";
 import LogoutView from "@/views/LogoutView.vue";
-
+import UsersView from "@/views/UsersView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +30,11 @@ const router = createRouter({
       path: '/profile',
       name: 'Profile',
       component: ProfileView
+    },
+    {
+      path: '/users',
+      name: 'Users',
+      component: UsersView
     },
     {
       path: '/logout',
