@@ -6,9 +6,9 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 
 @Module({
-	imports: [PassportModule, JwtModule.register({})],
-	controllers: [AuthController],
-	providers: [AuthService, Strategy42, JwtStrategy],
-	exports: [AuthService],
+  imports: [PassportModule, JwtModule.register({})],
+  controllers: [AuthController],
+  providers: [AuthService, Strategy42, JwtStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}
