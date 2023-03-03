@@ -10,7 +10,6 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
-
 import { AuthService } from 'src/auth/auth.service';
 import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
