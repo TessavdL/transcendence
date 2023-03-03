@@ -7,13 +7,13 @@ import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
-	ChatModule,
+    UserModule,
+    ChatModule,
     AuthModule,
-	PrismaModule, 
-	ConfigModule.forRoot({
-		isGlobal: true,
-	}),
-	UserModule,
+    PrismaModule,
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
   ],
-})	
+})
 export class AppModule {}

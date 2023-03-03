@@ -5,8 +5,6 @@ import { User } from '@prisma/client';
 import { Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
-import { JwtStrategy } from './strategy';
-import { UserClientService } from 'src/user/client/client.service';
 
 @Injectable()
 export class AuthService {
@@ -14,8 +12,6 @@ export class AuthService {
     private readonly configService: ConfigService,
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly jwtStrategy: JwtStrategy,
-    private readonly userClientService: UserClientService,
   ) {}
   private readonly logger: Logger = new Logger('AuthService');
 
@@ -50,18 +46,6 @@ export class AuthService {
     });
 
     return user;
-  }
-
-  async verifyWebsocketToken(client: Socket) {
-    const token: string = this.getJwtTokenFromSocket(client);
-
-    const payload: { name: string; sub: number } = await this.verifyToken(
-      token,
-    );
-
-    const user: User = await this.jwtStrategy.validate(payload);
-
-    this.userClientService.updateOrCreateclient(client.id, user.intraId);
   }
 
   async setBearerToken(

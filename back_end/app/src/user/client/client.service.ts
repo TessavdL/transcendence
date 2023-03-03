@@ -57,78 +57,66 @@ export class UserClientService {
     }
   }
 
-  async getClientIntraId(
-    clientId: string,
-  ): Promise<number> {
+  async getClientIntraId(clientId: string): Promise<number> {
     try {
       const client = await this.prisma.client.findUnique({
         where: {
-          client.id: clientId,
+          id: clientId,
         },
       });
-      return (client.intraId);
+      return client.intraId;
     } catch (error) {
       this.logger.error('Error creating and updating client');
     }
   }
 
-  async getClientId(
-    intraId: number,
-  ): Promise<string> {
+  async getClientId(intraId: number): Promise<string> {
     try {
       const client = await this.prisma.client.findUnique({
         where: {
-          client.intraId: intraId,
+          intraId: intraId,
         },
       });
-      return (client.id);
+      return client.id;
     } catch (error) {
       this.logger.error('Error creating and updating client');
     }
   }
 
-  async getClient(
-    intraId: number,
-  ): Promise<Client> {
+  async getClient(intraId: number): Promise<Client> {
     try {
       const client = await this.prisma.client.findUnique({
         where: {
-          client.intraId: intraId,
+          intraId: intraId,
         },
       });
-      return (client);
+      return client;
     } catch (error) {
       this.logger.error('Error creating and updating client');
     }
   }
 
-  async deleteClientBasedOnId(
-    clientId: string,
-  ): Promise<void> {
+  async deleteClientBasedOnId(clientId: string): Promise<void> {
     try {
       await this.prisma.client.delete({
         where: {
-          client.id: clientId,
-        }
+          id: clientId,
+        },
       });
+    } catch (error) {
+      this.logger.error('Error deleting client');
     }
-    catch (error) {
-      this.logger.error('Error deleting client');    }
   }
 
-  async deleteClientBasedOnIntraId(
-    intraId: number,
-  ): Promise<void> {
+  async deleteClientBasedOnIntraId(intraId: number): Promise<void> {
     try {
       await this.prisma.client.delete({
         where: {
-          client.intraId: intraId
-        }
+          intraId: intraId,
+        },
       });
+    } catch (error) {
+      this.logger.error('Error deleting client');
     }
-    catch (error) {
-      this.logger.error('Error deleting client');    }
   }
 }
-
-

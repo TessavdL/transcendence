@@ -10,7 +10,11 @@ import {
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+
 import { AuthService } from 'src/auth/auth.service';
+import { UserClientService } from 'src/user/client/client.service';
+import { JwtStrategy } from 'src/auth/strategy';
+import { User } from '@prisma/client';
 
 @WebSocketGateway({
   cors: {
@@ -21,7 +25,11 @@ import { AuthService } from 'src/auth/auth.service';
 export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly userClientService: UserClientService,
+    private readonly jwtStrategy: JwtStrategy,
+  ) {}
   private readonly logger: Logger = new Logger('WebsocketGateway');
 
   @WebSocketServer()
@@ -35,7 +43,11 @@ export class ChatGateway
     this.logger.log(`Client connected: ${client.id}`);
 
     try {
-      this.authService.verifyWebsocketToken(client);
+      const token: string = this.authService.getJwtTokenFromSocket(client);
+      const payload: { name: string; sub: number } =
+        await this.authService.verifyToken(token);
+      const user: User = await this.jwtStrategy.validate(payload);
+      this.userClientService.updateOrCreateclient(client.id, user.intraId);
     } catch (error) {
       this.logger.error(error);
       client.disconnect();
