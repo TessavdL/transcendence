@@ -24,3 +24,8 @@ model User {
 	intraId		Int @unique
 	intraName	String @unique
 }
+
+model Client {
+	id			String @unique
+	intraId		Int @unique
+}
