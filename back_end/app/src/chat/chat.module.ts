@@ -7,13 +7,12 @@ import { JwtStrategy } from 'src/auth/strategy';
 import { ConfigService } from '@nestjs/config';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
-import { SocketClientService } from 'src/user/socketclient/socketclient.service';
+import { UserClientService } from 'src/user/client/client.service';
 
 @Module({
   imports: [JwtModule.register({})],
   controllers: [ChatController],
-  providers:
-   [
+  providers: [
     AuthService,
     JwtService,
     ConfigService,
@@ -21,7 +20,7 @@ import { SocketClientService } from 'src/user/socketclient/socketclient.service'
     UserService,
     ChatService,
     ChatGateway,
-	SocketClientService
-   ]
+    UserClientService,
+  ],
 })
 export class ChatModule {}

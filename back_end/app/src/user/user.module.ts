@@ -4,12 +4,12 @@ import { AuthService } from 'src/auth/auth.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
-import { SocketclientModule } from './socketclient/socketclient.module';
+import { UserClientModule } from './client/client.module';
 
 @Module({
-  imports: [SocketclientModule],
+  imports: [UserClientModule],
   controllers: [UserController],
   providers: [AuthService, JwtService, UserService, JwtStrategy],
-  exports: [UserService]
+  exports: [UserService],
 })
 export class UserModule {}
