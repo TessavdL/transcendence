@@ -5,6 +5,7 @@ import { PrismaService } from './prisma.service';
 // make sure you are exporting the array of services when using global
 // make sure global module is importing into the app module
 // https://github.com/prisma/prisma/issues/17127
+
 @Global()
 @Module({
   providers: [PrismaService],

@@ -20,12 +20,18 @@ model User {
 	id				Int @id @default(autoincrement())
 	createdAt		DateTime @default(now())
 	updatedAt		DateTime @updatedAt
-    avatar          String
+    avatar          String?
 	name			String @unique
 	intraId			Int @unique
 	intraName		String @unique
-	allOtherUsers	Int[]
-	blockedUsers	Int[]
-	pendingFriends	Int[]
-	verifiedFriends	Int[]
+	allOtherUsers	AllOtherUsers[]
+}
+
+model AllOtherUsers {
+	id				Int @unique
+	intraId			Int	@unique
+	user			User @relation(fields: [id], references: [intraId])
+	activityStatus	Int @default(0)
+	blockedStatus	Boolean @default(false)
+	friendState		Int @default(0)
 }
