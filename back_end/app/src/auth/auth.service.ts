@@ -66,7 +66,6 @@ export class AuthService {
 
 		intraIds.forEach((value: number) => {
 			const otherUser = this.newRelationObject(value);
-			console.log({otherUser})
 			relationArray.push(otherUser);
 		});
 
@@ -76,6 +75,9 @@ export class AuthService {
 				allOtherUsers: {
 					create: relationArray,
 				},
+			},
+			include: {
+				allOtherUsers: true,
 			},
 		});
 	}
@@ -112,9 +114,6 @@ export class AuthService {
 	  newRelationObject(intraId: number): any {
 		return {
 		  intraId: intraId,
-		  activityStatus: 0,
-		  blockedStatus: false,
-		  friendState: 0,
 		};
 	  }
 

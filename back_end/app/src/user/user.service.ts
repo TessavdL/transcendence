@@ -8,14 +8,14 @@ export class UserService {
 	constructor(private prisma: PrismaService) {}
 
 	async getUserElements(user: User): Promise<userElement[]> {
-		const userlist: User[] = await this.getUserListExceptSelf(user);
+		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
 		const userElements: userElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
 
 		return (userElements);
 	}
 
-	async getUserListExceptSelf(user: User): Promise<User[]> {
-		const userlist: User[] = await this.prisma.user.findMany({
+	async getUserListExceptSelf(user: User): Promise<(User & { allOtherUsers: AllOtherUsers[]; })[]> {
+		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.prisma.user.findMany({
 			where: {
 				NOT: {
 					intraId: user.intraId,
@@ -29,19 +29,13 @@ export class UserService {
 		return (userlist);
 	}
 
-	async createUserElement(otherUser: User, self: User): Promise<userElement> {
-		const relationStatus: AllOtherUsers = await this.prisma.allOtherUsers.findUnique({
-			where: {
-				intraId: otherUser.intraId
-			}
-		})
-
+	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<userElement> {
 		const singleElement: userElement = {
 			avatar: otherUser.avatar,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
-			blockedState: relationStatus.blockedStatus,
-			friendStatus: relationStatus.friendStatus,
+			blockedState: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).blockedStatus,
+			friendStatus: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).friendStatus,
 		}
 
 		return (singleElement);
