@@ -23,7 +23,10 @@ export class AuthService {
 		const user: User = await this.prisma.user.findUnique({
 			where: {
 				intraId: id
-			}
+			},
+			include: {
+				allOtherUsers: true,
+			},
 		});
 
 		return (user);
@@ -38,7 +41,10 @@ export class AuthService {
 				allOtherUsers: {
 					create: [],
 				},
-			}
+			},
+			include: {
+				allOtherUsers: true,
+			},
 		});
         this.updateUsersOfNewUser(user.intraId);
 		this.updateSelfWithOtherUsers(user.intraId);
