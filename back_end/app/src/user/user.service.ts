@@ -40,4 +40,20 @@ export class UserService {
 
 		return (singleElement);
 	}
+
+    async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: string) {
+        try {
+            await this.prisma.user.update({
+                where: {
+                    name: otherUser,
+                },
+                data: {
+                    allOtherUsers.blockedStatus: true
+                },
+            });
+        }
+        catch(error) {
+
+        }
+    }
 }
