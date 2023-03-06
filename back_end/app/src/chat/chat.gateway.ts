@@ -8,13 +8,15 @@ import {
   WebSocketServer,
   SubscribeMessage,
 } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { User } from '@prisma/client';
+import { JwtAuthGuard } from 'src/auth/guards';
 
+//   @UseGuards(JwtAuthGuard)
 @WebSocketGateway({
   cors: {
     origin: 'localhost:5173',
@@ -46,6 +48,7 @@ export class ChatGateway
       const payload: { name: string; sub: number } =
         await this.authService.verifyToken(token);
       const user: User = await this.jwtStrategy.validate(payload);
+	  console.log(user);
       this.userClientService.updateOrCreateclient(client.id, user.intraId);
     } catch (error) {
       this.logger.error(error);
@@ -57,8 +60,21 @@ export class ChatGateway
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('events')
+  @SubscribeMessage('event')
   handleEvent(@MessageBody() data: string): string {
-    return data;
+    console.log(data);
+	return data;
+  }
+
+  @SubscribeMessage('joinRoom')
+  handeJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: number): string {
+	console.log(`joined room number ${data}`);
+	return ('data');
+  }
+
+  @SubscribeMessage('sendMessageToRoom')
+  handleRoomMessage(@ConnectedSocket() client: Socket, @MessageBody() data: number): string {
+	console.log(`send message to room number ${data}`);
+	return ('data');
   }
 }

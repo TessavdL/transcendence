@@ -1,7 +1,7 @@
 import { Injectable, Logger, Res } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { User } from '@prisma/client';
+import { AllOtherUsers, User } from '@prisma/client';
 import { Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
@@ -29,19 +29,6 @@ export class AuthService {
     const user: User = await this.prisma.user.findUnique({
       where: {
         intraId: id,
-      },
-    });
-
-    return user;
-  }
-
-  // should be moved to user directory eventually
-  async createUser(profile: any): Promise<User> | null {
-    const user: User = await this.prisma.user.create({
-      data: {
-        name: profile.username,
-        intraId: profile.intraid,
-        intraName: profile.username,
       },
     });
 
@@ -121,4 +108,89 @@ export class AuthService {
 
     res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
   }
+
+	async createUser(profile: any): Promise<User> | null {
+		const user: User = await this.prisma.user.create({
+			data: {
+				name: profile.username,
+				intraId: profile.intraid,
+				intraName: profile.username,
+				allOtherUsers: {
+					create: [],
+				},
+			},
+			include: {
+				allOtherUsers: true,
+			},
+		});
+        this.updateUsersOfNewUser(user.intraId);
+		this.updateSelfWithOtherUsers(user.intraId);
+
+		return (user);
+	}
+
+	async updateSelfWithOtherUsers(intraId: number) {
+		const userlist: User[] = await this.prisma.user.findMany({
+			where: {
+				NOT: {
+					intraId: intraId,
+				}
+			}
+		});
+
+		const intraIds: number[] = userlist.map(userlist => userlist.intraId);
+		let relationArray: AllOtherUsers[] = [];
+
+		intraIds.forEach((value: number) => {
+			const otherUser = this.newRelationObject(value);
+			relationArray.push(otherUser);
+		});
+
+		await this.prisma.user.update({
+			where: { intraId: intraId },
+			data: {
+				allOtherUsers: {
+					create: relationArray,
+				},
+			},
+			include: {
+				allOtherUsers: true,
+			},
+		});
+	}
+
+	async updateUsersOfNewUser(intraId: number) {
+		const usersToUpdate = await this.prisma.user.findMany({
+		  where: {
+			intraId: {
+			  not: intraId,
+			},
+		  },
+		  include: {
+			allOtherUsers: true,
+		  },
+		});
+		const newRelationObject = this.newRelationObject(intraId)
+	  
+		const promises = usersToUpdate.map(async (user) => {
+		  await this.prisma.user.update({
+			where: {
+			  id: user.id,
+			},
+			data: {
+			  allOtherUsers: {
+				create: newRelationObject
+			  },
+			},
+		  });
+		});
+	  
+		await Promise.all(promises);
+	  }
+
+	  newRelationObject(intraId: number): any {
+		return {
+		  intraId: intraId,
+		};
+	  }
 }
