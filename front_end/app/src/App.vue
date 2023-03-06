@@ -28,7 +28,6 @@ provide("socketioInstance", socket);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #8cb8e4;
 }
 
 body {
@@ -36,7 +35,7 @@ body {
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: var(--surface-a);
+  background-color: #01181d;
   font-family: var(--font-family);
   font-weight: 400;
   color: var(--text-color);
@@ -44,23 +43,6 @@ body {
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
-}
-
-@keyframes p-progress-spinner-color {
-  100%,
-  0% {
-    stroke: #fffafa;
-  }
-  40% {
-    stroke: #0057e7;
-  }
-  66% {
-    stroke: #6722f3;
-  }
-  80%,
-  90% {
-    stroke: #d5e7fb;
-  }
 }
 
 </style>
