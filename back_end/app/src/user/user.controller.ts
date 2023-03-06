@@ -5,12 +5,12 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Controller('user')
 export class UserController {
-	constructor (private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-	@UseGuards(JwtAuthGuard)
-	@Get('/')
-	getUser(@Req() request): User {
-		const user: User = request.user;
-		return (user);
-	}
+  @UseGuards(JwtAuthGuard)
+  @Get('/')
+  getUser(@Req() request): User {
+    const user: User = request.user;
+    return user;
+  }
 }

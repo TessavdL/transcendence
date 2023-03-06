@@ -26,6 +26,6 @@ model User {
 }
 
 model Client {
-	id		String
-	intraId Int @unique
+	id			String @unique
+	intraId		Int @unique
 }

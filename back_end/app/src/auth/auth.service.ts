@@ -15,91 +15,110 @@ export class AuthService {
   ) {}
   private readonly logger: Logger = new Logger('AuthService');
 
-  async validateUser(profile: any): Promise<User> | null  {
+  async validateUser(profile: any): Promise<User> | null {
     const user: User = await this.findUserById(profile.intraid);
     if (!user) {
-      return (this.createUser(profile));
+      return this.createUser(profile);
     }
 
-    return (user);
+    return user;
   }
 
+  // should be used to user directory eventually
   async findUserById(id: number): Promise<User> | null {
     const user: User = await this.prisma.user.findUnique({
       where: {
-        intraId: id
-      }
+        intraId: id,
+      },
     });
 
-    return (user);
+    return user;
   }
 
+  // should be moved to user directory eventually
   async createUser(profile: any): Promise<User> | null {
     const user: User = await this.prisma.user.create({
       data: {
         name: profile.username,
         intraId: profile.intraid,
         intraName: profile.username,
-      }
+      },
     });
 
-    return (user);
+    return user;
   }
 
-  async setBearerToken(user: User, @Res({ passthrough:true }) res: Response): Promise<void> {
+  async setBearerToken(
+    user: User,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
     console.log(`Hello ${user.intraName}, you have logged in!`);
-    
+
     const token = await this.signToken(user);
-    
-    res.cookie('jwt', token.access_token, { httpOnly:true, domain:'localhost' });
+
+    res.cookie('jwt', token.access_token, {
+      httpOnly: true,
+      domain: 'localhost',
+    });
     res.redirect('http://localhost:5173');
   }
 
-  async signToken(user: User): Promise<{access_token: string}> {
+  async signToken(user: User): Promise<{ access_token: string }> {
     const payload = { name: user.intraName, sub: user.intraId };
 
     return {
       access_token: await this.jwtService.signAsync(payload, {
         expiresIn: '24h',
-        secret:  this.configService.get('JWT_SECRET'),
-      })
+        secret: this.configService.get('JWT_SECRET'),
+      }),
     };
   }
 
-  getToken(client: Socket): string {
-    const cookieToken = client.handshake.headers.cookie;
-	if (!cookieToken) {
-		throw new Error('Could not find a token');
-	}
+  getJwtTokenFromSocket(client: Socket): string {
+    const { headers } = client.handshake;
+    const allCookies = headers?.cookie;
 
-	const token = cookieToken.split(';').find((cookie: string) => cookie.startsWith('jwt=')).split('=')[1];
-    if (!token) {
-       throw new Error('Could not find jwt token');
+    if (!allCookies) {
+      throw new Error('Could not find cookies');
     }
-	return (token);
+
+    const jwtCookie = allCookies
+      .split(';')
+      .find((cookie: string) => cookie.startsWith('jwt='));
+
+    if (!jwtCookie) {
+      throw new Error('Could not find cookie with jwt token');
+    }
+
+    const [, token] = jwtCookie.split('=');
+
+    if (!token) {
+      throw new Error('Could not find jwt token');
+    }
+
+    return token;
   }
 
-  async verifyToken(token: string): Promise<{ name: string, sub: number }> {
+  async verifyToken(token: string): Promise<{ name: string; sub: number }> {
     try {
       const secret: string = this.configService.get('JWT_SECRET');
-  
-      const payload: any = await this.jwtService.verify(token, {secret: secret, clockTolerance: 100});
-  
+
+      const payload: any = await this.jwtService.verify(token, {
+        secret: secret,
+        clockTolerance: 100,
+      });
+
       const name: string = payload.name;
       const sub: number = payload.sub;
       return { name, sub };
-    }
-    catch (error) {
-      this.logger.error('Token is invalid')
-      throw new Error(error);
+    } catch (error) {
+      throw new Error('Token is invalid');
     }
   }
 
-  logout(user: User, @Res({ passthrough:true }) res: Response) {
+  logout(user: User, @Res({ passthrough: true }) res: Response) {
     console.log(`Hello ${user.intraName}, you are logged out!`);
 
-    res.cookie('jwt', '', { httpOnly:true, domain:'localhost' });
-    // TO DO: needs to redirect to login page
-    res.redirect('http://localhost:5173');
+    res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
   }
 }
