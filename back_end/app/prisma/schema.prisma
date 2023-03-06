@@ -1,6 +1,18 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
+enum FriendStatus {
+    NOT_FRIENDS
+    PENDING
+    FRIENDS
+}
+
+enum ActivityStatus {
+    ONLINE
+    INGAME
+    OFFLINE
+}
+
 datasource db {
 	provider = "postgresql"
 	url      = env("DATABASE_URL")
@@ -17,10 +29,21 @@ model UserMessage {
 }
 
 model User {
-	id			Int @id @default(autoincrement())
-	createdAt	DateTime @default(now())
-	updatedAt	DateTime @updatedAt
-	name		String @unique
-	intraId		Int @unique
-	intraName	String @unique
+	id				Int @id @default(autoincrement())
+	createdAt		DateTime @default(now())
+	updatedAt		DateTime @updatedAt
+    avatar          String?
+	name			String @unique
+	intraId			Int @unique
+	intraName		String @unique
+	activityStatus	ActivityStatus @default(ONLINE)
+	allOtherUsers	AllOtherUsers[]
+}
+
+model AllOtherUsers {
+	id				Int @unique
+	intraId			Int	@unique
+	user			User @relation(fields: [id], references: [intraId])
+	blockedStatus	Boolean @default(false)
+	friendStatus	FriendStatus @default(NOT_FRIENDS)
 }
