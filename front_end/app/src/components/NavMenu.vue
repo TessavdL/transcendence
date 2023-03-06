@@ -1,6 +1,6 @@
 <template>
     <div>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
             <div class="container-fluid">
                 <!-- Logo -->
                 <a class="navbar-brand me-auto" href="#">

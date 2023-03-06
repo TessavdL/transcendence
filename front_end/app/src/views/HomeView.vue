@@ -11,7 +11,7 @@
       </div>
       <div class="game-buttons">
         <button type="button" class="btn btn-primary play-button" @click="playGame">Play Game</button>
-        <button type="button" class="btn btn-primary watch-button" @click="watchGame">Watch Game</button>
+        <button type="button" class="btn btn-info watch-button" @click="watchGame">Watch Game</button>
       </div>
     </div>
     <div v-else>
@@ -42,7 +42,7 @@ const watchGame = () => {
 
 <style scoped>
 .about {
-  color: #99c4eb;
+  color: #ffffff;
   text-align: center;
   font-size: 20px;
 }
@@ -56,17 +56,13 @@ const watchGame = () => {
 }
 
 .play-button{
+  width: 200px;
   font-weight: bold;
-  margin: 0px 10px;
-  color: #07434c;
-  background-color: #99c4eb;
-  border: 1px solid #07434c;
+  margin: 0px 20px;
 }
 .watch-button{
+  width: 200px;
   font-weight: bold;
-  margin: 0px 10px;
-  color: #99c4eb;
-  background-color: #07434c;
-  border: 1px solid #99c4eb;
+  margin: 0px 20px;
 }
 </style>

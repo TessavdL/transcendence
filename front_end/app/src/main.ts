@@ -14,6 +14,7 @@ import ToastService from "primevue/toastservice";
 import Tooltip from "primevue/tooltip";
 
 import "bootstrap/dist/css/bootstrap.css";
+import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.js";
 
 const app = createApp(App)
