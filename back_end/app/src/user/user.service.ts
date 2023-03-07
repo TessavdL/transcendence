@@ -34,26 +34,26 @@ export class UserService {
 			avatar: otherUser.avatar,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
-			blockedState: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).blockedStatus,
-			friendStatus: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).friendStatus,
+			blockedState: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).blockedStatus,
+			friendStatus: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus,
 		}
 
 		return (singleElement);
 	}
 
     async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: string) {
-        try {
-            await this.prisma.user.update({
-                where: {
-                    name: otherUser,
-                },
-                data: {
-                    allOtherUsers.blockedStatus: true
-                },
-            });
-        }
-        catch(error) {
+        // try {
+        //     await this.prisma.user.update({
+        //         where: {
+        //             name: otherUser,
+        //         },
+        //         data: {
+        //             allOtherUsers.blockedStatus: true
+        //         },
+        //     });
+        // }
+        // catch(error) {
 
-        }
+        // }
     }
 }
