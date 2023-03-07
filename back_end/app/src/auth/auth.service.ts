@@ -98,7 +98,7 @@ export class AuthService {
 		const promises = usersToUpdate.map(async (user) => {
 		  await this.prisma.user.update({
 			where: {
-			  id: user.id,
+			  intraId: user.intraId,
 			},
 			data: {
 			  allOtherUsers: {
@@ -107,13 +107,13 @@ export class AuthService {
 			},
 		  });
 		});
-	  
+
 		await Promise.all(promises);
 	  }
 
 	  newRelationObject(intraId: number): any {
 		return {
-		  intraId: intraId,
+		  otherIntraId: intraId,
 		};
 	  }
 
