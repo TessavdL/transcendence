@@ -1,13 +1,22 @@
 <template>
   <div>
-    <button @click="createRoomAndJoin()">Create Room and Join</button>
-    <button @click="sendMessage()">Send Message</button>
+    <form @submit.prevent="createChannel">
+      <input v-model="channelName" type="text" placeholder="Channel name" />
+      <button type="submit">Create Channel</button>
+      <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
+    </form>
+    <div v-if="joined">
+      <form @submit.prevent="sendMessage">
+        <input v-model="messageText" type="text" placeholder="" />
+        <button type="submit">Send Message</button>
+      </form>
+    </div>
   </div>
 </template>
 
 <script lang='ts'>
 import type { Socket } from "socket.io-client";
-import { inject } from 'vue';
+import { inject, ref } from 'vue';
 import axios from "axios";
 
 export default {
@@ -16,12 +25,27 @@ export default {
     return { socket };
   },
 
+  data() {
+    return {
+      channelName: ref(''),
+      errorMessage: ref(''),
+      messageText: ref(''),
+      activeChannel: ref(''),
+      joined: false,
+    }
+  },
+
   methods: {
     sendMessage() {
-      this.socket.emit('event', 'hello',);
+      const messageData = {
+        messageText: this.messageText,
+        channelName: this.activeChannel,
+      }
+      this.socket.emit('sendMessageToChannel', messageData);
+      this.messageText = '';
     },
 
-    async createRoomAndJoin() {
+    async createChannel() {
       try {
         const config = {
           withCredentials: true,
@@ -29,16 +53,17 @@ export default {
 
         // Send a POST request to create a new room
         axios.defaults.baseURL = 'http://localhost:3001';
-        const response = await axios.post('chat/createRoom', {}, config);
-        
-        // Join the newly created room with socketio
-        const roomId: number = response.data.id;
-        this.socket.emit('joinRoom', roomId);
-        this.socket.emit('sendMessageToRoom', roomId);
-      } catch (error) {
-        console.error(error);
+        const response = await axios.post('chat/createChannel', { channelName: this.channelName }, config);
+        this.activeChannel = response.data;
+        this.errorMessage = '';
+
+        // Join the newly created room with socketio, needs to be implemented
+        this.socket.emit('joinChannel', this.activeChannel);
+        this.joined = true;
+      } catch (error: any) {
+        this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
       }
-    },
+    }
   },
 }
 </script>
