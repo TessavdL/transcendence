@@ -1,16 +1,47 @@
 <template>
   <div>
-    <form @submit.prevent="createChannel">
+    <form class="create-channel-form" @submit.prevent="createChannel">
       <input v-model="channelName" type="text" placeholder="Channel name" />
+
+      <label>
+        <input type="radio" v-model="channelType" value="public" />
+        Public
+      </label>
+
+      <label>
+        <input type="radio" v-model="channelType" value="protected" />
+        Protected
+      </label>
+
+      <label v-if="channelType === 'protected'">
+        Password:
+        <input v-model="channelPassword" type="password" />
+      </label>
+
+      <label>
+        <input type="radio" v-model="channelType" value="private" />
+        Private
+      </label>
+
       <button type="submit">Create Channel</button>
       <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
     </form>
-    <div v-if="joined">
-      <form @submit.prevent="sendMessage">
-        <input v-model="messageText" type="text" placeholder="" />
-        <button type="submit">Send Message</button>
-      </form>
-    </div>
+  </div>
+
+  <div>
+    <h2>All Channels:</h2>
+    <ul style="list-style: none;">
+      <li v-for="channel in allChannels" :key="channel.channelName">
+        <a @click="joinChannel(channel.channelName)" class="button">{{ channel.channelName }}</a>
+      </li>
+    </ul>
+  </div>
+
+  <div v-if="joined">
+    <form @submit.prevent="sendMessage">
+      <input v-model="messageText" type="text" placeholder="" />
+      <button type="submit">Send Message</button>
+    </form>
   </div>
 </template>
 
@@ -18,21 +49,33 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
+import type { Channel } from "../types/ChatType";
 
 export default {
-  setup() {
-    const socket = inject("socketioInstance") as Socket;
-    return { socket };
-  },
-
   data() {
     return {
-      channelName: ref(''),
-      errorMessage: ref(''),
-      messageText: ref(''),
       activeChannel: ref(''),
+      allChannels: ref<Channel[]>([]),
+      channelName: ref(''),
+      channelType: 'public',
+      channelPassword: '',
+      messageText: ref(''),
       joined: false,
+      errorMessage: ref(''),
     }
+  },
+
+  setup() {
+    const socket = inject("socketioInstance") as Socket;
+    const axiosInstance = axios.create({
+      baseURL: 'http://localhost:3001',
+      withCredentials: true,
+    })
+    return { axiosInstance, socket };
+  },
+
+  async mounted() {
+    await this.getAllChannels();
   },
 
   methods: {
@@ -47,23 +90,60 @@ export default {
 
     async createChannel() {
       try {
-        const config = {
-          withCredentials: true,
-        };
-
         // Send a POST request to create a new room
-        axios.defaults.baseURL = 'http://localhost:3001';
-        const response = await axios.post('chat/createChannel', { channelName: this.channelName }, config);
+        const response = await this.axiosInstance.post('chat/createChannel', { channelName: this.channelName });
         this.activeChannel = response.data;
         this.errorMessage = '';
 
-        // Join the newly created room with socketio, needs to be implemented
-        this.socket.emit('joinChannel', this.activeChannel);
-        this.joined = true;
+        // Update this.allChannels so it shows the newly created Channel
+        this.getAllChannels();
+
       } catch (error: any) {
         this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
       }
+    },
+
+    async getAllChannels() {
+      try {
+        const response = await this.axiosInstance.get('chat/findAllChannels');
+        this.allChannels = response.data;
+      } catch (error: any) {
+        this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+      }
+    },
+
+    joinChannel(channel: string) {
+      this.activeChannel = channel;
+      this.socket.emit('joinChannel', this.activeChannel);
+      this.joined = true;
     }
   },
 }
 </script>
+<style>
+ul,
+h2 {
+  color: white;
+}
+
+.error {
+  color: red;
+}
+
+.button {
+  display: inline-block;
+  width: 120px;
+  padding: 8px 12px;
+  background-color: rgb(6, 24, 6);
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+}
+
+.create-channel-form label {
+  color: white;
+}
+</style>

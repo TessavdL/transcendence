@@ -1,7 +1,6 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { Channel, UserMessage } from '@prisma/client';
+import { Channel, User, UserMessage } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-
 
 @Injectable()
 export class ChatService {
@@ -13,6 +12,7 @@ export class ChatService {
     const existingChannel: Channel = await this.findChannel(channelName);
     if (existingChannel)
       throw new HttpException({ reason: `Channel ${channelName} already exists` }, HttpStatus.BAD_REQUEST);
+
     try {
       const newChannel = await this.prisma.channel.create({
         data: {
@@ -35,7 +35,6 @@ export class ChatService {
       });
       return channel;
     } catch (error) {
-      this.logger.log(error);
       return null;
     }
   }
@@ -57,6 +56,31 @@ export class ChatService {
           },
         },
       });
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async findAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
+    try {
+      const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
+        where: {
+          channelName: channelName,
+        },
+        include: {
+          userMessages: true,
+        }
+      });
+      return channel.userMessages;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
+  async findAllChannels(): Promise<Channel[]> {
+    try {
+      const channels: Channel[] = await this.prisma.channel.findMany({});
+      return channels;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
