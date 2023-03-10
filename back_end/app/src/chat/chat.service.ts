@@ -26,19 +26,6 @@ export class ChatService {
     }
   }
 
-  async findChannel(channelName: string): Promise<Channel> | null {
-    try {
-      const channel: Channel = await this.prisma.channel.findFirst({
-        where: {
-          channelName: channelName,
-        },
-      });
-      return channel;
-    } catch (error) {
-      return null;
-    }
-  }
-
   async addMessageToChannel(intraId: number, channelName: string, name: string, text: string): Promise<void> {
     const channel = await this.prisma.channel.findUnique({ where: { channelName } });
     if (!channel) {
@@ -61,6 +48,28 @@ export class ChatService {
     }
   }
 
+  async findChannel(channelName: string): Promise<Channel> | null {
+    try {
+      const channel: Channel = await this.prisma.channel.findFirst({
+        where: {
+          channelName: channelName,
+        },
+      });
+      return channel;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async findAllChannels(): Promise<Channel[]> {
+    try {
+      const channels: Channel[] = await this.prisma.channel.findMany({});
+      return channels;
+    } catch (error) {
+      throw new InternalServerErrorException(error.message);
+    }
+  }
+
   async findAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
     try {
       const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
@@ -72,15 +81,6 @@ export class ChatService {
         }
       });
       return channel.userMessages;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
-    }
-  }
-
-  async findAllChannels(): Promise<Channel[]> {
-    try {
-      const channels: Channel[] = await this.prisma.channel.findMany({});
-      return channels;
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
