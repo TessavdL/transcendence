@@ -41,6 +41,7 @@
     <form @submit.prevent="sendMessage">
       <input v-model="messageText" type="text" placeholder="" />
       <button type="submit">Send Message</button>
+	  <a @click="leaveChannel()" class="button">Leave Room</a>
     </form>
   </div>
 </template>
@@ -113,9 +114,15 @@ export default {
     },
 
     joinChannel(channel: string) {
+      this.socket.emit('joinChannel', channel);
       this.activeChannel = channel;
-      this.socket.emit('joinChannel', this.activeChannel);
       this.joined = true;
+    },
+
+    leaveChannel() {
+      this.socket.emit('leaveChannel', this.activeChannel);
+      this.activeChannel = '';
+	  this.joined = false;
     }
   },
 }
