@@ -58,13 +58,14 @@ export class ChatGateway
 
   @SubscribeMessage('joinChannel')
   handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string): string {
-    console.log(`joined channel ${data}`);
+    console.log(`${client.id} joined channel ${data}`);
     return ('data');
   }
 
   @SubscribeMessage('leaveChannel')
-  handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() data) {
-    console.log(`left channel ${client.id}`);
+  handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string): string {
+    console.log(`${client.id} left channel ${data}`);
+    return ('data');
   }
 
   @SubscribeMessage('sendMessageToChannel')

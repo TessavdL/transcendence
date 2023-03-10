@@ -114,15 +114,17 @@ export default {
     },
 
     joinChannel(channel: string) {
+      console.log(`joining ${channel}`);
       this.socket.emit('joinChannel', channel);
       this.activeChannel = channel;
       this.joined = true;
     },
 
     leaveChannel() {
+      console.log(`leaving ${this.activeChannel}`);
       this.socket.emit('leaveChannel', this.activeChannel);
       this.activeChannel = '';
-	  this.joined = false;
+      this.joined = false;
     }
   },
 }
