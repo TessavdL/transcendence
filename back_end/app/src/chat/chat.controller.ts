@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { Channel, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
@@ -30,9 +30,9 @@ export class ChatController {
     return await this.chatService.addMessageToChannel(intraId, channelName, name, text)
   }
 
-  @Get('findAllMessagesIncChannel')
-  async findAllMessagesInChannel(findAllMessagesDto: FindAllMessagesDto) {
-    const channelName: string = findAllMessagesDto.channelName;
+  @Get('findAllMessagesInChannel')
+  async findAllMessagesInChannel(@Query('channelName') channelName: string ) {
+    console.log(`channelName = ${channelName}`);
     return await this.chatService.findAllMessagesInChannel(channelName);
   }
 

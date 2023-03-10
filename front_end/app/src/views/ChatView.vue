@@ -28,7 +28,7 @@
     </form>
   </div>
 
-  <div>
+  <div v-if="!joined">
     <h2>All Channels:</h2>
     <ul style="list-style: none;">
       <li v-for="channel in allChannels" :key="channel.channelName">
@@ -38,11 +38,17 @@
   </div>
 
   <div v-if="joined">
+  <div class="message-container">
+    <h2>All Messages:</h2>
+    <div v-for="mes in allMessages">
+      [{{ mes.name }}]: {{  mes.text }}
+    </div>
+  </div>
     <form @submit.prevent="sendMessage">
       <input v-model="messageText" type="text" placeholder="" />
       <button type="submit">Send Message</button>
-	  <a @click="leaveChannel()" class="button">Leave Room</a>
     </form>
+	<a @click="leaveChannel()" class="button">Leave Room</a>
   </div>
 </template>
 
@@ -50,7 +56,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel } from "../types/ChatType";
+import type { Channel, Messages } from "../types/ChatType";
 
 export default {
   data() {
@@ -60,9 +66,10 @@ export default {
       channelName: ref(''),
       channelType: 'public',
       channelPassword: '',
-      messageText: ref(''),
       joined: false,
       errorMessage: ref(''),
+      messageText: ref(''),
+      allMessages: ref<Messages[]>([]),
     }
   },
 
@@ -104,7 +111,7 @@ export default {
       }
     },
 
-    async getAllChannels() {
+    async getAllChannels(): Promise<void> {
       try {
         const response = await this.axiosInstance.get('chat/findAllChannels');
         this.allChannels = response.data;
@@ -113,25 +120,40 @@ export default {
       }
     },
 
-    joinChannel(channel: string) {
+    async joinChannel(channel: string): Promise<void> {
       console.log(`joining ${channel}`);
       this.socket.emit('joinChannel', channel);
       this.activeChannel = channel;
       this.joined = true;
+      await this.loadAllMessages(channel);
     },
 
-    leaveChannel() {
+    leaveChannel(): void {
       console.log(`leaving ${this.activeChannel}`);
       this.socket.emit('leaveChannel', this.activeChannel);
       this.activeChannel = '';
       this.joined = false;
-    }
+    },
+
+    async loadAllMessages(channel: string): Promise<void> {
+      try {
+        console.log('loading messages...');
+        const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: { channelName: channel }});
+        console.log(response.data);
+        const allMessages: Messages[] = response.data;
+        this.allMessages = allMessages;
+      } catch (error: any) {
+        this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+      }
+    },
   },
 }
 </script>
 <style>
 ul,
-h2 {
+h2,
+.create-channel-form label,
+.message-container {
   color: white;
 }
 
@@ -152,7 +174,4 @@ h2 {
   cursor: pointer;
 }
 
-.create-channel-form label {
-  color: white;
-}
 </style>
