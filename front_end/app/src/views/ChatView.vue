@@ -86,6 +86,12 @@ export default {
     await this.getAllChannels();
   },
 
+  created() {
+    this.socket.on('message', (data) => {
+      this.allMessages.push(data);
+  });
+  },
+
   methods: {
     sendMessage() {
       const messageData = {

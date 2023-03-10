@@ -67,7 +67,7 @@ export class UserClientService {
       });
       return client.intraId;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error finding the client based on clientId');
     }
   }
 
@@ -80,7 +80,7 @@ export class UserClientService {
       });
       return client.id;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error finding the client based on intraId');
     }
   }
 
@@ -93,7 +93,7 @@ export class UserClientService {
       });
       return client;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error find client');
     }
   }
 

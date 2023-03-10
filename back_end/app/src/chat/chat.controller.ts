@@ -21,18 +21,18 @@ export class ChatController {
     return await this.chatService.createChannel(channelName, createdByIntraId);
   }
 
-  @Post('message')
-  async addMessageToChannel(addMessageToChannelDto: AddMessageToChannelDto) {
-    const intraId: number = addMessageToChannelDto.intraId;
-    const channelName: string = addMessageToChannelDto.channelName;
-    const name: string = addMessageToChannelDto.name;
-    const text: string = addMessageToChannelDto.text;
-    return await this.chatService.addMessageToChannel(intraId, channelName, name, text)
-  }
+//   @Post('message')
+//   async addMessageToChannel(addMessageToChannelDto: AddMessageToChannelDto) {
+//     const intraId: number = addMessageToChannelDto.intraId;
+//     const channelName: string = addMessageToChannelDto.channelName;
+//     const name: string = addMessageToChannelDto.name;
+//     const text: string = addMessageToChannelDto.text;
+//     return await this.chatService.addMessageToChannel(intraId, channelName, name, text)
+//   }
 
   @Get('findAllMessagesInChannel')
   async findAllMessagesInChannel(@Query('channelName') channelName: string ) {
-    console.log(`channelName = ${channelName}`);
+    console.log(`Retrieving all messages from ${channelName}`);
     return await this.chatService.findAllMessagesInChannel(channelName);
   }
 

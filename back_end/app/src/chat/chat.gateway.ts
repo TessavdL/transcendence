@@ -14,6 +14,8 @@ import { AuthService } from 'src/auth/auth.service';
 import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { User } from '@prisma/client';
+import { ChatService } from './chat.service';
+import { Messages } from './types';
 
 @WebSocketGateway({
   cors: {
@@ -25,6 +27,7 @@ export class ChatGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private readonly authService: AuthService,
+    private readonly chatService: ChatService,
     private readonly userClientService: UserClientService,
     private readonly jwtStrategy: JwtStrategy,
   ) { }
@@ -58,19 +61,24 @@ export class ChatGateway
 
   @SubscribeMessage('joinChannel')
   handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string): string {
+    client.join(data);
     console.log(`${client.id} joined channel ${data}`);
     return ('data');
   }
 
   @SubscribeMessage('leaveChannel')
   handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string): string {
+    client.leave(data);
     console.log(`${client.id} left channel ${data}`);
     return ('data');
   }
 
   @SubscribeMessage('sendMessageToChannel')
-  handleRoomMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }): string {
-    console.log(data);
-    return ('data');
+  async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }) {
+    console.log(data.channelName);
+    const channelName = data.channelName;
+    const text = data.messageText;
+    const message: Messages = await this.chatService.handleChannelMessage(client, channelName, text);
+    this.server.to(channelName).emit('message', message);
   }
 }
