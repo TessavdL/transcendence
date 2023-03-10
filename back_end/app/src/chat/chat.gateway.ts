@@ -62,6 +62,11 @@ export class ChatGateway
     return ('data');
   }
 
+  @SubscribeMessage('leaveChannel')
+  handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() data) {
+    console.log(`left channel ${client.id}`);
+  }
+
   @SubscribeMessage('sendMessageToChannel')
   handleRoomMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }): string {
     console.log(data);
