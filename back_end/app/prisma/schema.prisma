@@ -35,9 +35,10 @@ model User {
 }
 
 model AllOtherUsers {
-    id            Int          @unique
-    intraId       Int          @unique
-    user          User         @relation(fields: [id], references: [intraId])
+    id            Int          @id @default(autoincrement())
+    intraId       Int
+    otherIntraId  Int
+    user          User         @relation(fields: [intraId], references: [intraId])
     blockedStatus Boolean      @default(false)
     friendStatus  FriendStatus @default(NOT_FRIENDS)
 }
