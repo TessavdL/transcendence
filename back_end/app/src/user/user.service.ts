@@ -34,8 +34,8 @@ export class UserService {
 			avatar: otherUser.avatar,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
-			blockedState: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).blockedStatus,
-			friendStatus: otherUser.allOtherUsers.find(x => x.intraId === user.intraId).friendStatus,
+			blockedState: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).blockedStatus,
+			friendStatus: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus,
 		}
 
 		return (singleElement);
