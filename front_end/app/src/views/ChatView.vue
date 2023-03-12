@@ -38,17 +38,17 @@
   </div>
 
   <div v-if="joined">
-  <div class="message-container">
-    <h2>All Messages:</h2>
-    <div v-for="mes in allMessages">
-      [{{ mes.name }}]: {{  mes.text }}
+    <div class="message-container">
+      <h2>All Messages:</h2>
+      <div v-for="mes in allMessages" :key="mes.intraId">
+        [{{ mes.name }}]: {{ mes.text }}
+      </div>
     </div>
-  </div>
     <form @submit.prevent="sendMessage">
       <input v-model="messageText" type="text" placeholder="" />
       <button type="submit">Send Message</button>
     </form>
-	<a @click="leaveChannel()" class="button">Leave Room</a>
+    <a @click="leaveChannel()" class="button">Leave Room</a>
   </div>
 </template>
 
@@ -89,7 +89,7 @@ export default {
   created() {
     this.socket.on('message', (data) => {
       this.allMessages.push(data);
-  });
+    });
   },
 
   methods: {
@@ -144,7 +144,7 @@ export default {
     async loadAllMessages(channel: string): Promise<void> {
       try {
         console.log('loading messages...');
-        const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: { channelName: channel }});
+        const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: { channelName: channel } });
         console.log(response.data);
         const allMessages: Messages[] = response.data;
         this.allMessages = allMessages;
@@ -179,5 +179,4 @@ h2,
   margin: 4px 2px;
   cursor: pointer;
 }
-
 </style>
