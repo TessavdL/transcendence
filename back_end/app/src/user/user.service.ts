@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { AllOtherUsers, User } from '@prisma/client';
+import { type ActivityStatus, AllOtherUsers, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { userElement } from './types';
 
 @Injectable()
 export class UserService {
-	constructor(private prisma: PrismaService) {}
+	constructor(private prisma: PrismaService) { }
 
 	async getUserElements(user: User): Promise<userElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
@@ -39,5 +39,33 @@ export class UserService {
 		}
 
 		return (singleElement);
+	}
+
+	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
+		try {
+			const user: User = await this.prisma.user.findUnique({
+				where: {
+					intraId: intraId,
+				},
+			});
+			return user.activityStatus;
+		} catch (error: any) {
+			throw new Error(error);
+		}
+	}
+
+	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<void> {
+		try {
+			const user: User = await this.prisma.user.update({
+				where: {
+					intraId: intraId,
+				},
+				data: {
+					activityStatus: status,
+				}
+			});
+		} catch (error: any) {
+			throw new Error(error);
+		}
 	}
 }
