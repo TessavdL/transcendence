@@ -13,7 +13,8 @@ import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
-import { User } from '@prisma/client';
+import { ActivityStatus, User } from '@prisma/client';
+import { UserService } from 'src/user/user.service';
 
 @WebSocketGateway({
   cors: {
@@ -26,6 +27,7 @@ export class ChatGateway
   constructor(
     private readonly authService: AuthService,
     private readonly userClientService: UserClientService,
+    private readonly userService: UserService,
     private readonly jwtStrategy: JwtStrategy,
   ) { }
   private readonly logger: Logger = new Logger('WebsocketGateway');
@@ -38,22 +40,27 @@ export class ChatGateway
   }
 
   async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`Client is trying to connect: ${client.id}`);
 
     try {
       const token: string = this.authService.getJwtTokenFromSocket(client);
       const payload: { name: string; sub: number } =
         await this.authService.verifyToken(token);
       const user: User = await this.jwtStrategy.validate(payload);
-      this.userClientService.updateOrCreateclient(client.id, user.intraId);
+      await this.userClientService.updateOrCreateclient(client.id, user.intraId);
+      const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
+      this.logger.log(`Client connected: ${client.id}, status: ${status}`);
     } catch (error) {
       this.logger.error(error);
+      this.logger.error(`Unkown client connection refused: ${client.id}`);
       client.disconnect();
     }
   }
 
-  handleDisconnect(@ConnectedSocket() client: Socket): void {
-    this.logger.log(`Client disconnected: ${client.id}`);
+  async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
+    const user: User = await this.userClientService.getUser(client.id);
+    const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.OFFLINE);
+    this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
   }
 
   @SubscribeMessage('joinChannel')
