@@ -8,7 +8,6 @@
             </button>
         </div>
     </div>
-
 </template>
 
 <script  setup lang="ts">
@@ -67,5 +66,6 @@ async function logOut() {
 .logout-button{
   font-size: 20px;
   margin: 10px auto;
+  border-radius: 10px;
 }
 </style>
