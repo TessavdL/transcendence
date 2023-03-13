@@ -24,5 +24,5 @@ class SocketioService {
         }
     }
 }
-  
+
 export default new SocketioService();
