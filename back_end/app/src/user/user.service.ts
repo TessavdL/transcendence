@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type ActivityStatus, AllOtherUsers, User } from '@prisma/client';
+import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { userElement } from './types';
 
@@ -54,9 +54,9 @@ export class UserService {
 		}
 	}
 
-	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<void> {
+	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<ActivityStatus> {
 		try {
-			const user: User = await this.prisma.user.update({
+			await this.prisma.user.update({
 				where: {
 					intraId: intraId,
 				},
@@ -64,6 +64,12 @@ export class UserService {
 					activityStatus: status,
 				}
 			});
+			const user: User = await this.prisma.user.findUnique({
+				where: {
+					intraId: intraId,
+				},
+			});
+			return (user.activityStatus);
 		} catch (error: any) {
 			throw new Error(error);
 		}
