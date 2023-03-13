@@ -53,9 +53,8 @@ export class ChatGateway
       this.logger.log(`Client connected: ${client.id}, status: ${status}`);
     } catch (error) {
       this.logger.error(error);
-      this.logger.error(`Unkown client connection refused: ${client.id}`);
+      this.logger.error(`Client connection refused: ${client.id}`);
       client.disconnect();
-      throw new WsException(error.message);
     }
   }
 
@@ -65,7 +64,7 @@ export class ChatGateway
       const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.OFFLINE);
       this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
     } catch (error: any) {
-      throw new WsException(error.message);
+      this.logger.error(error);
     }
   }
 
