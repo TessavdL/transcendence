@@ -7,6 +7,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
+  WsException,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
@@ -54,13 +55,18 @@ export class ChatGateway
       this.logger.error(error);
       this.logger.error(`Unkown client connection refused: ${client.id}`);
       client.disconnect();
+      throw new WsException(error.message);
     }
   }
 
   async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-    const user: User = await this.userClientService.getUser(client.id);
-    const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.OFFLINE);
-    this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
+    try {
+      const user: User = await this.userClientService.getUser(client.id);
+      const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.OFFLINE);
+      this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
+    } catch (error: any) {
+      throw new WsException(error.message);
+    }
   }
 
   @SubscribeMessage('joinChannel')
