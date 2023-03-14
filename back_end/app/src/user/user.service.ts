@@ -42,16 +42,36 @@ export class UserService {
 		return (singleElement);
 	}
 
-	async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: number) {
+	async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
 		try {
-			await this.prisma.user.update({
+			await this.prisma.allOtherUsers.update({
 				where: {
-					intraId: user.intraId
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
+					}
 				},
 				data: {
-					allOtherUsers: {
-					
+					blockedStatus: true,
+				}
+			});
+		}
+		catch(error) {
+
+		}
+	}
+
+	async unblockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		try {
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
 					}
+				},
+				data: {
+					blockedStatus: false,
 				}
 			});
 		}

@@ -47,4 +47,6 @@ model AllOtherUsers {
 	user			User @relation(fields: [intraId], references: [intraId])
 	blockedStatus	Boolean @default(false)
 	friendStatus	FriendStatus @default(NOT_FRIENDS)
+
+    @@unique([intraId, otherIntraId])
 }
