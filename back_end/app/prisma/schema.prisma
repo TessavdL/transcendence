@@ -61,5 +61,5 @@ model UserMessage {
     name        String
     text        String
     channel     Channel @relation(fields: [channelName], references: [channelName])
-    channelName String  @unique
+    channelName String
 }

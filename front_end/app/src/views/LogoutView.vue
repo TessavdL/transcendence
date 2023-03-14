@@ -8,6 +8,7 @@
             </button>
         </div>
     </div>
+
 </template>
 
 <script  setup lang="ts">
@@ -42,6 +43,7 @@ async function logOut() {
       storeUser.dispatch("logout");
       isVisible.value = false;
       socket.emit("exitUserSocketRoom");
+      socket.disconnect();
       redirectToHome();
     })
     .catch(() => {
@@ -57,13 +59,13 @@ async function logOut() {
 </script>
 
 <style scoped>
-.confirm-msg{
+.confirm-msg {
   font-size: 40px;
   margin: 30px auto;
   color: #ffffff;
 }
 
-.logout-button{
+.logout-button {
   font-size: 20px;
   margin: 10px auto;
   border-radius: 10px;
