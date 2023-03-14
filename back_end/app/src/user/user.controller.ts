@@ -28,7 +28,7 @@ export class UserController {
 	@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
 		const user: User = request.user;
-		const intraId: number = parseInt(params.id);
-		return (this.userService.getUserElementBasedOnIntraId(user, intraId));
+		const otherIntraId: number = parseInt(params.id);
+		return (this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
 	}
 }

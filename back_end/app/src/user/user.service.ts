@@ -91,8 +91,8 @@ export class UserService {
 		}
 	}
 
-	async getUserElementBasedOnIntraId(user: User, intraId: number): Promise<UserElement> {
-		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(intraId);
+	async getUserElementBasedOnIntraId(user: User, otherIntraId: number): Promise<UserElement> {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherIntraId);
 		const userElement: UserElement = await this.createUserElement(otherUser, user);
 
 		return (userElement);
