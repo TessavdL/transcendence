@@ -3,31 +3,32 @@
         <div>
             <RouterLink to="/profile">
                 <img src="../assets/logo_klein.png" class="card-img-top avatar-pic" alt="avatar">
+                <!-- need to do dymatic avatar -->
             </RouterLink>
         </div>
 
         <div class="card-body">
-            <h3 class="card-title">Username&nbsp;<i class="bi bi-circle-fill" style="font-size: 1rem; color: cornflowerblue;"></i></h3>
+            <h3 class="card-title">{{ user.username }}&nbsp;<i class="bi bi-circle-fill" style="font-size: 1rem; color: cornflowerblue;"></i></h3>
             <div class="friend-buttons">
-                <div class="d-grid gap-2" v-if="users.value[0].friendStatus === 'NOT_FRIENDS' ">
+                <div class="d-grid gap-2" v-if="user.friendStatus === 'NOT_FRIENDS' ">
                     <button type="button" class="btn btn-light" style="color:#042d3f;"
-                        @click="showProps">
+                        @click="addFriend">
                         Add Friend</button>
                 </div>
-                <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-light" style="color:#094b5f; background-color: #aab9ba;">
+                <div class="d-grid gap-2" v-if="user.friendStatus === 'PENDING'">
+                    <button type="button" class="btn btn-light disabled" style="color:#094b5f; background-color: #aab9ba;">
                         Requested</button>
                 </div>
-                <div class="d-grid gap-2">
+                <div class="d-grid gap-2" v-if="user.friendStatus === 'FRIENDS'">
                     <button type="button" class="btn btn-light" style="color:#ffffff; background-color: #147a99">
                         Friend</button>
                 </div>
             </div>
             <div class="block-buttons">
-                <div class="d-grid gap-2">
+                <div class="d-grid gap-2" v-if="user.blockedState === false">
                     <button type="button" class="btn btn-outline-light">Block</button>
                 </div>
-                <div class="d-grid gap-2">
+                <div class="d-grid gap-2" v-else>
                     <button type="button" class="btn btn-outline-light" style="color:#094b5f; background-color: #aab9ba;">
                         Unblock</button>
                 </div>
@@ -50,41 +51,18 @@
     </div>  -->
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
-import Job from '@/types/Job'
-import OrderTerm from '@/types/OrderTerm'
+<script setup lang="ts">
+import { computed, defineProps } from 'vue';
 import type UserInfo from '@/types/UserInfo';
 
-export default defineComponent({
-    props: {
-        // jobs: {
-        //     required: true,
-        //     type: Array as PropType<Job[]>
-        // },
-        // order: {
-        //     required: true,
-        //     type: String as PropType<OrderTerm>
-        // },
-        user: {
-            required: true,
-            type: Object as PropType<UserInfo>
-        }
-    },
-    setup(props) {
-        // const orderedJobs = computed(() => {
-        //     return [...props.jobs].sort((a: Job, b: Job) => {
-        //         return a[props.order] > b[props.order] ? 1 : -1
-        //     })
-        // })
+const props = defineProps({
+    user: Object
+});
         
-        const showProps = () => {
-            console.log(props);
-        }
-
-        return { showProps }
-    }
-})
+const addFriend = () => {
+    console.log("friend button clicked");
+    console.log(props);
+}
 
 </script>
 
