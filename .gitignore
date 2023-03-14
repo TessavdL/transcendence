@@ -1,0 +1,5 @@
+/prep/
+/database_data/
+*.env
+*.txt
+*.vscode/
