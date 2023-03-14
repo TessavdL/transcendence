@@ -1,5 +1,5 @@
 <template>
-    <div class="card info-card" style="width: 12rem; background-color: #032333;">
+    <div class="card info-card" style="width: 12rem; background-color: #094b5f;">
         <div>
             <RouterLink to="/profile">
                 <img src="../assets/logo_klein.png" class="card-img-top avatar-pic" alt="avatar">
@@ -8,61 +8,38 @@
         </div>
 
         <div class="card-body">
-            <h3 class="card-title">{{ user.username }}&nbsp;<i class="bi bi-circle-fill" style="font-size: 1rem; color: cornflowerblue;"></i></h3>
+            <h3 class="card-title"> {{ user.username }}</h3>
+            <div class="user-status">
+                <div v-if="user.activityStatus === 'ONLINE'">
+                    <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i> Online
+                </div>
+                <div v-if="user.activityStatus === 'OFFLINE'">
+                    <i class="bi bi-circle-fill" style="font-size: 1rem; color: orange;"></i> Offline
+                </div>
+                <div v-if="user.activityStatus === 'INGAME'">
+                    <i class="bi bi-circle-fill" style="font-size: 1rem; color: purple;"></i> In Game
+                </div>
+            </div>
+
             <div class="friend-buttons">
-                <div class="d-grid gap-2" v-if="user.friendStatus === 'NOT_FRIENDS' ">
-                    <button type="button" class="btn btn-light" style="color:#042d3f;"
-                        @click="addFriend">
-                        Add Friend</button>
-                </div>
-                <div class="d-grid gap-2" v-if="user.friendStatus === 'PENDING'">
-                    <button type="button" class="btn btn-light disabled" style="color:#094b5f; background-color: #aab9ba;">
-                        Requested</button>
-                </div>
-                <div class="d-grid gap-2" v-if="user.friendStatus === 'FRIENDS'">
-                    <button type="button" class="btn btn-light" style="color:#ffffff; background-color: #147a99">
-                        Friend</button>
-                </div>
+                <ButtonsFriend :friendStatus="user.friendStatus" />
             </div>
             <div class="block-buttons">
-                <div class="d-grid gap-2" v-if="user.blockedState === false">
-                    <button type="button" class="btn btn-outline-light">Block</button>
-                </div>
-                <div class="d-grid gap-2" v-else>
-                    <button type="button" class="btn btn-outline-light" style="color:#094b5f; background-color: #aab9ba;">
-                        Unblock</button>
-                </div>
+                <ButtonsBlock :blockedState="user.blockedState" />
             </div>
+
         </div>
     </div>
-    <!-- <div class="job-list">
-        <p>Ordered by {{ order }}</p>
-        <ul>
-            <li v-for="job in orderedJobs" :key="job.id">
-                <h2>{{ job.title }} in {{ job.location }}</h2>
-                <div class="salary">
-                    <p>{{ job.salary }} rupees</p>
-                </div>
-                <div class="description">
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci quae recusandae enim iusto, error autem debitis. Velit temporibus consequatur optio libero, repudiandae alias laboriosam qui quibusdam incidunt non, enim obcaecati!</p>
-                </div>
-            </li>
-        </ul>    
-    </div>  -->
 </template>
 
 <script setup lang="ts">
 import { computed, defineProps } from 'vue';
-import type UserInfo from '@/types/UserInfo';
+import ButtonsFriend from '@/components/ButtonsFriend.vue';
+import ButtonsBlock from '@/components/ButtonsBlock.vue';
 
 const props = defineProps({
     user: Object
 });
-        
-const addFriend = () => {
-    console.log("friend button clicked");
-    console.log(props);
-}
 
 </script>
 

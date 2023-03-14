@@ -24,8 +24,10 @@
                 </div>
                     
                 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 users-main">
-                    <div v-for="user in users" :key="user.username">
-                        <UserInfoCard :user="user" />
+                    <div class="card-group">
+                        <div v-for="user in users" :key="user.username">
+                            <UserInfoCard :user="user" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -38,7 +40,6 @@ import axios from "axios";
 import { ref, onMounted } from "vue";
 
 import UserInfoCard from '@/components/UserInfoCard.vue';
-import UserInfo from "@/types/UserInfo.vue";
 
 const users = ref([]);
 

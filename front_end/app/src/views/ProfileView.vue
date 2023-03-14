@@ -1,12 +1,35 @@
 <template>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-sm-3 col-md-2 profile-sidebar flex-fluid">
-                <img src="../assets/logo_klein.png" alt="Avatar" class="avatar d-inline-block align-text-center">
-                <h3>{{ storeUser.state.user.username }}&nbsp;<i class="bi bi-circle-fill" style="font-size: 1rem; color: cornflowerblue;"></i></h3>
-                <p>win: nn</p>
-                <p>loss: nn</p>
-                <p>ladder level: nn</p>
+            <div class="col-sm-3 col-md-2 profile-sidebar">
+                <div class="avatar-container">
+                    <img src="../assets/logo_klein.png" alt="Avatar" class="avatar d-inline-block align-text-center">
+                </div>
+                
+                <div class="user-name-status">
+                    <h3>{{ storeUser.state.user.username }}</h3>
+                    <div>
+                        <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i>Online
+                        <!-- <div class="user-status">
+                            <div v-if="user.activityStatus === 'ONLINE'">
+                                <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i> Online
+                            </div>
+                            <div v-if="user.activityStatus === 'OFFLINE'">
+                                <i class="bi bi-circle-fill" style="font-size: 1rem; color: orange;"></i> Offline
+                            </div>
+                            <div v-if="user.activityStatus === 'INGAME'">
+                                <i class="bi bi-circle-fill" style="font-size: 1rem; color: purple;"></i> In Game
+                            </div>
+                        </div> -->
+                    </div>
+                </div>   
+
+                <div class="profile-matchinfo">
+                    <p>win: nn</p>
+                    <p>loss: nn</p>
+                    <p>ladder level: nn</p>
+                </div>
+
                 <button type="button" class="btn btn-outline-primary watch-button" 
                     style="color:#ffffff; background-color: #094b5f; border: 2px solid #ffffff;"
                     @click="watchGame">
@@ -70,6 +93,14 @@ function watchGame() {
     width: 160px;
     height: 160px;
     border-radius: 50%;
+}
+
+.profile-matchinfo {
+    margin: 30px auto;
+}
+
+p {
+    margin: 5px auto;
 }
 
 .profile-main {
