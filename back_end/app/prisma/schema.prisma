@@ -32,6 +32,7 @@ model User {
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
+    dMChannel      DMChannel[]
 }
 
 model AllOtherUsers {
@@ -55,11 +56,22 @@ model Channel {
     userMessages     UserMessage[]
 }
 
+model DMChannel {
+    id           Int           @id @default(autoincrement())
+    otherIntraId Int
+    channelName  String        @unique
+    userMessages UserMessage[]
+    user         User?         @relation(fields: [intraId], references: [intraId])
+    intraId      Int?
+}
+
 model UserMessage {
-    id          Int     @id @default(autoincrement())
-    intraId     Int
-    name        String
-    text        String
-    channel     Channel @relation(fields: [channelName], references: [channelName])
-    channelName String  @unique
+    id            Int        @id @default(autoincrement())
+    intraId       Int
+    name          String
+    text          String
+    channel       Channel?   @relation(fields: [channelName], references: [channelName])
+    channelName   String?    @unique
+    DMChannel     DMChannel? @relation(fields: [dMChannelName], references: [channelName])
+    dMChannelName String?    @unique
 }
