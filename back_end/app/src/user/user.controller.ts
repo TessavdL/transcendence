@@ -23,7 +23,7 @@ export class UserController {
 
     @UseGuards(JwtAuthGuard)
     @Get('block_user')
-    blockUser(@Req() request, @Query('otherUser') otherUser: string) {
+    blockUser(@Req() request, @Query('otherUser') otherUser: number) {
         return (this.userService.blockUser(request.user, otherUser));
     }
 
