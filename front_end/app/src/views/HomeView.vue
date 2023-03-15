@@ -9,14 +9,10 @@
         <p>The goal is to defeat your opponent by being the first one to gain 10 point.</p>
         <p>A player gets a point once the opponent misses a ball.</p>
       </div>
-      <div class="card">
-        <div class="flex justify-content-center flex-wrap card-container mt-4">
-            <Button @click="playGame" label="Play Game"
-                class="flex align-items-center justify-content-center border-round m-4" />
-            <Button @click="watchGame" label="Watch Game"
-                class="flex align-items-center justify-content-center border-round m-4" />
-        </div>    
-    </div>
+      <div class="game-buttons">
+        <button type="button" class="btn btn-primary play-button" @click="playGame">Play Game</button>
+        <button type="button" class="btn btn-info watch-button" @click="watchGame">Watch Game</button>
+      </div>
     </div>
     <div v-else>
       <LogInButton />
@@ -28,7 +24,6 @@
 import storeUser from "@/store";
 import LogInButton from "@/components/LogInButton.vue";
 
-import Button from "primevue/button";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -44,3 +39,30 @@ const watchGame = () => {
 }
 
 </script>
+
+<style scoped>
+.about {
+  color: #ffffff;
+  text-align: center;
+  font-size: 20px;
+}
+.about h3{
+  margin: 20px auto;
+  font-size: 40px;
+}
+.game-buttons{
+  font-size: 20px;
+  margin: 30px auto;
+}
+
+.play-button{
+  width: 200px;
+  font-weight: bold;
+  margin: 0px 20px;
+}
+.watch-button{
+  width: 200px;
+  font-weight: bold;
+  margin: 0px 20px;
+}
+</style>

@@ -6,25 +6,28 @@ import { AuthGuard42, JwtAuthGuard } from './guards';
 
 @Controller('auth')
 export class AuthController {
-	constructor (private authService: AuthService) {}
+  constructor(private authService: AuthService) {}
 
-	@UseGuards(AuthGuard42)
-	@Get('login')
-	async login (@Request() req): Promise<any> {
-		return req.user;
-	}
+  @UseGuards(AuthGuard42)
+  @Get('login')
+  async login(@Request() req): Promise<any> {
+    return req.user;
+  }
 
-	@UseGuards(AuthGuard42)
-	@Get('callback')
-	async handleIntraReturn(@Request() req, @Res({ passthrough:true }) res: Response): Promise<void> {
-		const user: User = req.user;
-		return (this.authService.setBearerToken(user, res));
-	}
+  @UseGuards(AuthGuard42)
+  @Get('callback')
+  async handleIntraReturn(
+    @Request() req,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const user: User = req.user;
+    return this.authService.setBearerToken(user, res);
+  }
 
-	@UseGuards(JwtAuthGuard)
-	@Get('logout')
-	logout(@Request() req, @Res({ passthrough:true }) res: Response) {
-		const user: User = req.user;
-		return (this.authService.logout(user, res))
-	}
+  @UseGuards(JwtAuthGuard)
+  @Get('logout')
+  logout(@Request() req, @Res({ passthrough: true }) res: Response) {
+    const user: User = req.user;
+    return this.authService.logout(user, res);
+  }
 }

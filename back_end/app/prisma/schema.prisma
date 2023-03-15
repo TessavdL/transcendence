@@ -14,30 +14,24 @@ enum ActivityStatus {
 }
 
 datasource db {
-	provider = "postgresql"
-	url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 generator client {
-	provider = "prisma-client-js"
-}
-
-model UserMessage {
-	id		Int @id @default(autoincrement())
-	name	String
-	text	String
+    provider = "prisma-client-js"
 }
 
 model User {
-	id				Int @id @default(autoincrement())
-	createdAt		DateTime @default(now())
-	updatedAt		DateTime @updatedAt
-	avatar			String?
-	name			String @unique
-	intraId			Int @unique
-	intraName		String @unique
-	activityStatus	ActivityStatus @default(ONLINE)
-	allOtherUsers	AllOtherUsers[]
+    id             Int             @id @default(autoincrement())
+    createdAt      DateTime        @default(now())
+    updatedAt      DateTime        @updatedAt
+    avatar         String?
+    name           String          @unique
+    intraId        Int             @unique
+    intraName      String          @unique
+    activityStatus ActivityStatus  @default(ONLINE)
+    allOtherUsers  AllOtherUsers[]
 }
 
 model AllOtherUsers {
@@ -49,4 +43,25 @@ model AllOtherUsers {
 	friendStatus	FriendStatus @default(NOT_FRIENDS)
 
 	@@unique([intraId, otherIntraId])
+}
+
+model Client {
+    id      String @unique
+    intraId Int    @unique
+}
+
+model Channel {
+    id               Int           @default(autoincrement())
+    createdByIntraId Int
+    channelName      String        @unique
+    userMessages     UserMessage[]
+}
+
+model UserMessage {
+    id          Int     @id @default(autoincrement())
+    intraId     Int
+    name        String
+    text        String
+    channel     Channel @relation(fields: [channelName], references: [channelName])
+    channelName String
 }
