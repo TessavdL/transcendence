@@ -5,7 +5,6 @@ import { ChatService } from './chat.service';
 import { AddMessageToChannelDto } from './dto/add-message-to-channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { CreateDMChannelDto } from './dto/create-dmchannel.dto';
-// import { FindAllMessagesDto } from './dto/find-all-messages-in-channel';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
