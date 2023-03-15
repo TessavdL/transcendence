@@ -33,6 +33,7 @@ export class UserService {
 	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<UserElement> {
 		const singleElement: UserElement = {
 			avatar: otherUser.avatar,
+			intraId: otherUser.intraId,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
 			blockedState: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).blockedStatus,
@@ -41,6 +42,44 @@ export class UserService {
 
 		return (singleElement);
 	}
+
+	async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		try {
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
+					}
+				},
+				data: {
+					blockedStatus: true,
+				}
+			});
+		}
+		catch(error) {
+            throw new Error(error);
+		}
+	}
+
+	async unblockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		try {
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
+					}
+				},
+				data: {
+					blockedStatus: false,
+				}
+			});
+		}
+		catch(error) {
+            throw new Error(error);
+        }
+    }
 
 	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
 		try {

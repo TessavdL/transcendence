@@ -2,15 +2,15 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 enum FriendStatus {
-    NOT_FRIENDS
-    PENDING
-    FRIENDS
+	NOT_FRIENDS
+	PENDING
+	FRIENDS
 }
 
 enum ActivityStatus {
-    ONLINE
-    INGAME
-    OFFLINE
+	ONLINE
+	INGAME
+	OFFLINE
 }
 
 datasource db {
@@ -35,12 +35,14 @@ model User {
 }
 
 model AllOtherUsers {
-    id            Int          @id @default(autoincrement())
-    intraId       Int
-    otherIntraId  Int
-    user          User         @relation(fields: [intraId], references: [intraId])
-    blockedStatus Boolean      @default(false)
-    friendStatus  FriendStatus @default(NOT_FRIENDS)
+	id				Int @id @default(autoincrement())
+	intraId 		Int
+	otherIntraId	Int
+	user			User @relation(fields: [intraId], references: [intraId])
+	blockedStatus	Boolean @default(false)
+	friendStatus	FriendStatus @default(NOT_FRIENDS)
+
+	@@unique([intraId, otherIntraId])
 }
 
 model Client {
