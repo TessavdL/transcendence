@@ -9,3 +9,8 @@ export interface Messages {
     name: string;
     text: string;
 }
+
+export interface User {
+    intraId: number;
+    name: string;
+}

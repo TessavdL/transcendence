@@ -1,13 +1,13 @@
 <template>
-  <div class="create-dmchannel" v-if="!joined">
+  <!-- <div class="create-dmchannel" v-if="!joined">
     <form @submit.prevent="createDMChannel">
       <input v-model="dmChannelName" type="text" placeholder="DMChannel name" />
       <button type="submit">CreateDMChannel</button>
       <div v-if="errorMessage" class="error">{{ errorMessage }}</div>
     </form>
-  </div>
+  </div> -->
 
-  <br>
+  <!-- <br> -->
 
   <div class="create-channel">
     <form @submit.prevent="createChannel">
@@ -50,14 +50,14 @@
     </ul>
   </div>
 
-  <!-- <div class="all-users" v-if="!joined">
+  <div class="all-users" v-if="!joined">
     <h2>All Users</h2>
     <ul style="list-style: none;">
-      <li v-for="channel in allUsers" :key="channel.channelName">
-        <a @click="joinChannel(channel.channelName)" class="button">{{ channel.channelName }}</a>
+      <li v-for="user in allUsers" :key="user.intraId">
+        <a @click="createDMChannel(user.name)" class="button">{{ user.name }}</a>
       </li>
     </ul>
-  </div> -->
+  </div>
 
   <div class="chat" v-if="joined">
     <div class="message-container">
@@ -78,14 +78,14 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Messages } from "../types/ChatType";
+import type { Channel, Messages, User } from "../types/ChatType";
 
 export default {
   data() {
     return {
       activeChannel: ref(''),
       allChannels: ref<Channel[]>([]),
-      allUsers: ref([]),
+      allUsers: ref<User[]>([]),
       channelName: ref(''),
       channelType: 'public',
       channelPassword: '',
@@ -108,6 +108,7 @@ export default {
 
   async mounted() {
     await this.getAllChannels();
+    await this.getAllUsers();
   },
 
   created() {
@@ -150,15 +151,22 @@ export default {
       }
     },
 
-    // async getAllUsers(): Promise<void> {
-    //   try {
-    //     const response = await this.axiosInstance.get('user/userexceptself');
-    //     const users = response.data;
-    //     this.allUsers = users.map(user => user.name);
-    //   } catch (error: any) {
-    //     this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
-    //   }
-    // },
+    async getAllUsers(): Promise<void> {
+      try {
+        const response = await this.axiosInstance.get('user/usersexceptself');
+        console.log(response.data);
+        const users = response.data;
+        console.log(users);
+        this.allUsers = users.map(user => {
+          return {
+            intraId: user.intraId,
+            name: user.name,
+          };
+        });
+      } catch (error: any) {
+        this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+      }
+    },
 
     async joinChannel(channel: string): Promise<void> {
       this.socket.emit('joinChannel', channel);
@@ -183,10 +191,15 @@ export default {
       }
     },
 
-    async createDMChannel() {
+    async createDMChannel(name: string) {
       try {
         // Send a POST request to create a new room
-        const response = await this.axiosInstance.post('chat/createDMChannel', { otherIntraId: 63991 });
+        const otherUser = this.allUsers.find(x => x.name === name);
+        if (!otherUser) {
+          throw new Error('Cannot create DMChannle, Unknown User');
+        }
+        const otherIntraId: number = otherUser.intraId;
+        const response = await this.axiosInstance.post('chat/createDMChannel', { otherIntraId: otherIntraId });
         this.activeChannel = response.data;
         this.errorMessage = '';
 
