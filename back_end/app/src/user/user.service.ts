@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { userElement } from './types';
+import { UserElement } from './types';
 
 @Injectable()
 export class UserService {
 	constructor(private prisma: PrismaService, private authService: AuthService) { }
 
-	async getUserElements(user: User): Promise<userElement[]> {
+	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
-		const userElements: userElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
+		const userElements: UserElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
 
 		return (userElements);
 	}
@@ -30,8 +30,8 @@ export class UserService {
 		return (userlist);
 	}
 
-	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<userElement> {
-		const singleElement: userElement = {
+	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<UserElement> {
+		const singleElement: UserElement = {
 			avatar: otherUser.avatar,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
@@ -105,5 +105,28 @@ export class UserService {
 		}
 
 		return parseInt(result);
+}
+
+	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
+		try {
+			const user: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.prisma.user.findUnique({
+				where: {
+					intraId: intraId,
+				},
+				include: {
+					allOtherUsers: true,
+				},
+			});
+			return (user);
+		} catch (error: any) {
+			throw new Error(error);
+		}
+	}
+
+	async getUserElementBasedOnIntraId(user: User, otherIntraId: number): Promise<UserElement> {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherIntraId);
+		const userElement: UserElement = await this.createUserElement(otherUser, user);
+
+		return (userElement);
 	}
 }
