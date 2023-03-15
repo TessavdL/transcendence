@@ -1,15 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
+import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { userElement } from './types';
+import { UserElement } from './types';
 
 @Injectable()
 export class UserService {
-	constructor(private prisma: PrismaService) { }
+	constructor(private prisma: PrismaService, private authService: AuthService) { }
 
-	async getUserElements(user: User): Promise<userElement[]> {
+	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
-		const userElements: userElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
+		const userElements: UserElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
 
 		return (userElements);
 	}
@@ -29,8 +30,8 @@ export class UserService {
 		return (userlist);
 	}
 
-	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<userElement> {
-		const singleElement: userElement = {
+	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<UserElement> {
+		const singleElement: UserElement = {
 			avatar: otherUser.avatar,
 			intraId: otherUser.intraId,
 			username: otherUser.name,
@@ -112,5 +113,59 @@ export class UserService {
 		} catch (error: any) {
 			throw new Error(error);
 		}
+	}
+
+	async createDummyUser(): Promise<void> {
+		const randomUserName = this.generateString(7);
+		const randomIntraId = this.generateNumber(5);
+
+		this.authService.createUser({
+			username: randomUserName,
+			intraid: randomIntraId,
+		});
+	}
+
+	private generateString(length: number): string {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = ' ';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+
+		return result;
+	}
+	private generateNumber(length: number): number {
+		const characters = '0123456789';
+		let result = ' ';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+
+		return parseInt(result);
+}
+
+	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
+		try {
+			const user: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.prisma.user.findUnique({
+				where: {
+					intraId: intraId,
+				},
+				include: {
+					allOtherUsers: true,
+				},
+			});
+			return (user);
+		} catch (error: any) {
+			throw new Error(error);
+		}
+	}
+
+	async getUserElementBasedOnIntraId(user: User, otherIntraId: number): Promise<UserElement> {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherIntraId);
+		const userElement: UserElement = await this.createUserElement(otherUser, user);
+
+		return (userElement);
 	}
 }

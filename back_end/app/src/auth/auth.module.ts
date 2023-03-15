@@ -5,11 +5,12 @@ import { JwtStrategy, Strategy42 } from './strategy';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtAuthGuard } from './guards';
+import { UserModule } from 'src/user/user.module';
 
 @Module({
-  imports: [PassportModule, JwtModule.register({})],
-  controllers: [AuthController],
-  providers: [AuthService, Strategy42, JwtStrategy],
-  exports: [AuthService, JwtStrategy],
+	imports: [PassportModule, UserModule, JwtModule.register({})],
+	controllers: [AuthController],
+	providers: [AuthService, Strategy42, JwtStrategy],
+	exports: [AuthService, JwtStrategy],
 })
-export class AuthModule {}
+export class AuthModule { }
