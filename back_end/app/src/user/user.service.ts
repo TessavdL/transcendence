@@ -57,8 +57,8 @@ export class UserService {
 				}
 			});
 		}
-		catch(error) {
-            throw new Error(error);
+		catch (error) {
+			throw new Error(error);
 		}
 	}
 
@@ -76,10 +76,10 @@ export class UserService {
 				}
 			});
 		}
-		catch(error) {
-            throw new Error(error);
-        }
-    }
+		catch (error) {
+			throw new Error(error);
+		}
+	}
 
 	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
 		try {
@@ -135,6 +135,7 @@ export class UserService {
 
 		return result;
 	}
+
 	private generateNumber(length: number): number {
 		const characters = '0123456789';
 		let result = ' ';
@@ -144,7 +145,7 @@ export class UserService {
 		}
 
 		return parseInt(result);
-}
+	}
 
 	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
 		try {
