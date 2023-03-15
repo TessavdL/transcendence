@@ -25,7 +25,11 @@ export class UserController {
 		return (this.userService.getUserListExceptSelf(request.user));
 	}
 
-	@Get(':id')
+	@Get('createdummy')
+	async createDummyUser(): Promise<void> {
+		return (this.userService.createDummyUser());
+
+@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);

@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
+import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserElement } from './types';
 
 @Injectable()
 export class UserService {
-	constructor(private prisma: PrismaService) { }
+	constructor(private prisma: PrismaService, private authService: AuthService) { }
 
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
@@ -74,6 +75,37 @@ export class UserService {
 			throw new Error(error);
 		}
 	}
+
+	async createDummyUser(): Promise<void> {
+		const randomUserName = this.generateString(7);
+		const randomIntraId = this.generateNumber(5);
+
+		this.authService.createUser({
+			username: randomUserName,
+			intraid: randomIntraId,
+		});
+	}
+
+	private generateString(length: number): string {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = ' ';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+
+		return result;
+	}
+	private generateNumber(length: number): number {
+		const characters = '0123456789';
+		let result = ' ';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+
+		return parseInt(result);
+}
 
 	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
 		try {
