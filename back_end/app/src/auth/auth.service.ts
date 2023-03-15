@@ -8,107 +8,108 @@ import { Socket } from 'socket.io';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly prisma: PrismaService,
-    private readonly jwtService: JwtService,
-  ) {}
-  private readonly logger: Logger = new Logger('AuthService');
+	constructor(
+		private readonly configService: ConfigService,
+		private readonly prisma: PrismaService,
+		private readonly jwtService: JwtService,
+	) { }
+	private readonly logger: Logger = new Logger('AuthService');
 
-  async validateUser(profile: any): Promise<User> | null {
-    const user: User = await this.findUserById(profile.intraid);
-    if (!user) {
-      return this.createUser(profile);
-    }
+	async validateUser(profile: any): Promise<User> | null {
+		const user: User = await this.findUserById(profile.intraid);
+		if (!user) {
+			return this.createUser(profile);
+		}
 
-    return user;
-  }
+		return user;
+	}
 
-  // should be used to user directory eventually
-  async findUserById(id: number): Promise<User> | null {
-    const user: User = await this.prisma.user.findUnique({
-      where: {
-        intraId: id,
-      },
-    });
+	// should be used to user module
+	async findUserById(id: number): Promise<User> | null {
+		const user: User = await this.prisma.user.findUnique({
+			where: {
+				intraId: id,
+			},
+		});
 
-    return user;
-  }
+		return user;
+	}
 
-  async setBearerToken(
-    user: User,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    console.log(`Hello ${user.intraName}, you have logged in!`);
+	async setBearerToken(
+		user: User,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<void> {
+		console.log(`Hello ${user.intraName}, you have logged in!`);
 
-    const token = await this.signToken(user);
+		const token = await this.signToken(user);
 
-    res.cookie('jwt', token.access_token, {
-      httpOnly: true,
-      domain: 'localhost',
-    });
-    res.redirect('http://localhost:5173');
-  }
+		res.cookie('jwt', token.access_token, {
+			httpOnly: true,
+			domain: 'localhost',
+		});
+		res.redirect('http://localhost:5173');
+	}
 
-  async signToken(user: User): Promise<{ access_token: string }> {
-    const payload = { name: user.intraName, sub: user.intraId };
+	async signToken(user: User): Promise<{ access_token: string }> {
+		const payload = { name: user.intraName, sub: user.intraId };
 
-    return {
-      access_token: await this.jwtService.signAsync(payload, {
-        expiresIn: '24h',
-        secret: this.configService.get('JWT_SECRET'),
-      }),
-    };
-  }
+		return {
+			access_token: await this.jwtService.signAsync(payload, {
+				expiresIn: '24h',
+				secret: this.configService.get('JWT_SECRET'),
+			}),
+		};
+	}
 
-  getJwtTokenFromSocket(client: Socket): string {
-    const { headers } = client.handshake;
-    const allCookies = headers?.cookie;
+	getJwtTokenFromSocket(client: Socket): string {
+		const { headers } = client.handshake;
+		const allCookies = headers?.cookie;
 
-    if (!allCookies) {
-      throw new Error('Could not find cookies');
-    }
+		if (!allCookies) {
+			throw new Error('Could not find cookies');
+		}
 
-    const jwtCookie = allCookies
-      .split(';')
-      .find((cookie: string) => cookie.startsWith('jwt='));
+		const jwtCookie = allCookies
+			.split(';')
+			.find((cookie: string) => cookie.startsWith('jwt='));
 
-    if (!jwtCookie) {
-      throw new Error('Could not find cookie with jwt token');
-    }
+		if (!jwtCookie) {
+			throw new Error('Could not find cookie with jwt token');
+		}
 
-    const [, token] = jwtCookie.split('=');
+		const [, token] = jwtCookie.split('=');
 
-    if (!token) {
-      throw new Error('Could not find jwt token');
-    }
+		if (!token) {
+			throw new Error('Could not find jwt token');
+		}
 
-    return token;
-  }
+		return token;
+	}
 
-  async verifyToken(token: string): Promise<{ name: string; sub: number }> {
-    try {
-      const secret: string = this.configService.get('JWT_SECRET');
+	async verifyToken(token: string): Promise<{ name: string; sub: number }> {
+		try {
+			const secret: string = this.configService.get('JWT_SECRET');
 
-      const payload: any = await this.jwtService.verify(token, {
-        secret: secret,
-        clockTolerance: 100,
-      });
+			const payload: any = await this.jwtService.verify(token, {
+				secret: secret,
+				clockTolerance: 100,
+			});
 
-      const name: string = payload.name;
-      const sub: number = payload.sub;
-      return { name, sub };
-    } catch (error) {
-      throw new Error('Token is invalid');
-    }
-  }
+			const name: string = payload.name;
+			const sub: number = payload.sub;
+			return { name, sub };
+		} catch (error) {
+			throw new Error('Token is invalid');
+		}
+	}
 
-  logout(user: User, @Res({ passthrough: true }) res: Response) {
-    console.log(`Hello ${user.intraName}, you are logged out!`);
+	logout(user: User, @Res({ passthrough: true }) res: Response) {
+		console.log(`Hello ${user.intraName}, you are logged out!`);
 
-    res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
-  }
+		res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
+	}
 
+	// should be moved to user module
 	async createUser(profile: any): Promise<User> | null {
 		const user: User = await this.prisma.user.create({
 			data: {
@@ -123,12 +124,13 @@ export class AuthService {
 				allOtherUsers: true,
 			},
 		});
-        this.updateUsersOfNewUser(user.intraId);
+		this.updateUsersOfNewUser(user.intraId);
 		this.updateSelfWithOtherUsers(user.intraId);
 
 		return (user);
 	}
 
+	// should be moved to user module and made private
 	async updateSelfWithOtherUsers(intraId: number) {
 		const userlist: User[] = await this.prisma.user.findMany({
 			where: {
@@ -159,38 +161,40 @@ export class AuthService {
 		});
 	}
 
+	// should be moved to user module and made private
 	async updateUsersOfNewUser(intraId: number) {
 		const usersToUpdate = await this.prisma.user.findMany({
-		  where: {
-			intraId: {
-			  not: intraId,
+			where: {
+				intraId: {
+					not: intraId,
+				},
 			},
-		  },
-		  include: {
-			allOtherUsers: true,
-		  },
+			include: {
+				allOtherUsers: true,
+			},
 		});
 		const newRelationObject = this.newRelationObject(intraId)
-	  
+
 		const promises = usersToUpdate.map(async (user) => {
-		  await this.prisma.user.update({
-			where: {
-			  intraId: user.intraId,
-			},
-			data: {
-			  allOtherUsers: {
-				create: newRelationObject
-			  },
-			},
-		  });
+			await this.prisma.user.update({
+				where: {
+					intraId: user.intraId,
+				},
+				data: {
+					allOtherUsers: {
+						create: newRelationObject
+					},
+				},
+			});
 		});
 
 		await Promise.all(promises);
-	  }
+	}
 
-	  newRelationObject(intraId: number): any {
+	// should be moved to user module and made private
+	newRelationObject(intraId: number): any {
 		return {
-		  otherIntraId: intraId,
+			otherIntraId: intraId,
 		};
-	  }
+	}
 }
