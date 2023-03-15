@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { OtherUserIntraDto } from './dto/other-user-intra.dto';
 import { userElement } from './types';
 import { UserService } from './user.service';
 
@@ -21,18 +22,17 @@ export class UserController {
 		return (this.userService.getUserElements(request.user));
 	}
 
-    //TODO: Make DTO for block_user and unblock_user, can change Post to Get to view functionality 
-    @UseGuards(JwtAuthGuard)
-    @Post('block_user')
-    blockUser(@Req() request, @Query('otherUser') otherUser: string) {
-        return (this.userService.blockUser(request.user, parseInt(otherUser)));
-    }
+	@UseGuards(JwtAuthGuard)
+	@Post('block_user')
+	blockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.blockUser(request.user, OtherUserIntraDto.otherIntraId));
+	}
 
-    @UseGuards(JwtAuthGuard)
-    @Post('unblock_user')
-    unblockUser(@Req() request, @Query('otherUser') otherUser: string) {
-        return (this.userService.unblockUser(request.user, parseInt(otherUser)));
-    }
+	@UseGuards(JwtAuthGuard)
+	@Post('unblock_user')
+	unblockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.unblockUser(request.user, OtherUserIntraDto.otherIntraId));
+	}
 
 	@UseGuards(JwtAuthGuard)
 	@Get('usersexceptself')

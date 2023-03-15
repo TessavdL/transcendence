@@ -48,5 +48,5 @@ model AllOtherUsers {
 	blockedStatus	Boolean @default(false)
 	friendStatus	FriendStatus @default(NOT_FRIENDS)
 
-    @@unique([intraId, otherIntraId])
+	@@unique([intraId, otherIntraId])
 }
