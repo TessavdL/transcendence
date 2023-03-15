@@ -24,7 +24,6 @@ export class Strategy42 extends PassportStrategy(Strategy, '42') {
     refreshToken: string,
     profile: any,
   ): Promise<User> {
-    console.log(profile.intraid, profile.username);
     const user = await this.authService.validateUser(profile);
 
     if (!user) {

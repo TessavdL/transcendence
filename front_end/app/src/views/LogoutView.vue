@@ -1,14 +1,13 @@
 <template>
-    <div class="logout">
-        <div v-if="isVisible">
-            <p class="confirm-msg">Are you sure?</p>
-            <button type="button" class="btn btn-outline-light logout-button" @click="logOut">
-              <i class="bi bi-box-arrow-in-right" style="font-size: 1.2em;"></i> 
-              Log Out
-            </button>
-        </div>
+  <div class="logout">
+    <div v-if="isVisible">
+      <p class="confirm-msg">Are you sure?</p>
+      <button type="button" class="btn btn-outline-light logout-button" @click="logOut">
+        <i class="bi bi-box-arrow-in-right" style="font-size: 1.2em;"></i>
+        Log Out
+      </button>
     </div>
-
+  </div>
 </template>
 
 <script  setup lang="ts">
@@ -43,6 +42,7 @@ async function logOut() {
       storeUser.dispatch("logout");
       isVisible.value = false;
       socket.emit("exitUserSocketRoom");
+      socket.disconnect();
       redirectToHome();
     })
     .catch(() => {
@@ -58,13 +58,13 @@ async function logOut() {
 </script>
 
 <style scoped>
-.confirm-msg{
+.confirm-msg {
   font-size: 40px;
   margin: 30px auto;
   color: #ffffff;
 }
 
-.logout-button{
+.logout-button {
   font-size: 20px;
   margin: 10px auto;
 }

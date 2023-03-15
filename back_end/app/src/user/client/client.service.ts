@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Client } from '@prisma/client';
+import { Client, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class UserClientService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
   private readonly logger: Logger = new Logger('UserService');
 
   async createClient(clientId: string, userIntraId: number): Promise<void> {
@@ -39,7 +39,6 @@ export class UserClientService {
     clientId: string,
     userIntraId: number,
   ): Promise<void> {
-	console.log(`clientId = ${clientId}, userintraId = ${userIntraId}`);
     try {
       await this.prisma.client.upsert({
         where: {
@@ -67,7 +66,7 @@ export class UserClientService {
       });
       return client.intraId;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error finding the client based on clientId');
     }
   }
 
@@ -80,7 +79,7 @@ export class UserClientService {
       });
       return client.id;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error finding the client based on intraId');
     }
   }
 
@@ -93,7 +92,7 @@ export class UserClientService {
       });
       return client;
     } catch (error) {
-      this.logger.error('Error creating and updating client');
+      this.logger.error('Error find client');
     }
   }
 
@@ -118,6 +117,20 @@ export class UserClientService {
       });
     } catch (error) {
       this.logger.error('Error deleting client');
+    }
+  }
+
+  async getUser(clientId: string): Promise<User> {
+    try {
+      const intraId: number = await this.getClientIntraId(clientId);
+      const user: User = await this.prisma.user.findUnique({
+        where: {
+          intraId: intraId,
+        },
+      });
+      return (user);
+    } catch (error) {
+      this.logger.error('Error returning user');
     }
   }
 }

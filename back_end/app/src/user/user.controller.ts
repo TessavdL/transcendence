@@ -7,7 +7,7 @@ import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-	constructor (private userService: UserService, private prisma: PrismaService) {}
+	constructor(private userService: UserService, private prisma: PrismaService) { }
 
 	@UseGuards(JwtAuthGuard)
 	@Get('/')
