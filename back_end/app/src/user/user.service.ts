@@ -57,7 +57,7 @@ export class UserService {
 			});
 		}
 		catch(error) {
-
+            throw new Error(error);
 		}
 	}
 
@@ -76,6 +76,9 @@ export class UserService {
 			});
 		}
 		catch(error) {
+            throw new Error(error);
+        }
+    }
 
 	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
 		try {
