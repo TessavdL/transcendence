@@ -71,6 +71,7 @@ export class AuthService {
 
 		const jwtCookie = allCookies
 			.split(';')
+			.map((cookie: string) => cookie.trim())
 			.find((cookie: string) => cookie.startsWith('jwt='));
 
 		if (!jwtCookie) {
