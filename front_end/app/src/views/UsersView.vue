@@ -1,49 +1,134 @@
 <template>
     <div>
         <div class="container-fluid">
-            <div class="row flex-nowrap">
-                <nav class="navbar col-auto col-md-3 col-xl-2 px-sm-2 px-0 navbar-dark" style="background-color: #032333;">
-                    <ul class="navbar-nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start">
+            <div class="row">
+
+                <div class="col-sm-3 col-md-2 users-sidebar">
+                    <ul class="nav flex-column">
                         <li class="nav-item">
-                            <i class="bi bi-people-fill fs-4" style="font-size: 2rem; color: #9aa4aa;"></i>
-                            <RouterLink class="nav-link ms-1 d-none d-sm-inline" to="/">Users</RouterLink>
+                            <h3 class="nav-link"  @click="handleFilter('none')">
+                                <i class="bi bi-people-fill fs-4" style="font-size: 2rem; color: #ffffff;"></i>
+                                All Users</h3>
                         </li>
                         <li class="nav-item">
-                            <i class="bi bi-person-heart fs-4" style="font-size: 2rem; color: #9aa4aa;"></i>
-                            <RouterLink class="nav-link ms-1 d-none d-sm-inline" to="/users">Friends</RouterLink>
+                            <h3 class="nav-link" @click="handleFilter('activityStatus')">
+                                <i class="bi bi-person-up fs-4" style="font-size: 2rem; color: #ffffff;"></i>
+                                Online</h3>
                         </li>
                         <li class="nav-item">
-                            <i class="bi bi-person-fill-slash fs-4" style="font-size: 2rem; color: #9aa4aa;"></i>
-                            <RouterLink class="nav-link ms-1 d-none d-sm-inline" to="/chat">Blocked</RouterLink>
+                            <h3 class="nav-link" @click="handleFilter('friendStatus')">
+                                <i class="bi bi-person-heart fs-4" style="font-size: 2rem; color: #ffffff;"></i>
+                                Friends</h3>
+                        </li>
+                        <li class="nav-item">
+                            <h3 class="nav-link" @click="handleFilter('blockedState')">
+                                <i class="bi bi-person-fill-slash fs-4" style="font-size: 2rem; color: #ffffff;"></i>
+                                Blocked</h3>
                         </li>
                     </ul>
-                </nav>
 
-                <div class="col py-3">
-                    <h3>Left Sidebar with Submenus</h3>
-                    <p>
-                        An example 2-level sidebar with collasible menu items. The menu functions like an "accordion" where only a single 
-                        menu is be open at a time. While the sidebar itself is not toggle-able, it does responsively shrink in width on smaller screens.</p>
+                </div>
+                    
+                <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 users-main">
+                    <div class="card-group">
+                        <div v-for="user in filteredUsers" :key="user.username">
+                            <UserInfoCard :user="user" />
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
-
 </template>
 
 <script setup lang="ts">
+import axios from "axios";
+import { ref, onMounted, computed } from "vue";
+
+import UserInfoCard from '@/components/UserInfoCard.vue';
+
+const users = ref([]);
+const filteredUsers= ref([]);
+const filterCat = ref<String>('none');
+
+onMounted(async () => {
+    await getUsers();
+    filteredUsers.value = [...users.value];
+});
+
+async function getUsers() {
+    await axios
+        .get("http://localhost:3001/user/users", {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            users.value = response.data;
+        })
+        .catch(() => {
+            console.log("cannot get users infomation");
+        });
+};
+
+const handleFilter = (cat: String) => {
+    filterCat.value = cat;
+    filteredUsers.value = [...users.value];
+    if (cat === 'activityStatus') {
+        filteredUsers.value = filteredUsers.value.filter((user) => {
+            return (
+                user.activityStatus === "ONLINE"
+            );
+        });;
+    }
+    else if (cat === 'friendStatus') {
+        filteredUsers.value = filteredUsers.value.filter((user) => {
+            return (
+                user.friendStatus === "FRIENDS"
+            );
+        });;
+    }
+    else if (cat === 'blockedState') {
+        filteredUsers.value = filteredUsers.value.filter((user) => {
+            return (
+                user.blockedState === true
+            );
+        });;
+    }
+    else {
+        filteredUsers.value = filteredUsers.value;
+    }
+}
+
 
 </script>
 
 <style scoped>
-.navbar {
-    max-width: 150px;
+
+h3 {
+    color: #ffffff;
     font-weight: bold;
-    font-size: 1em;
 }
 
 .nav-item {
     margin: 10px 0px;
+}
+
+.users-sidebar {
+    position: fixed;
+    width: 180px;
+    top: 70px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    background-color: #0a242f;
+}
+
+.users-main {
+    padding-left: 180px;
 }
 
 </style>>

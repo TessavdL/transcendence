@@ -1,7 +1,7 @@
 <template>
   <div>
     <h3 class="logout-msg">Please login with 42 authentication</h3>
-    <a class="btn btn-info logout-button" href="http://localhost:3001/auth/login">42 Intra Login</a>
+    <a class="btn btn-info login-button" href="http://localhost:3001/auth/login">42 Intra Login</a>
   </div>
 </template>
 
@@ -14,8 +14,9 @@
   color: #ffffff;
   margin: 30px auto;
 }
-.logout-button {
+.login-button {
   margin: 30px auto;
   font-size: 30px;
+  border-radius: 10px;
 }
 </style>
