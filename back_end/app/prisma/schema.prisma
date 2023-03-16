@@ -1,16 +1,22 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-enum FriendStatus {
-	NOT_FRIENDS
-	PENDING
-	FRIENDS
+enum ActivityStatus {
+    ONLINE
+    INGAME
+    OFFLINE
 }
 
-enum ActivityStatus {
-	ONLINE
-	INGAME
-	OFFLINE
+enum FriendStatus {
+    NOT_FRIENDS
+    PENDING
+    FRIENDS
+}
+
+enum Role {
+    OWNER
+    ADMIN
+    MEMBER
 }
 
 datasource db {
@@ -33,17 +39,34 @@ model User {
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
     dMChannel      DMChannel[]
+    memberships    Membership[]    @relation("UserMembership")
+}
+
+model Channel {
+    id           Int           @id @default(autoincrement())
+    channelName  String        @unique
+    userMessages UserMessage[]
+    memberships  Membership[]  @relation("ChannelMembership")
+}
+
+model Membership {
+    id          Int     @id @default(autoincrement())
+    role        Role    @default(MEMBER)
+    user        User    @relation("UserMembership", fields: [intraId], references: [intraId])
+    intraId     Int
+    channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName])
+    channelName String
 }
 
 model AllOtherUsers {
-	id				Int @id @default(autoincrement())
-	intraId 		Int
-	otherIntraId	Int
-	user			User @relation(fields: [intraId], references: [intraId])
-	blockedStatus	Boolean @default(false)
-	friendStatus	FriendStatus @default(NOT_FRIENDS)
+    id            Int          @id @default(autoincrement())
+    intraId       Int
+    otherIntraId  Int
+    user          User         @relation(fields: [intraId], references: [intraId])
+    blockedStatus Boolean      @default(false)
+    friendStatus  FriendStatus @default(NOT_FRIENDS)
 
-	@@unique([intraId, otherIntraId])
+    @@unique([intraId, otherIntraId])
 }
 
 model Client {
@@ -51,20 +74,13 @@ model Client {
     intraId Int    @unique
 }
 
-model Channel {
-    id               Int           @default(autoincrement())
-    createdByIntraId Int
-    channelName      String        @unique
-    userMessages     UserMessage[]
-}
-
 model DMChannel {
     id           Int           @id @default(autoincrement())
     otherIntraId Int
     channelName  String        @unique
     userMessages UserMessage[]
-    user         User?         @relation(fields: [intraId], references: [intraId])
-    intraId      Int?
+    user         User          @relation(fields: [intraId], references: [intraId])
+    intraId      Int
 }
 
 model UserMessage {
@@ -73,7 +89,7 @@ model UserMessage {
     name          String
     text          String
     channel       Channel?   @relation(fields: [channelName], references: [channelName])
-    channelName   String?    @unique
-    DMChannel     DMChannel? @relation(fields: [dMChannelName], references: [channelName])
-    dMChannelName String?    @unique
+    channelName   String?
+    dMChannel     DMChannel? @relation(fields: [dMChannelName], references: [channelName])
+    dMChannelName String?
 }
