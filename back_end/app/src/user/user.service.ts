@@ -10,7 +10,8 @@ export class UserService {
 
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
-		const userElements: UserElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, user)));
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+		const userElements: UserElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, userWithAllOtherUsers)));
 
 		return (userElements);
 	}
@@ -30,14 +31,14 @@ export class UserService {
 		return (userlist);
 	}
 
-	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User): Promise<UserElement> {
+	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User & { allOtherUsers: AllOtherUsers[]; }): Promise<UserElement> {
 		const singleElement: UserElement = {
 			avatar: otherUser.avatar,
 			intraId: otherUser.intraId,
 			username: otherUser.name,
 			activityStatus: otherUser.activityStatus,
-			blockedState: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).blockedStatus,
-			friendStatus: otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus,
+			blockedState: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).blockedStatus,
+			friendStatus: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).friendStatus,
 		}
 
 		return (singleElement);
@@ -57,8 +58,8 @@ export class UserService {
 				}
 			});
 		}
-		catch(error) {
-            throw new Error(error);
+		catch (error) {
+			throw new Error(error);
 		}
 	}
 
@@ -76,10 +77,10 @@ export class UserService {
 				}
 			});
 		}
-		catch(error) {
-            throw new Error(error);
-        }
-    }
+		catch (error) {
+			throw new Error(error);
+		}
+	}
 
 	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
 		try {
@@ -144,7 +145,7 @@ export class UserService {
 		}
 
 		return parseInt(result);
-}
+	}
 
 	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
 		try {
@@ -164,7 +165,8 @@ export class UserService {
 
 	async getUserElementBasedOnIntraId(user: User, otherIntraId: number): Promise<UserElement> {
 		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherIntraId);
-		const userElement: UserElement = await this.createUserElement(otherUser, user);
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+		const userElement: UserElement = await this.createUserElement(otherUser, userWithAllOtherUsers);
 
 		return (userElement);
 	}
