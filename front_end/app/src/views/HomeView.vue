@@ -10,8 +10,16 @@
         <p>A player gets a point once the opponent misses a ball.</p>
       </div>
       <div class="game-buttons">
-        <button type="button" class="btn btn-primary play-button" @click="playGame">Play Game</button>
-        <button type="button" class="btn btn-info watch-button" @click="watchGame">Watch Game</button>
+        <button type="button" class="btn btn-outline-primary play-button" 
+        style="color:#09252f; background-color: #ffffff; border: 2px solid #09252f;" 
+          @click="playGame">
+            Play Game
+        </button>
+        <button type="button" class="btn btn-outline-primary watch-button" 
+          style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;"
+          @click="watchGame">
+            Watch Game
+        </button>
       </div>
     </div>
     <div v-else>
