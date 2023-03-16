@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
+import { ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserElement } from './types';
@@ -75,6 +75,59 @@ export class UserService {
 				data: {
 					blockedStatus: false,
 				}
+			});
+		}
+		catch (error) {
+			throw new Error(error);
+		}
+	}
+
+	async handleFriendRequest(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherUserIntraId);
+
+		if (otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus === 'PENDING') {
+			return (this.befriendBothUsers(user, otherUser));
+		}
+		return (this.setRequestToPending(user, otherUserIntraId));
+	}
+
+	async befriendBothUsers(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: (User & { allOtherUsers: AllOtherUsers[]; })) {
+		try {
+			await this.prisma.allOtherUsers.updateMany({
+				where: {
+					OR: [
+						{
+							intraId: user.intraId,
+							otherIntraId: otherUser.intraId,
+						},
+						{
+							intraId: otherUser.intraId,
+							otherIntraId: user.intraId,
+						},
+					]
+				},
+				data: {
+					friendStatus: 'FRIENDS',
+				},
+			});
+		}
+		catch (error) {
+			throw new Error(error);
+		}
+	}
+
+	async setRequestToPending(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		try {
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
+					},
+				},
+				data: {
+					friendStatus: 'PENDING',
+				},
 			});
 		}
 		catch (error) {

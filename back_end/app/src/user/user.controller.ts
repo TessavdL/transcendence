@@ -22,19 +22,21 @@ export class UserController {
 		return (this.userService.getUserElements(request.user));
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Post('block_user')
-	blockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.blockUser(request.user, OtherUserIntraDto.otherIntraId));
+	blockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.blockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Post('unblock_user')
-	unblockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.unblockUser(request.user, OtherUserIntraDto.otherIntraId));
+	unblockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
-	@UseGuards(JwtAuthGuard)
+    @Post('friend_request')
+    handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+        return (this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
+    }
+
 	@Get('usersexceptself')
 	getUserListExceptSelf(@Req() request): Promise<User[]> {
 		return (this.userService.getUserListExceptSelf(request.user));
