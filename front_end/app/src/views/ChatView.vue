@@ -35,7 +35,8 @@
 		<h2>All Users</h2>
 		<ul style="list-style: none;">
 			<li v-for="user in allUsers" :key="user.intraId">
-				<a @click="createDMChannel(user.name)" class="button">{{ user.name }}</a>
+				<button class="button" type="button" disabled>{{ user.name }} {{ user.intraId }}</button>
+				<button v-if="!isDM(user.intraId)" @click=createDMChannel(user.intraId)>Start a conversation</button>
 			</li>
 		</ul>
 	</div>
@@ -44,7 +45,9 @@
 		<h2>All Channels</h2>
 		<ul style="list-style: none;">
 			<li v-for="channel in allChannels" :key="channel.channelName">
-				<a @click="joinChannel(channel.channelName)" class="button">{{ channel.channelName }}</a>
+				<button class="button" type="button" disabled>{{ channel.channelName }}</button>
+				<button v-if="!isMember(channel.channelName)" @click="addUserToChannel(channel.channelName)">Add
+					Channel</button>
 			</li>
 		</ul>
 	</div>
@@ -53,7 +56,17 @@
 		<h2>All DMChannels</h2>
 		<ul style="list-style: none;">
 			<li v-for="dmchannel in allDMChannels" :key="dmchannel.channelName">
-				<a @click="joinChannel(dmchannel.channelName)" class="button">{{ dmchannel.channelName }}</a>
+				<a @click="joinDMChannel(dmchannel.channelName)" class="button">{{ getOtherUserName(dmchannel.otherIntraId)
+				}}</a>
+			</li>
+		</ul>
+	</div>
+
+	<div class="all-mychannels" v-if="!joined">
+		<h2>All My Channels</h2>
+		<ul style="list-style: none;">
+			<li v-for="mychannel in allMyChannels" :key="mychannel.channelName">
+				<a @click="joinChannel(mychannel.channelName)" class="button">{{ mychannel.channelName }}</a>
 			</li>
 		</ul>
 	</div>
@@ -83,8 +96,10 @@ export default {
 	data() {
 		return {
 			activeChannel: ref(''),
+			activeChannelType: ref(''),
 			allChannels: ref<Channel[]>([]),
 			allDMChannels: ref<DMChannel[]>([]),
+			allMyChannels: ref<Channel[]>([]),
 			allUsers: ref<User[]>([]),
 			channelName: ref(''),
 			channelType: 'public',
@@ -110,6 +125,7 @@ export default {
 		await this.getAllChannels();
 		await this.getAllDMChannels();
 		await this.getAllUsers();
+		await this.getMyChannels();
 	},
 
 	created() {
@@ -123,6 +139,7 @@ export default {
 			const messageData = {
 				messageText: this.messageText,
 				channelName: this.activeChannel,
+				channelType: this.activeChannelType,
 			};
 			this.socket.emit('sendMessageToChannel', messageData);
 			this.messageText = '';
@@ -131,13 +148,39 @@ export default {
 		async createChannel() {
 			try {
 				// Send a POST request to create a new channel
-				const response = await this.axiosInstance.post('chat/createChannel', { channelName: this.channelName });
-				this.activeChannel = response.data;
+				await this.axiosInstance.post('chat/createChannel', { channelName: this.channelName });
 				this.errorMessage = '';
 
-				// Update this.allChannels so it shows the newly created channel
+				// Update this.allChannels and this.allMyChannels so it shows the newly created channel
 				this.getAllChannels();
+				this.getMyChannels();
+			} catch (error: any) {
+				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+			}
+		},
 
+		async addUserToChannel(channelName: string) {
+			try {
+				// Send a POST request to add the user to an existing channel
+				await this.axiosInstance.post('chat/addUserToChannel', { channelName: channelName });
+
+				// Update this.allChannels and this.allMyChannels so it shows the changes in the channels
+				this.getAllChannels();
+				this.getMyChannels();
+			} catch (error: any) {
+				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+			}
+		},
+
+		async createDMChannel(otherIntraId: number) {
+			try {
+				// Send a POST request to create a new direct message channel
+				await this.axiosInstance.post('chat/createDMChannel', { otherIntraId: otherIntraId });
+				this.errorMessage = '';
+
+				// Update this.allUsers and this.allMyDMChannels so its hows the newly created direct message channel
+				this.getAllUsers();
+				this.getAllDMChannels();
 			} catch (error: any) {
 				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
 			}
@@ -152,6 +195,7 @@ export default {
 			}
 		},
 
+		// now returns ALL DMS, should only return the DMS that the user actually is involved in
 		async getAllDMChannels(): Promise<void> {
 			try {
 				const response = await this.axiosInstance.get('chat/findAllDMChannels');
@@ -159,9 +203,10 @@ export default {
 				this.allDMChannels = allDMChannels.map(channel => {
 					return {
 						id: channel.id,
-						intraId: channel.intraId,
+						otherIntraId: channel.otherIntraId,
 						channelName: channel.channelName,
-					}
+						intraId: channel.intraID,
+					};
 				});
 			} catch (error: any) {
 				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
@@ -171,12 +216,10 @@ export default {
 		async getAllUsers(): Promise<void> {
 			try {
 				const response = await this.axiosInstance.get('user/usersexceptself');
-				console.log(response.data);
 				const users = response.data;
-				console.log(users);
 				this.allUsers = users.map(user => {
 					return {
-						otherIntraId: user.intraId,
+						intraId: user.intraId,
 						name: user.name,
 					};
 				});
@@ -185,22 +228,59 @@ export default {
 			}
 		},
 
+		async getMyChannels(): Promise<void> {
+			try {
+				const response = await this.axiosInstance.get('chat/findMyChannels');
+				const channels = response.data;
+				this.allMyChannels = channels.map(channel => {
+					return {
+						id: channel.id,
+						channelName: channel.channelName,
+					}
+				});
+			} catch (error: any) {
+				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+			}
+		},
+
+		isMember(channelName: string) {
+			return this.allMyChannels.some((myChannel) => myChannel.channelName === channelName);
+		},
+
+		isDM(intraId: number) {
+			return (this.allDMChannels.some((myDMChannel) => myDMChannel.otherIntraId === intraId));
+		},
+
 		async joinChannel(channel: string): Promise<void> {
 			this.socket.emit('joinChannel', channel);
 			this.activeChannel = channel;
+			this.activeChannelType = 'channel';
 			this.joined = true;
-			await this.loadAllMessages(channel);
+			await this.loadAllMessages();
+		},
+
+		async joinDMChannel(channel: string): Promise<void> {
+			this.socket.emit('joinChannel', channel);
+			this.activeChannel = channel;
+			this.activeChannelType = 'dmchannel';
+			this.joined = true;
+			await this.loadAllMessages();
 		},
 
 		leaveChannel(): void {
 			this.socket.emit('leaveChannel', this.activeChannel);
 			this.activeChannel = '';
+			this.activeChannelType = '';
 			this.joined = false;
 		},
 
-		async loadAllMessages(channel: string): Promise<void> {
+		async loadAllMessages(): Promise<void> {
 			try {
-				const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: { channelName: channel } });
+				const request: { channelName: string, channelType: string } = {
+					channelName: this.activeChannel,
+					channelType: this.activeChannelType,
+				}
+				const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: request });
 				const allMessages: Messages[] = response.data;
 				this.allMessages = allMessages;
 			} catch (error: any) {
@@ -208,24 +288,9 @@ export default {
 			}
 		},
 
-		async createDMChannel(name: string) {
-			try {
-				// Send a POST request to create a new room
-				const otherUser = this.allUsers.find(x => x.name === name);
-				if (!otherUser) {
-					throw new Error('Cannot create DMChannle, Unknown User');
-				}
-				const otherIntraId: number = otherUser.intraId;
-				const response = await this.axiosInstance.post('chat/createDMChannel', { otherIntraId: otherIntraId });
-				this.activeChannel = response.data;
-				this.errorMessage = '';
-
-				// Join the newly created room with socketio, needs to be implemented
-				this.socket.emit('joinChannel', this.activeChannel);
-				this.joined = true;
-			} catch (error: any) {
-				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
-			}
+		getOtherUserName(otherIntraId: number) {
+			const user = this.allUsers.find(x => x.intraId === otherIntraId);
+			return user?.name;
 		}
 	},
 }
@@ -255,5 +320,9 @@ h2,
 	font-size: 16px;
 	margin: 4px 2px;
 	cursor: pointer;
+}
+
+.button[disabled] {
+	pointer-events: none;
 }
 </style>

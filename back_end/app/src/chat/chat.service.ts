@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Channel, DMChannel, Membership, User, UserMessage } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
@@ -37,6 +37,34 @@ export class ChatService {
 			});
 			return (newChannel.channelName);
 		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async addUserToChannel(user: User, channelName: string): Promise<void> {
+		try {
+			const channel: Channel = await this.findChannel(channelName);
+			if (!channel) {
+				throw new HttpException({ reason: `Channel ${channelName} already exists` }, HttpStatus.BAD_REQUEST);
+			}
+
+			// to do check if user is already in channel
+
+			await this.prisma.membership.create({
+				data: {
+					user: {
+						connect: {
+							intraId: user.intraId,
+						},
+					},
+					channel: {
+						connect: {
+							channelName: channelName,
+						}
+					},
+				},
+			});
+		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
@@ -83,6 +111,15 @@ export class ChatService {
 		}
 	}
 
+	async findAllChannels(): Promise<Channel[]> {
+		try {
+			const channels: Channel[] = await this.prisma.channel.findMany({});
+			return channels;
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async findMyChannels(user: User): Promise<Channel[]> | null {
 		try {
 			const memberships: { channelName: string }[] = await this.prisma.membership.findMany({
@@ -120,6 +157,32 @@ export class ChatService {
 		}
 	}
 
+	async findDMChannelWithMessages(channelName: string): Promise<(DMChannel & { userMessages: UserMessage[]; }) | null> {
+		try {
+			const channel: (DMChannel & { userMessages: UserMessage[]; }) = await this.prisma.dMChannel.findUnique({
+				where: {
+					channelName: channelName,
+				},
+				include: {
+					userMessages: true,
+				}
+			});
+			return channel;
+		} catch (error) {
+			this.logger.log(error);
+			return null;
+		}
+	}
+
+	async findAllDMChannels(): Promise<DMChannel[]> {
+		try {
+			const channels: DMChannel[] = await this.prisma.dMChannel.findMany({});
+			return channels;
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async findMyDMChannels(user: User): Promise<DMChannel[]> | null {
 		try {
 			const userWithDMChannels: (User & { dMChannel: DMChannel[]; }) = await this.prisma.user.findUnique({
@@ -137,25 +200,8 @@ export class ChatService {
 		}
 	}
 
-	async findAllChannels(): Promise<Channel[]> {
-		try {
-			const channels: Channel[] = await this.prisma.channel.findMany({});
-			return channels;
-		} catch (error) {
-			throw new InternalServerErrorException(error.message);
-		}
-	}
-
-	async findAllDMChannels(): Promise<DMChannel[]> {
-		try {
-			const channels: DMChannel[] = await this.prisma.dMChannel.findMany({});
-			return channels;
-		} catch (error) {
-			throw new InternalServerErrorException(error.message);
-		}
-	}
-
 	async findAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
+		console.log("HERE");
 		try {
 			const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
 				where: {
@@ -171,7 +217,23 @@ export class ChatService {
 		}
 	}
 
-	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Messages> {
+	async findAllMessagesInDMChannel(channelName: string): Promise<UserMessage[]> {
+		try {
+			const channel: DMChannel & { userMessages: UserMessage[]; } = await this.prisma.dMChannel.findUnique({
+				where: {
+					channelName: channelName,
+				},
+				include: {
+					userMessages: true,
+				}
+			});
+			return channel.userMessages;
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async handleChannelMessage(client: Socket, channelName: string, channelType: string, text: string): Promise<Messages> {
 		const intraId: number = await this.userClientService.getClientIntraId(client.id);
 		if (!intraId)
 			throw new WsException({ reason: `Client is invalid` });
@@ -193,7 +255,12 @@ export class ChatService {
 		};
 
 		try {
-			this.addMessageToChannel(intraId, channelName, user.name, text);
+			if (channelType === 'channel') {
+				this.addMessageToChannel(intraId, channelName, user.name, text);
+			}
+			else {
+				this.addMessageToDMChannel(intraId, channelName, user.name, text);
+			}
 			return (message);
 		} catch (error) {
 			throw new WsException(error.message);

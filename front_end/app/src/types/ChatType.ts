@@ -1,6 +1,5 @@
 export interface Channel {
 	id: number;
-	createdByIntraId: number;
 	channelName: string;
 }
 
@@ -19,4 +18,5 @@ export interface DMChannel {
 	id: number;
 	otherIntraId: number;
 	channelName: string;
+	intraId: number;
 }
