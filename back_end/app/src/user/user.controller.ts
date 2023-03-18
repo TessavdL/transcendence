@@ -57,7 +57,6 @@ export class UserController {
 	}
 
 	@Post('avatar')
-	@UseGuards(AuthGuard())
 	@UseInterceptors(
 		FileInterceptor('avatar', {
 			storage: diskStorage({
@@ -78,5 +77,4 @@ export class UserController {
 	async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
 		return file.filename;
 	}
-
 }
