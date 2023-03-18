@@ -19,6 +19,11 @@ enum Role {
     MEMBER
 }
 
+enum ChannelType {
+    NORMAL
+    DM
+}
+
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
@@ -38,12 +43,23 @@ model User {
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
-    dMChannel      DMChannel[]
     memberships    Membership[]    @relation("UserMembership")
+}
+
+model AllOtherUsers {
+    id            Int          @id @default(autoincrement())
+    intraId       Int
+    otherIntraId  Int
+    user          User         @relation(fields: [intraId], references: [intraId])
+    blockedStatus Boolean      @default(false)
+    friendStatus  FriendStatus @default(NOT_FRIENDS)
+
+    @@unique([intraId, otherIntraId])
 }
 
 model Channel {
     id           Int           @id @default(autoincrement())
+    channelType  ChannelType   @default(NORMAL)
     channelName  String        @unique
     userMessages UserMessage[]
     memberships  Membership[]  @relation("ChannelMembership")
@@ -58,38 +74,16 @@ model Membership {
     channelName String
 }
 
-model AllOtherUsers {
-    id            Int          @id @default(autoincrement())
-    intraId       Int
-    otherIntraId  Int
-    user          User         @relation(fields: [intraId], references: [intraId])
-    blockedStatus Boolean      @default(false)
-    friendStatus  FriendStatus @default(NOT_FRIENDS)
-
-    @@unique([intraId, otherIntraId])
+model UserMessage {
+    id          Int      @id @default(autoincrement())
+    intraId     Int
+    name        String
+    text        String
+    channel     Channel? @relation(fields: [channelName], references: [channelName])
+    channelName String?
 }
 
 model Client {
     id      String @unique
     intraId Int    @unique
-}
-
-model DMChannel {
-    id           Int           @id @default(autoincrement())
-    otherIntraId Int
-    channelName  String        @unique
-    userMessages UserMessage[]
-    user         User          @relation(fields: [intraId], references: [intraId])
-    intraId      Int
-}
-
-model UserMessage {
-    id            Int        @id @default(autoincrement())
-    intraId       Int
-    name          String
-    text          String
-    channel       Channel?   @relation(fields: [channelName], references: [channelName])
-    channelName   String?
-    dMChannel     DMChannel? @relation(fields: [dMChannelName], references: [channelName])
-    dMChannelName String?
 }

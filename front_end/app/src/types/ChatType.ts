@@ -1,6 +1,7 @@
 export interface Channel {
 	id: number;
 	channelName: string;
+	channelType: string;
 }
 
 export interface Messages {
@@ -12,11 +13,4 @@ export interface Messages {
 export interface User {
 	intraId: number;
 	name: string;
-}
-
-export interface DMChannel {
-	id: number;
-	otherIntraId: number;
-	channelName: string;
-	intraId: number;
 }

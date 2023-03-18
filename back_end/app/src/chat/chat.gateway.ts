@@ -82,11 +82,10 @@ export class ChatGateway
 	}
 
 	@SubscribeMessage('sendMessageToChannel')
-	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string, channelType: string }) {
+	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }) {
 		const text = data.messageText;
 		const channelName = data.channelName;
-		const channelType = data.channelType;
-		const message: Messages = await this.chatService.handleChannelMessage(client, channelName, channelType, text);
+		const message: Messages = await this.chatService.handleChannelMessage(client, channelName, text);
 
 		this.server.to(channelName).emit('message', message);
 	}
