@@ -7,6 +7,7 @@ const storeUser = createStore({
         isAuthenticated: false,
         user: {
             id: 0,
+            intraId: 0,
             username: "",
             avatar: "",
             twoFactorEnabled: false,
@@ -22,6 +23,9 @@ const storeUser = createStore({
     mutations: {
         updateId(state, id) {
             state.user.id = id;
+        },
+        updateIntraId(state, intraId) {
+            state.user.intraId = intraId;
         },
         updateUserName(state, name) {
             state.user.username = name;
@@ -55,6 +59,7 @@ const storeUser = createStore({
                     .then(async (response) => {
                         commit("setAuthenticated");
                         commit("updateId", response.data.id);
+                        commit("updateIntraId", response.data.intraId);
                         commit("updateUserName", response.data.name);
                         // if (
                         //     response.data.isTwoFactorAuthEnabled &&

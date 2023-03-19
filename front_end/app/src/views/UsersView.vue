@@ -31,7 +31,7 @@
                     
                 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 users-main">
                     <div class="card-group">
-                        <div v-for="user in filteredUsers" :key="user.username">
+                        <div v-for="user in filteredUsers" :key="user.intraId">
                             <UserInfoCard :user="user" />
                         </div>
                     </div>
@@ -44,13 +44,17 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
+
+import { useToast } from "primevue/usetoast";
+import { ErrorType, errorMessage } from "@/types/ErrorType";
 
 import UserInfoCard from '@/components/UserInfoCard.vue';
 
 const users = ref([]);
 const filteredUsers= ref([]);
 const filterCat = ref<String>('none');
+const toast = useToast();
 
 onMounted(async () => {
     await getUsers();
@@ -66,7 +70,7 @@ async function getUsers() {
             users.value = response.data;
         })
         .catch(() => {
-            console.log("cannot get users infomation");
+            console.log("failed get users infomation");
         });
 };
 
