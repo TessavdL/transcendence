@@ -56,8 +56,4 @@ const props = defineProps({
 
 }
 
-.btn {
-    border-radius: 10px;
-    margin-top: 5px;
-}
 </style>

@@ -1,0 +1,26 @@
+<template>
+    <div class="match-history">
+        <div class="mini-profile">
+            <img :src=props.avatar class="avatar-pic-mini" alt="avatar">
+            <p>{{ props.username }}</p>
+        </div>
+    </div>
+</template>
+
+<script setup lang="ts">
+import { ref, defineProps } from 'vue';
+
+const props = defineProps({
+    username: String,
+    avatar: String,
+});
+</script>
+
+<style scoped>
+.avatar-pic-mini {
+    width: 40px;
+    margin: 1rem auto 0rem;
+    border-radius: 50%;
+}
+
+</style>
