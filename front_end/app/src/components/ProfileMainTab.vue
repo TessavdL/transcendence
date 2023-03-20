@@ -45,6 +45,11 @@ const matches = ref([
 </script>
 
 <style scoped>
+.nav-item {
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
 button[aria-selected="true"] {
     color: #0a242f;
 }
