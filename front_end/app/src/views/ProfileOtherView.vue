@@ -12,7 +12,7 @@
             </div>
 
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-                <ProfileMainTab />
+                <ProfileMainTab :currentIntraId="userProflie.intraId" :currentName="userProflie.username" :currentAvatar="userProflie.avatar" />
             </div>
 
         </div>
@@ -32,7 +32,8 @@ const props = defineProps({
 });
 
 const userProflie = ref({
-    avatar: null,
+    intraId: 0,
+    avatar: "http://localhost:5173/src/assets/logo_klein.png", //for testing
     username: "",
     activityStatus: "ONLINE",
     blockedState: false,
@@ -52,7 +53,8 @@ async function getUserProfile() {
             withCredentials: true,
         })
         .then(async (response) =>  {
-            userProflie.value.avatar = response.data.avatar;
+            userProflie.value.intraId = response.data.intraId;
+            // userProflie.value.avatar = response.data.avatar; //for testing, use the default avatar
             userProflie.value.username = response.data.username;
             userProflie.value.activityStatus = response.data.activityStatus;
             userProflie.value.blockedState = response.data.blockedState;
