@@ -16,7 +16,7 @@ export class ChatService {
 	private readonly logger: Logger = new Logger('UserService initialized');
 
 	async createChannel(channelName: string, intraId: number): Promise<string> {
-		const existingChannel: Channel = await this.findChannel(channelName);
+		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel)
 			throw new HttpException({ reason: `Channel ${channelName} already exists` }, HttpStatus.BAD_REQUEST);
 		try {
@@ -44,7 +44,7 @@ export class ChatService {
 
 	async addUserToChannel(intraId: number, channelName: string): Promise<void> {
 		try {
-			const channel: Channel = await this.findChannel(channelName);
+			const channel: Channel = await this.getChannel(channelName);
 			if (!channel) {
 				throw new HttpException({ reason: `Channel ${channelName} was not found` }, HttpStatus.BAD_REQUEST);
 			}
@@ -86,7 +86,7 @@ export class ChatService {
 		}
 		const channelName: string = getChannel(user.intraId, otherIntraId);
 
-		const existingChannel: Channel = await this.findChannel(channelName);
+		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel)
 			throw new HttpException({ reason: 'Channel already exists' }, HttpStatus.BAD_REQUEST);
 
@@ -113,7 +113,7 @@ export class ChatService {
 		}
 	}
 
-	async findChannel(channelName: string): Promise<Channel> | null {
+	async getChannel(channelName: string): Promise<Channel> | null {
 		try {
 			const channel: Channel = await this.prisma.channel.findUnique({
 				where: {
@@ -127,7 +127,7 @@ export class ChatService {
 		}
 	}
 
-	async findAllChannels(): Promise<Channel[]> {
+	async getAllChannels(): Promise<Channel[]> {
 		try {
 			const channels: Channel[] = await this.prisma.channel.findMany({});
 			return channels;
@@ -136,7 +136,7 @@ export class ChatService {
 		}
 	}
 
-	async findMyChannels(user: User): Promise<Channel[]> | null {
+	async getMyChannels(user: User): Promise<Channel[]> | null {
 		try {
 			const memberships: { channelName: string }[] = await this.prisma.membership.findMany({
 				where: {
@@ -159,7 +159,7 @@ export class ChatService {
 		}
 	}
 
-	// async findDMChannel(channelName: string): Promise<DMChannel> | null {
+	// async getDMChannel(channelName: string): Promise<DMChannel> | null {
 	// 	try {
 	// 		const channel: DMChannel = await this.prisma.dMChannel.findUnique({
 	// 			where: {
@@ -173,7 +173,7 @@ export class ChatService {
 	// 	}
 	// }
 
-	// async findDMChannelWithMessages(channelName: string): Promise<(DMChannel & { userMessages: UserMessage[]; }) | null> {
+	// async getDMChannelWithMessages(channelName: string): Promise<(DMChannel & { userMessages: UserMessage[]; }) | null> {
 	// 	try {
 	// 		const channel: (DMChannel & { userMessages: UserMessage[]; }) = await this.prisma.dMChannel.findUnique({
 	// 			where: {
@@ -190,7 +190,7 @@ export class ChatService {
 	// 	}
 	// }
 
-	// async findAllDMChannels(): Promise<DMChannel[]> {
+	// async getAllDMChannels(): Promise<DMChannel[]> {
 	// 	try {
 	// 		const channels: DMChannel[] = await this.prisma.dMChannel.findMany({});
 	// 		return channels;
@@ -199,7 +199,7 @@ export class ChatService {
 	// 	}
 	// }
 
-	// async findMyDMChannels(user: User): Promise<DMChannel[]> | null {
+	// async getMyDMChannels(user: User): Promise<DMChannel[]> | null {
 	// 	try {
 	// 		const userWithDMChannels: (User & { dMChannel: DMChannel[]; }) = await this.prisma.user.findUnique({
 	// 			where: {
@@ -216,7 +216,7 @@ export class ChatService {
 	// 	}
 	// }
 
-	async findAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
+	async getAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
 		try {
 			const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
 				where: {
@@ -232,7 +232,7 @@ export class ChatService {
 		}
 	}
 
-	// async findAllMessagesInDMChannel(channelName: string): Promise<UserMessage[]> {
+	// async getAllMessagesInDMChannel(channelName: string): Promise<UserMessage[]> {
 	// 	try {
 	// 		const channel: DMChannel & { userMessages: UserMessage[]; } = await this.prisma.dMChannel.findUnique({
 	// 			where: {

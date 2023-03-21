@@ -205,7 +205,7 @@ export default {
 
 		async getAllChannels(): Promise<Channel[]> {
 			try {
-				const response = await this.axiosInstance.get('chat/findAllChannels');
+				const response = await this.axiosInstance.get('chat/getAllChannels');
 				const channels: Channel[] = response.data;
 				return (channels);
 			} catch (error: any) {
@@ -215,7 +215,7 @@ export default {
 
 		async getAllMyChannels(): Promise<Channel[]> {
 			try {
-				const response = await this.axiosInstance.get('chat/findMyChannels');
+				const response = await this.axiosInstance.get('chat/getMyChannels');
 				const channels: Channel[] = response.data;
 				return (channels);
 			} catch (error: any) {
@@ -308,7 +308,7 @@ export default {
 					channelName: this.activeChannel,
 					channelType: this.activeChannelType,
 				}
-				const response = await this.axiosInstance.get('chat/findAllMessagesInChannel', { params: request });
+				const response = await this.axiosInstance.get('chat/getAllMessagesInChannel', { params: request });
 				const allMessages: Messages[] = response.data;
 				this.allMessages = allMessages;
 			} catch (error: any) {

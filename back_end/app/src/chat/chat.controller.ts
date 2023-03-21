@@ -34,20 +34,20 @@ export class ChatController {
 		return await this.chatService.addUserToChannel(intraId, channelName);
 	}
 
-	@Get('findAllChannels')
-	async findAllChannels(): Promise<Channel[]> {
-		return await this.chatService.findAllChannels();
+	@Get('getAllChannels')
+	async getAllChannels(): Promise<Channel[]> {
+		return await this.chatService.getAllChannels();
 	}
 
-	@Get('findMyChannels')
-	async findMyChannels(@Req() request): Promise<Channel[]> {
+	@Get('getMyChannels')
+	async getMyChannels(@Req() request): Promise<Channel[]> {
 		const user = request.user;
-		return await this.chatService.findMyChannels(user);
+		return await this.chatService.getMyChannels(user);
 	}
 
-	@Get('findAllMessagesInChannel')
-	async findAllMessagesInChannel(@Query() params: { channelName: string }): Promise<UserMessage[]> {
+	@Get('getAllMessagesInChannel')
+	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<UserMessage[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.findAllMessagesInChannel(channelName);
+		return await this.chatService.getAllMessagesInChannel(channelName);
 	}
 }
