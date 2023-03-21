@@ -55,7 +55,7 @@ export class ChatService {
 					channelName: channelName,
 				},
 			});
-			if (!isInChannel) {
+			if (isInChannel === true) {
 				throw new HttpException({ reason: `User is already a member of ${channelName}` }, HttpStatus.BAD_REQUEST);
 			}
 
