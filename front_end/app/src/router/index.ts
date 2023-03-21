@@ -4,7 +4,10 @@ import storeUser from "@/store";
 import HomeView from '@/views/HomeView.vue';
 import GameView from "@/views/GameView.vue";
 import ChatView from "@/views/ChatView.vue";
-import ProfileView from "@/views/ProfileView.vue";
+import ProfileCurrentView from "@/views/ProfileCurrentView.vue";
+import ProfileOtherView from "@/views/ProfileOtherView.vue";
+import ProfileEditView from "@/views/ProfileEditView.vue";
+
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
 
@@ -27,9 +30,20 @@ const router = createRouter({
       component: ChatView
     },
     {
-      path: '/profile',
-      name: 'Profile',
-      component: ProfileView
+      path: '/profile/current',
+      name: 'ProfileCurrent',
+      component: ProfileCurrentView,
+    },
+    {
+      path: '/profile/other/:intraId',
+      name: 'ProfileOther',
+      component: ProfileOtherView,
+      props: true,
+    },
+    {
+      path: '/profileedit',
+      name: 'ProfileEdit',
+      component: ProfileEditView,
     },
     {
       path: '/users',
