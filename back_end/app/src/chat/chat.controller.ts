@@ -1,43 +1,53 @@
-import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
-import { Channel, User } from '@prisma/client';
+import { Body, Controller, Get, HttpException, HttpStatus, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Channel, User, UserMessage, type ChannelType } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
-import { AddMessageToChannelDto } from './dto/add-message-to-channel.dto';
+import { AddUserToChannelDto } from './dto/add-user-to-channel.dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
-import { FindAllMessagesDto } from './dto/find-all-messages-in-channel';
+import { CreateDMChannelDto } from './dto/create-dm-channel.dto';
+
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
-  constructor(private readonly chatService: ChatService) { }
-  @Post('createChannel')
-  async createChannel(@Req() request, @Body() createChannelDto: CreateChannelDto): Promise<string> {
-    const user: User = request.user;
-    console.log(user);
-    console.log(createChannelDto);
-    const createdByIntraId: number = request.user.intraId;
-    const channelName: string = createChannelDto.channelName;
-    console.log(channelName, createdByIntraId);
-    return await this.chatService.createChannel(channelName, createdByIntraId);
-  }
+	constructor(private readonly chatService: ChatService) { }
 
-//   @Post('message')
-//   async addMessageToChannel(addMessageToChannelDto: AddMessageToChannelDto) {
-//     const intraId: number = addMessageToChannelDto.intraId;
-//     const channelName: string = addMessageToChannelDto.channelName;
-//     const name: string = addMessageToChannelDto.name;
-//     const text: string = addMessageToChannelDto.text;
-//     return await this.chatService.addMessageToChannel(intraId, channelName, name, text)
-//   }
+	@Post('createChannel')
+	async createChannel(@Req() request, @Body() createChannelDto: CreateChannelDto): Promise<string> {
+		const user: User = request.user;
+		const channelName: string = createChannelDto.channelName;
+		return await this.chatService.createChannel(channelName, user.intraId);
+	}
 
-  @Get('findAllMessagesInChannel')
-  async findAllMessagesInChannel(@Query('channelName') channelName: string ) {
-    console.log(`Retrieving all messages from ${channelName}`);
-    return await this.chatService.findAllMessagesInChannel(channelName);
-  }
+	@Post('createDMChannel')
+	async createDMChannel(@Req() request, @Body() createDMChannelDto: CreateDMChannelDto): Promise<string> {
+		const user: User = request.user;
+		const otherIntraId: number = createDMChannelDto.otherIntraId;
+		return await this.chatService.createDMChannel(user, otherIntraId);
+	}
 
-  @Get('findAllChannels')
-  async findAllChannels(): Promise<Channel[]> {
-    return await this.chatService.findAllChannels();
-  }
+	@Post('addUserToChannel')
+	async addUserToChannel(@Req() request, @Body() addUserToChannel: AddUserToChannelDto): Promise<void> {
+		const user: User = request.user;
+		const intraId: number = user.intraId;
+		const channelName: string = addUserToChannel.channelName;
+		return await this.chatService.addUserToChannel(intraId, channelName);
+	}
+
+	@Get('getAllChannels')
+	async getAllChannels(): Promise<Channel[]> {
+		return await this.chatService.getAllChannels();
+	}
+
+	@Get('getMyChannels')
+	async getMyChannels(@Req() request): Promise<Channel[]> {
+		const user = request.user;
+		return await this.chatService.getMyChannels(user);
+	}
+
+	@Get('getAllMessagesInChannel')
+	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<UserMessage[]> {
+		const channelName: string = params.channelName;
+		return await this.chatService.getAllMessagesInChannel(channelName);
+	}
 }

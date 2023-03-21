@@ -189,6 +189,7 @@ export class UserService {
 
 		return result;
 	}
+
 	private generateNumber(length: number): number {
 		const characters = '0123456789';
 		let result = ' ';
