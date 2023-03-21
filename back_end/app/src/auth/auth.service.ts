@@ -112,11 +112,14 @@ export class AuthService {
 
 	// should be moved to user module
 	async createUser(profile: any): Promise<User> | null {
+		const default_avatar: string = this.pick_random_default_avatar();
+
 		const user: User = await this.prisma.user.create({
 			data: {
 				name: profile.username,
 				intraId: profile.intraid,
 				intraName: profile.username,
+				avatar: default_avatar,
 				allOtherUsers: {
 					create: [],
 				},
@@ -129,6 +132,29 @@ export class AuthService {
 		this.updateSelfWithOtherUsers(user.intraId);
 
 		return (user);
+	}
+
+	pick_random_default_avatar(): string {
+		const avatar_array: string[] = [
+			"src/assets/default_avatars/Cody_Christmas1.jpeg",
+			"src/assets/default_avatars/Cody_Christmas2.jpeg",
+			"src/assets/default_avatars/Cody_Cute.jpeg",
+			"src/assets/default_avatars/Cody_Droopy.jpeg",
+			"src/assets/default_avatars/Cody_Majestic.jpeg",
+			"src/assets/default_avatars/Cody_Outside.jpeg",
+			"src/assets/default_avatars/Cody_Pancake.jpeg",
+			"src/assets/default_avatars/Cody_Punky.jpeg",
+			"src/assets/default_avatars/Cody_Puppy.jpeg",
+			"src/assets/default_avatars/Cody_Sad.jpeg",
+			"src/assets/default_avatars/Cody_Seal.jpeg",
+			"src/assets/default_avatars/Cody_Sleepy.jpeg",
+			"src/assets/default_avatars/Cody_Stare.jpeg",
+			"src/assets/default_avatars/Cody_Stuffed_Animal.jpeg",
+			"src/assets/default_avatars/Cody_Sunset.jpeg",
+			"src/assets/default_avatars/Cody_Young.jpeg",
+		];
+		const random_number = Math.floor(Math.random() * 16);
+		return avatar_array[random_number];
 	}
 
 	// should be moved to user module and made private
