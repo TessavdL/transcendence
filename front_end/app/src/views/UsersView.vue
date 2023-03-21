@@ -44,17 +44,14 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, onMounted } from "vue";
-
-import { useToast } from "primevue/usetoast";
-import { ErrorType, errorMessage } from "@/types/ErrorType";
+import { ref, onMounted, getCurrentInstance } from "vue";
 
 import UserInfoCard from '@/components/UserInfoCard.vue';
 
+const instance = getCurrentInstance();
 const users = ref([]);
 const filteredUsers= ref([]);
 const filterCat = ref<String>('none');
-const toast = useToast();
 
 onMounted(async () => {
     await getUsers();
@@ -74,8 +71,9 @@ async function getUsers() {
         });
 };
 
-const handleFilter = (cat: String) => {
+const handleFilter = async (cat: String) => {
     filterCat.value = cat;
+    await getUsers();
     filteredUsers.value = [...users.value];
     if (cat === 'activityStatus') {
         filteredUsers.value = filteredUsers.value.filter((user) => {
@@ -102,6 +100,7 @@ const handleFilter = (cat: String) => {
         filteredUsers.value = filteredUsers.value;
     }
 }
+
 
 
 </script>

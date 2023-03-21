@@ -42,13 +42,13 @@ let friendState = props.friendStatus;
 
 const addFriend = () => {
     console.log(props.intraId);
-    // confirm.require({
-    //   message: "Are you sure you want to add this user as user?",
-    //   header: "Confirmation",
-    //   accept: () => {
-    //     sendFriendRequest();
-    //   },
-    // });
+    confirm.require({
+      message: "Are you sure you want to add this user as user?",
+      header: "Confirmation",
+      accept: () => {
+        sendFriendRequest();
+      },
+    });
 }
 
 const friendRequestBody = {

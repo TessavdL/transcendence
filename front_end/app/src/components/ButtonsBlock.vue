@@ -21,15 +21,16 @@ import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 
-const props = defineProps({
-    blockedState: Boolean,
-    intraId: String
-});
-
 const confirm = useConfirm();
 const toast = useToast();
 
+const props = defineProps({
+    blockedState: Boolean,
+    intraId: String,
+});
+
 const componentKey = ref(0);
+
 const componentRerender = () => {
     componentKey.value += 1;
 }
@@ -71,7 +72,7 @@ async function sendBlockRequest(endpoint: String) {
             toast.add({
                 severity: "success",
                 summary: "Success",
-                detail: "Success",
+                detail: "Done",
                 life: 3000,
             })
         })
