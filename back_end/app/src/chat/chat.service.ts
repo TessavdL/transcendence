@@ -6,8 +6,6 @@ import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { Messages } from './types';
 import * as argon2 from "argon2";
-import { DeletePasswordDto } from './dto/delete-password.dto';
-import { check } from 'prettier';
 
 @Injectable()
 export class ChatService {
