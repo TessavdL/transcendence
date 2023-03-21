@@ -1,10 +1,13 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { Channel, Membership, User, UserMessage, ChannelType } from '@prisma/client';
+import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { Messages } from './types';
+import * as argon2 from "argon2";
+import { DeletePasswordDto } from './dto/delete-password.dto';
+import { check } from 'prettier';
 
 @Injectable()
 export class ChatService {
@@ -15,15 +18,26 @@ export class ChatService {
 
 	private readonly logger: Logger = new Logger('UserService initialized');
 
-	async createChannel(channelName: string, intraId: number): Promise<string> {
+	async createChannel(channelMode: ChannelMode, channelName: string, password: string, intraId: number): Promise<string> {
 		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel)
 			throw new HttpException({ reason: `Channel ${channelName} already exists` }, HttpStatus.BAD_REQUEST);
+
+		let hashed_password: string;
+		if (password !== null) {
+			hashed_password = await this.createHashedPassword(password);
+		}
+		else {
+			hashed_password = '';
+		}
+
 		try {
 			const newChannel = await this.prisma.channel.create({
 				data: {
+					channelMode: channelMode,
 					channelName: channelName,
 					channelType: 'NORMAL',
+					password: hashed_password,
 					memberships: {
 						create: {
 							role: 'OWNER',
@@ -93,6 +107,7 @@ export class ChatService {
 		try {
 			const newChannel = await this.prisma.channel.create({
 				data: {
+					channelMode: 'PRIVATE',
 					channelName: channelName,
 					channelType: 'DM',
 					memberships: {
@@ -159,63 +174,6 @@ export class ChatService {
 		}
 	}
 
-	// async getDMChannel(channelName: string): Promise<DMChannel> | null {
-	// 	try {
-	// 		const channel: DMChannel = await this.prisma.dMChannel.findUnique({
-	// 			where: {
-	// 				channelName: channelName,
-	// 			},
-	// 		});
-	// 		return channel;
-	// 	} catch (error) {
-	// 		this.logger.log(error);
-	// 		return null;
-	// 	}
-	// }
-
-	// async getDMChannelWithMessages(channelName: string): Promise<(DMChannel & { userMessages: UserMessage[]; }) | null> {
-	// 	try {
-	// 		const channel: (DMChannel & { userMessages: UserMessage[]; }) = await this.prisma.dMChannel.findUnique({
-	// 			where: {
-	// 				channelName: channelName,
-	// 			},
-	// 			include: {
-	// 				userMessages: true,
-	// 			}
-	// 		});
-	// 		return channel;
-	// 	} catch (error) {
-	// 		this.logger.log(error);
-	// 		return null;
-	// 	}
-	// }
-
-	// async getAllDMChannels(): Promise<DMChannel[]> {
-	// 	try {
-	// 		const channels: DMChannel[] = await this.prisma.dMChannel.findMany({});
-	// 		return channels;
-	// 	} catch (error) {
-	// 		throw new InternalServerErrorException(error.message);
-	// 	}
-	// }
-
-	// async getMyDMChannels(user: User): Promise<DMChannel[]> | null {
-	// 	try {
-	// 		const userWithDMChannels: (User & { dMChannel: DMChannel[]; }) = await this.prisma.user.findUnique({
-	// 			where: {
-	// 				intraId: user.intraId,
-	// 			},
-	// 			include: {
-	// 				dMChannel: true,
-	// 			},
-	// 		});
-	// 		return userWithDMChannels.dMChannel;
-	// 	} catch (error) {
-	// 		this.logger.log(error);
-	// 		return null;
-	// 	}
-	// }
-
 	async getAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
 		try {
 			const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
@@ -231,22 +189,6 @@ export class ChatService {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
-
-	// async getAllMessagesInDMChannel(channelName: string): Promise<UserMessage[]> {
-	// 	try {
-	// 		const channel: DMChannel & { userMessages: UserMessage[]; } = await this.prisma.dMChannel.findUnique({
-	// 			where: {
-	// 				channelName: channelName,
-	// 			},
-	// 			include: {
-	// 				userMessages: true,
-	// 			}
-	// 		});
-	// 		return channel.userMessages;
-	// 	} catch (error) {
-	// 		throw new InternalServerErrorException(error.message);
-	// 	}
-	// }
 
 	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Messages> {
 		const intraId: number = await this.userClientService.getClientIntraId(client.id);
@@ -299,25 +241,113 @@ export class ChatService {
 		}
 	}
 
-	// async addMessageToDMChannel(intraId: number, channelName: string, name: string, text: string): Promise<void> {
-	// 	const channel = await this.prisma.dMChannel.findUnique({ where: { channelName } });
-	// 	if (!channel) {
-	// 		throw new HttpException({ reason: `Channel ${channelName} was not found` }, HttpStatus.BAD_REQUEST);
-	// 	}
+	async checkPassword(channelName: string, password: string): Promise<boolean> {
+		try {
+			const channel: Channel = await this.getChannel(channelName);
 
-	// 	try {
-	// 		await this.prisma.userMessage.create({
-	// 			data: {
-	// 				intraId: intraId,
-	// 				name: name,
-	// 				text: text,
-	// 				dMChannel: {
-	// 					connect: { channelName },
-	// 				},
-	// 			},
-	// 		});
-	// 	} catch (error) {
-	// 		throw new InternalServerErrorException(error.message);
-	// 	}
-	// }
+			const hashed_password: string = channel.password;
+
+			return (argon2.verify(hashed_password, password));
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async changePassword(user: User, channelName: string, oldPassword: string, newPassword: string): Promise<void> {
+		await this.checkCredentials(user, channelName, oldPassword);
+
+		try {
+			const hashed_password = await this.createHashedPassword(newPassword);
+
+			await this.prisma.channel.update({
+				where: {
+					channelName: channelName,
+				},
+				data: {
+					password: hashed_password,
+				}
+			})
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async deletePasswordAndSetChannelModeToPublic(user: User, channelName: string, password: string): Promise<void> {
+		await this.checkCredentials(user, channelName, password);
+		try {
+			await this.prisma.channel.update({
+				where: {
+					channelName: channelName,
+				},
+				data: {
+					password: '',
+					channelMode: 'PUBLIC',
+				},
+			});
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async setPasswordAndSetChannelModeToProtected(user: User, channelName: string, password: string): Promise<void> {
+		await this.checkCredentials(user, channelName, '');
+		try {
+			const hashed_password = await this.createHashedPassword(password);
+
+			await this.prisma.channel.update({
+				where: {
+					channelName: channelName,
+				},
+				data: {
+					password: hashed_password,
+					channelMode: 'PROTECTED',
+				},
+			});
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	private async checkCredentials(user: User, channelName: string, password: string) {
+		if (await this.getRole(user, channelName) !== 'OWNER') {
+			throw new HttpException('User is not the owner of the channel and does not have the rights to change password', HttpStatus.BAD_REQUEST);
+		}
+		if (await this.getChannelType(channelName) === 'DM') {
+			throw new HttpException('Channel is a direct message and cannot have a password', HttpStatus.BAD_REQUEST);
+		}
+		if (password !== '' && await this.checkPassword(channelName, password) === false) {
+			throw new HttpException('Old password is not correct', HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	private async getRole(user: User, channelName: string): Promise<Role> {
+		try {
+			const membership: Membership = await this.prisma.membership.findFirst({
+				where: {
+					channelName: channelName,
+					user: {
+						intraId: user.intraId,
+					},
+				},
+			});
+			const role: Role = membership.role;
+			return (role);
+		} catch (error: any) {
+			throw new InternalServerErrorException();
+		}
+	}
+
+	private async getChannelType(channelName): Promise<ChannelType> {
+		try {
+			const channel: Channel = await this.getChannel(channelName);
+			return (channel.channelType);
+		} catch (error: any) {
+			throw new InternalServerErrorException();
+		}
+	}
+
+	private async createHashedPassword(password: string): Promise<string> {
+		const hashed_password: string = await argon2.hash(password);
+		return (hashed_password);
+	}
 }
