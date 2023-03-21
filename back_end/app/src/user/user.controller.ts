@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, Res, Query, StreamableFile } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -45,6 +45,11 @@ export class UserController {
 	async createDummyUser(): Promise<void> {
 		return (this.userService.createDummyUser());
 	}
+
+    @Get('get_avatar')
+    getAvatar(@Query('avatar') avatar: string): StreamableFile {
+        return (this.userService.getAvatar(avatar));
+    }
 
 	@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
