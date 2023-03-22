@@ -31,7 +31,9 @@
                                 {{ storeUser.state.user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
-                                <li><RouterLink class="nav-link" to="/profile">View Proflie</RouterLink></li>
+                                <li><RouterLink class="nav-link" 
+                                    :to="{name: 'ProfileCurrent'}">
+                                    View Proflie</RouterLink></li>
                                 <li><RouterLink class="nav-link" to="/logout">Log Out</RouterLink></li>
                             </ul>
                         </li>

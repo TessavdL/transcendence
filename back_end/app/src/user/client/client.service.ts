@@ -39,7 +39,6 @@ export class UserClientService {
     clientId: string,
     userIntraId: number,
   ): Promise<void> {
-    console.log(`clientId = ${clientId}, userintraId = ${userIntraId}`);
     try {
       await this.prisma.client.upsert({
         where: {

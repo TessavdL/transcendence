@@ -1,12 +1,10 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';
 import { UserElement } from './types';
-
 import { UserService } from './user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -26,19 +24,21 @@ export class UserController {
 		return (this.userService.getUserElements(request.user));
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Post('block_user')
-	blockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.blockUser(request.user, OtherUserIntraDto.otherIntraId));
+	blockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.blockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Post('unblock_user')
-	unblockUser(@Req() request, @Body() OtherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.unblockUser(request.user, OtherUserIntraDto.otherIntraId));
+	unblockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
-	@UseGuards(JwtAuthGuard)
+	@Post('friend_request')
+	handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
+	}
+
 	@Get('usersexceptself')
 	getUserListExceptSelf(@Req() request): Promise<User[]> {
 		return (this.userService.getUserListExceptSelf(request.user));
@@ -47,9 +47,14 @@ export class UserController {
 	@Get('createdummy')
 	async createDummyUser(): Promise<void> {
 		return (this.userService.createDummyUser());
+	}
+
+    @Get('get_avatar')
+    getAvatar(@Query('avatar') avatar: string): StreamableFile {
+        return (this.userService.getAvatar(avatar));
     }
 
-    @Get(':id')
+	@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);

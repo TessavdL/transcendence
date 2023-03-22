@@ -1,31 +1,31 @@
 <template>
     <div class="card info-card" style="width: 12rem; background-color: #094b5f;">
         <div>
-            <RouterLink to="/profile">
+            <RouterLink :to="{ name: 'ProfileOther', params: {intraId: props.user.intraId} }">
                 <img src="../assets/logo_klein.png" class="card-img-top avatar-pic" alt="avatar">
                 <!-- need to do dymatic avatar -->
             </RouterLink>
         </div>
 
         <div class="card-body">
-            <h3 class="card-title"> {{ user.username }}</h3>
+            <h3 class="card-title"> {{ props.user.username }}</h3>
             <div class="user-status">
-                <div v-if="user.activityStatus === 'ONLINE'">
+                <div v-if="props.user.activityStatus === 'ONLINE'">
                     <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i> Online
                 </div>
-                <div v-if="user.activityStatus === 'OFFLINE'">
+                <div v-if="props.user.activityStatus === 'OFFLINE'">
                     <i class="bi bi-circle-fill" style="font-size: 1rem; color: orange;"></i> Offline
                 </div>
-                <div v-if="user.activityStatus === 'INGAME'">
+                <div v-if="props.user.activityStatus === 'INGAME'">
                     <i class="bi bi-circle-fill" style="font-size: 1rem; color: purple;"></i> In Game
                 </div>
             </div>
 
             <div class="friend-buttons">
-                <ButtonsFriend :friendStatus="user.friendStatus" />
+                <ButtonsFriend :friendStatus="props.user.friendStatus" :intraId="String(props.user.intraId)" />
             </div>
             <div class="block-buttons">
-                <ButtonsBlock :blockedState="user.blockedState" />
+                <ButtonsBlock :blockedState="props.user.blockedState" :intraId="String(props.user.intraId)" />
             </div>
 
         </div>
@@ -56,8 +56,4 @@ const props = defineProps({
 
 }
 
-.btn {
-    border-radius: 10px;
-    margin-top: 5px;
-}
 </style>

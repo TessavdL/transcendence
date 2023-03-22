@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
-import { ActivityStatus, AllOtherUsers, User } from '@prisma/client';
+import { Injectable, StreamableFile } from '@nestjs/common';
+import { ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
+import { createReadStream } from 'fs';
+import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserElement } from './types';
@@ -82,6 +84,59 @@ export class UserService {
 		}
 	}
 
+	async handleFriendRequest(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherUserIntraId);
+
+		if (otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus === 'PENDING') {
+			return (this.befriendBothUsers(user, otherUser));
+		}
+		return (this.setRequestToPending(user, otherUserIntraId));
+	}
+
+	async befriendBothUsers(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: (User & { allOtherUsers: AllOtherUsers[]; })) {
+		try {
+			await this.prisma.allOtherUsers.updateMany({
+				where: {
+					OR: [
+						{
+							intraId: user.intraId,
+							otherIntraId: otherUser.intraId,
+						},
+						{
+							intraId: otherUser.intraId,
+							otherIntraId: user.intraId,
+						},
+					]
+				},
+				data: {
+					friendStatus: 'FRIENDS',
+				},
+			});
+		}
+		catch (error) {
+			throw new Error(error);
+		}
+	}
+
+	async setRequestToPending(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+		try {
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: user.intraId,
+						otherIntraId: otherUserIntraId,
+					},
+				},
+				data: {
+					friendStatus: 'PENDING',
+				},
+			});
+		}
+		catch (error) {
+			throw new Error(error);
+		}
+	}
+
 	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
 		try {
 			const user: User = await this.prisma.user.findUnique({
@@ -136,6 +191,7 @@ export class UserService {
 
 		return result;
 	}
+
 	private generateNumber(length: number): number {
 		const characters = '0123456789';
 		let result = ' ';
@@ -170,4 +226,9 @@ export class UserService {
 
 		return (userElement);
 	}
+
+    getAvatar(avatar: string): StreamableFile {
+        const file = createReadStream(join(process.cwd(), avatar));
+        return new StreamableFile(file);
+    }
 }

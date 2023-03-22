@@ -1,16 +1,33 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-enum FriendStatus {
-	NOT_FRIENDS
-	PENDING
-	FRIENDS
+enum ActivityStatus {
+    ONLINE
+    INGAME
+    OFFLINE
 }
 
-enum ActivityStatus {
-	ONLINE
-	INGAME
-	OFFLINE
+enum FriendStatus {
+    NOT_FRIENDS
+    PENDING
+    FRIENDS
+}
+
+enum Role {
+    OWNER
+    ADMIN
+    MEMBER
+}
+
+enum ChannelMode {
+    PRIVATE
+    PROTECTED
+    PUBLIC
+}
+
+enum ChannelType {
+    NORMAL
+    DM
 }
 
 datasource db {
@@ -32,36 +49,49 @@ model User {
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
+    memberships    Membership[]    @relation("UserMembership")
 }
 
 model AllOtherUsers {
-	id				Int @id @default(autoincrement())
-	intraId 		Int
-	otherIntraId	Int
-	user			User @relation(fields: [intraId], references: [intraId])
-	blockedStatus	Boolean @default(false)
-	friendStatus	FriendStatus @default(NOT_FRIENDS)
+    id            Int          @id @default(autoincrement())
+    intraId       Int
+    otherIntraId  Int
+    user          User         @relation(fields: [intraId], references: [intraId])
+    blockedStatus Boolean      @default(false)
+    friendStatus  FriendStatus @default(NOT_FRIENDS)
 
-	@@unique([intraId, otherIntraId])
+    @@unique([intraId, otherIntraId])
+}
+
+model Channel {
+    id           Int           @id @default(autoincrement())
+    channelMode  ChannelMode
+    channelName  String        @unique
+    channelType  ChannelType   @default(NORMAL)
+    password     String        @default("")
+    userMessages UserMessage[]
+    memberships  Membership[]  @relation("ChannelMembership")
+}
+
+model Membership {
+    id          Int     @id @default(autoincrement())
+    role        Role    @default(MEMBER)
+    user        User    @relation("UserMembership", fields: [intraId], references: [intraId])
+    intraId     Int
+    channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName])
+    channelName String
+}
+
+model UserMessage {
+    id          Int      @id @default(autoincrement())
+    intraId     Int
+    name        String
+    text        String
+    channel     Channel? @relation(fields: [channelName], references: [channelName])
+    channelName String?
 }
 
 model Client {
     id      String @unique
     intraId Int    @unique
-}
-
-model Channel {
-    id               Int           @default(autoincrement())
-    createdByIntraId Int
-    channelName      String        @unique
-    userMessages     UserMessage[]
-}
-
-model UserMessage {
-    id          Int     @id @default(autoincrement())
-    intraId     Int
-    name        String
-    text        String
-    channel     Channel @relation(fields: [channelName], references: [channelName])
-    channelName String
 }

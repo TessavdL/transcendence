@@ -1,6 +1,19 @@
+import { IsString, IsNotEmpty, IsInt } from 'class-validator';
+
 export class AddMessageToChannelDto {
-    intraId: number;
-    channelName: string;
-    name: string;
-    text: string;
+	@IsInt()
+	@IsNotEmpty()
+	intraId: number;
+
+	@IsString()
+	@IsNotEmpty()
+	channelName: string;
+
+	@IsString()
+	@IsNotEmpty()
+	name: string;
+
+	@IsString()
+	@IsNotEmpty()
+	text: string;
 }
