@@ -28,7 +28,6 @@ export class ChatService {
 		else {
 			hashed_password = '';
 		}
-
 		try {
 			const newChannel = await this.prisma.channel.create({
 				data: {

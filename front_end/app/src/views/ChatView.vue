@@ -150,8 +150,14 @@ export default {
 		async createChannel() {
 			try {
 				// Send a POST request to create a new channel
-				console.log(`${this.channelMode}, ${this.channelName}`);
-				await this.axiosInstance.post('chat/createChannel', { channelMode: this.channelMode, channelName: this.channelName, password: this.channelPassword });
+				const password: string = this.channelPassword;
+				this.channelPassword = '';
+				if (password === '') {
+					await this.axiosInstance.post('chat/createChannel', { channelMode: this.channelMode, channelName: this.channelName });
+				}
+				else {
+					await this.axiosInstance.post('chat/createChannel', { channelMode: this.channelMode, channelName: this.channelName, password: password });
+				}
 				this.errorMessage = '';
 
 				// Update this.allNormalChannels and this.allMyNormalChannels so it shows the newly created channel
