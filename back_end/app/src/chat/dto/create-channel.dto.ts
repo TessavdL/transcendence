@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
 
 enum ChannelMode {
 	PRIVATE = 'PRIVATE',
@@ -16,6 +16,7 @@ export class CreateChannelDto {
 	@IsNotEmpty()
 	channelName: string;
 
+    @IsOptional()
 	@IsString()
 	@IsNotEmpty()
 	password?: string;

@@ -1,5 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, StreamableFile } from '@nestjs/common';
 import { ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
+import { createReadStream } from 'fs';
+import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserElement } from './types';
@@ -224,4 +226,9 @@ export class UserService {
 
 		return (userElement);
 	}
+
+    getAvatar(avatar: string): StreamableFile {
+        const file = createReadStream(join(process.cwd(), avatar));
+        return new StreamableFile(file);
+    }
 }
