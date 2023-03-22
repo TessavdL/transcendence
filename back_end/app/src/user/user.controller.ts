@@ -31,6 +31,11 @@ export class UserController {
 		return (this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
+	@Post('friend_request')
+	handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
+	}
+
 	@Get('usersexceptself')
 	getUserListExceptSelf(@Req() request): Promise<User[]> {
 		return (this.userService.getUserListExceptSelf(request.user));
