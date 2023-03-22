@@ -2,11 +2,7 @@ import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards } from '@nest
 import { Channel, ChannelMode, User, UserMessage } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
-import { AddUserToChannelDto } from './dto/add-user-to-channel.dto';
-import { ChangePasswordDto } from './dto/change-password-dto';
-import { CreateChannelDto } from './dto/create-channel.dto';
-import { CreateDMChannelDto } from './dto/create-dm-channel.dto';
-import { DeletePasswordDto } from './dto/delete-password.dto';
+import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 
 
 @UseGuards(JwtAuthGuard)
@@ -88,5 +84,21 @@ export class ChatController {
 		const password: string = setPasswordDto.password;
 		const user: User = request.user;
 		return await this.chatService.setPasswordAndSetChannelModeToProtected(user, channelName, password);
+	}
+
+	@Patch('promoteMemberToAdmin')
+	async promoteMember(@Req() request, @Body() promoteMemberToAdminDto: PromoteMemberToAdminDto): Promise<void> {
+		const channelName: string = promoteMemberToAdminDto.channelName;
+		const otherIntraId: number = promoteMemberToAdminDto.otherIntraId;
+		const user: User = request.user;
+		return await this.chatService.promoteMemberToAdmin(user, channelName, otherIntraId);
+	}
+
+	@Patch('demoteAdminToMember')
+	async demoteAdmin(@Req() request, @Body() demoteAdminToMember: PromoteMemberToAdminDto): Promise<void> {
+		const channelName: string = demoteAdminToMember.channelName;
+		const otherIntraId: number = demoteAdminToMember.otherIntraId;
+		const user: User = request.user;
+		return await this.chatService.demoteAdminToMember(user, channelName, otherIntraId);
 	}
 }

@@ -80,6 +80,8 @@ model Membership {
     intraId     Int
     channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName])
     channelName String
+
+    @@unique([intraId, channelName])
 }
 
 model UserMessage {
