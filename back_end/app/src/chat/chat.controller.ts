@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
 import { Channel, ChannelMode, User, UserMessage } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
@@ -7,6 +7,7 @@ import { ChangePasswordDto } from './dto/change-password-dto';
 import { CreateChannelDto } from './dto/create-channel.dto';
 import { CreateDMChannelDto } from './dto/create-dm-channel.dto';
 import { DeletePasswordDto } from './dto/delete-password.dto';
+import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 
 
 @UseGuards(JwtAuthGuard)
