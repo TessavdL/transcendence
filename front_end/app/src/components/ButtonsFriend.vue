@@ -1,5 +1,5 @@
 <template>
-    <div class="friend-buttons">
+    <div class="friend-buttons" :key="componentKey">
         <div class="d-grid gap-2" v-if="friendtype === 'NOT_FRIENDS' ">
             <button type="button" class="btn btn-light" style="color:#042d3f;"
                  @click="addFriend">

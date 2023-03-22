@@ -30,7 +30,6 @@ const props = defineProps({
 });
 
 const componentKey = ref(0);
-
 const componentRerender = () => {
     componentKey.value += 1;
 }

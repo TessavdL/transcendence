@@ -42,7 +42,7 @@ const playGame = () => {
 }
 const watchGame = () => {
     router.push({
-        name: "Game",
+        name: "Chat",
     })
 }
 

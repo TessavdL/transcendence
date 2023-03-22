@@ -1,6 +1,6 @@
 <template>
     <div>
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
             <div class="container-fluid">
                 <!-- Logo -->
                 <a class="navbar-brand me-auto" href="#">
@@ -22,7 +22,7 @@
                             <RouterLink class="nav-link" to="/users">User</RouterLink>
                         </li>
                         <li class="nav-item">
-                            <RouterLink class="nav-link" to="/chat">Chat</RouterLink>
+                            <RouterLink class="nav-link" to="/chat0">Chat</RouterLink>
                         </li>
 
                         <li class="nav-item dropdown">

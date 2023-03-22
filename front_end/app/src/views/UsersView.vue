@@ -44,11 +44,10 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, onMounted, getCurrentInstance } from "vue";
+import { ref, onMounted } from "vue";
 
 import UserInfoCard from '@/components/UserInfoCard.vue';
 
-const instance = getCurrentInstance();
 const users = ref([]);
 const filteredUsers= ref([]);
 const filterCat = ref<String>('none');
