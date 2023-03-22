@@ -19,6 +19,12 @@ enum Role {
     MEMBER
 }
 
+enum ChannelMode {
+    PRIVATE
+    PROTECTED
+    PUBLIC
+}
+
 enum ChannelType {
     NORMAL
     DM
@@ -59,8 +65,10 @@ model AllOtherUsers {
 
 model Channel {
     id           Int           @id @default(autoincrement())
-    channelType  ChannelType   @default(NORMAL)
+    channelMode  ChannelMode
     channelName  String        @unique
+    channelType  ChannelType   @default(NORMAL)
+    password     String        @default("")
     userMessages UserMessage[]
     memberships  Membership[]  @relation("ChannelMembership")
 }

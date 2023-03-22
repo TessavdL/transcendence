@@ -5,22 +5,22 @@
 			<br>
 			<ul>
 				<label>
-					<input type="radio" v-model="channelType" value="public" />
+					<input type="radio" v-model="channelMode" value="PUBLIC" />
 					Public
 				</label>
 
 				<label>
-					<input type="radio" v-model="channelType" value="protected" />
+					<input type="radio" v-model="channelMode" value="PROTECTED" />
 					Protected
 				</label>
 
-				<label v-if="channelType === 'protected'">
+				<label v-if="channelMode === 'PROTECTED'">
 					Password
 					<input v-model="channelPassword" type="password" />
 				</label>
 
 				<label>
-					<input type="radio" v-model="channelType" value="private" />
+					<input type="radio" v-model="channelMode" value="PRIVATE" />
 					Private
 				</label>
 			</ul>
@@ -105,7 +105,7 @@ export default {
 			allMyNormalChannels: ref<Channel[]>([]),
 
 			channelName: ref(''),
-			channelType: 'public',
+			channelMode: 'PUBLIC',
 			channelPassword: '',
 			dmChannelName: ref(''),
 			joined: false,
@@ -150,14 +150,21 @@ export default {
 		async createChannel() {
 			try {
 				// Send a POST request to create a new channel
-				await this.axiosInstance.post('chat/createChannel', { channelName: this.channelName });
+				const password: string = this.channelPassword;
+				this.channelPassword = '';
+				if (password === '') {
+					await this.axiosInstance.post('chat/createChannel', { channelMode: this.channelMode, channelName: this.channelName });
+				}
+				else {
+					await this.axiosInstance.post('chat/createChannel', { channelMode: this.channelMode, channelName: this.channelName, password: password });
+				}
 				this.errorMessage = '';
 
 				// Update this.allNormalChannels and this.allMyNormalChannels so it shows the newly created channel
 				this.getAllNormalChannels();
 				this.getMyNormalChannels();
 			} catch (error: any) {
-				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+				this.errorMessage = error?.response?.data?.reason || "Failed to create channel";
 			}
 		},
 
@@ -170,7 +177,7 @@ export default {
 				this.getAllNormalChannels();
 				this.getMyNormalChannels();
 			} catch (error: any) {
-				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+				this.errorMessage = error?.response?.data?.reason || "Failed to add user to channel";
 			}
 		},
 
@@ -184,7 +191,7 @@ export default {
 				this.getAllUsers();
 				this.getDMChannels();
 			} catch (error: any) {
-				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
+				this.errorMessage = error?.response?.data?.reason || "Failed to create direct message channel";
 			}
 		},
 
