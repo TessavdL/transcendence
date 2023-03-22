@@ -3,6 +3,7 @@ import { Channel, ChannelMode, User, UserMessage } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
+import { Member } from './types';
 
 
 @UseGuards(JwtAuthGuard)
@@ -84,6 +85,12 @@ export class ChatController {
 		const password: string = setPasswordDto.password;
 		const user: User = request.user;
 		return await this.chatService.setPasswordAndSetChannelModeToProtected(user, channelName, password);
+	}
+
+	@Get('getMembersInChannel')
+	async getMembersInChannel(@Query() params: { channelName: string }): Promise<Member[]> {
+		const channelName: string = params.channelName;
+		return await this.chatService.getMembersInChannel(channelName);
 	}
 
 	@Patch('promoteMemberToAdmin')

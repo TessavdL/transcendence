@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { Messages } from './types';
+import { Member, Messages } from './types';
 import * as argon2 from "argon2";
 
 @Injectable()
@@ -103,7 +103,7 @@ export class ChatService {
 			throw new HttpException({ reason: 'Channel already exists' }, HttpStatus.BAD_REQUEST);
 
 		try {
-			const newChannel = await this.prisma.channel.create({
+			await this.prisma.channel.create({
 				data: {
 					channelMode: 'PRIVATE',
 					channelName: channelName,
@@ -136,6 +136,22 @@ export class ChatService {
 			return channel;
 		} catch (error: any) {
 			throw new HttpException(`Cannot find channel: ${channelName}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	async getMembersWithUser(channelName: string): Promise<(Membership & { user: User; })[]> {
+		try {
+			const members: (Membership & { user: User })[] = await this.prisma.membership.findMany({
+				where: {
+					channelName: channelName,
+				},
+				include: {
+					user: true,
+				},
+			});
+			return members;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find channel: ${channelName} with members`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -172,7 +188,9 @@ export class ChatService {
 
 	async getAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
 		try {
-			const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
+			const channel: Channel & {
+				userMessages: UserMessage[];
+			} = await this.prisma.channel.findUnique({
 				where: {
 					channelName: channelName,
 				},
@@ -345,6 +363,17 @@ export class ChatService {
 	private async createHashedPassword(password: string): Promise<string> {
 		const hashed_password: string = await argon2.hash(password);
 		return (hashed_password);
+	}
+
+	async getMembersInChannel(channelName: string): Promise<Member[]> {
+		const membershipsWithUser: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
+		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User })) => ({
+			intraId: member.user.intraId,
+			name: member.user.name,
+			avatar: member.user.avatar,
+			role: member.role,
+		}));
+		return members;
 	}
 
 	async promoteMemberToAdmin(user: User, channelName: string, otherIntraId: number): Promise<void> {
