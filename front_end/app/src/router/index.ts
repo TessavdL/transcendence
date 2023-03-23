@@ -9,7 +9,7 @@ import ProfileOtherView from "@/views/ProfileOtherView.vue";
 import ProfileEditView from "@/views/ProfileEditView.vue";
 
 import ChatView0 from "@/views/ChatView0.vue";
-import ChatView from "@/views/ChatView.vue";
+import ChatView from "@/views/ChatViewTest.vue";
 
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
