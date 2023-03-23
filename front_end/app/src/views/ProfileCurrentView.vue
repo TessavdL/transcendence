@@ -2,7 +2,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-3 col-md-2 profile-sidebar">
-                <ProfileSideBar :userProflie="userProflie" />
+                <ProfileSideBar :userProfile="userProfile" />
 
                 <div class="profile-buttons">
                     <button type="button" class="btn btn-outline-primary watch-button" 
@@ -14,7 +14,7 @@
             </div>
 
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-                <ProfileMainTab :currentIntraId="userProflie.intraId" :currentName="userProflie.username" :currentAvatar="userProflie.avatar" />
+                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username" :currentAvatar="userProfile.avatar" />
             </div>
 
         </div>
@@ -27,9 +27,9 @@ import { ref, onMounted } from "vue";
 import ProfileSideBar from "@/components/ProfileSideBar.vue";
 import ProfileMainTab from "@/components/ProfileMainTab.vue";
 
-const userProflie = ref({
+const userProfile = ref({
     intraId: 0,
-    avatar: "http://localhost:5173/src/assets/logo_klein.png", //for testing
+    avatar: "http://localhost:3001/user/get_avatar?avatar=",
     username: "",
     activityStatus: "ONLINE",
     win: "00",
@@ -47,13 +47,13 @@ async function getCurrentUserProfile() {
             withCredentials: true,
         })
         .then(async (response) =>  {
-            userProflie.value.intraId = response.data.intraId;
-            // userProflie.value.avatar = response.data.avatar; //for testing, use the default avatar
-            userProflie.value.username = response.data.name;
-            userProflie.value.activityStatus = response.data.activityStatus;
-            // userProflie.value.win = response.data.win;
-            // userProflie.value.loss = response.data.loss;
-            // userProflie.value.ladderLevel = response.data.ladderLevel;
+            userProfile.value.intraId = response.data.intraId;
+            userProfile.value.avatar = userProfile.value.avatar + response.data.avatar;
+            userProfile.value.username = response.data.name;
+            userProfile.value.activityStatus = response.data.activityStatus;
+            // userProfile.value.win = response.data.win;
+            // userProfile.value.loss = response.data.loss;
+            // userProfile.value.ladderLevel = response.data.ladderLevel;
         })
         .catch(() => {
             console.log("cannot get users profile infomation");

@@ -2,8 +2,7 @@
     <div class="card info-card" style="width: 12rem; background-color: #094b5f;">
         <div>
             <RouterLink :to="{ name: 'ProfileOther', params: {intraId: props.user.intraId} }">
-                <img src="../assets/logo_klein.png" class="card-img-top avatar-pic" alt="avatar">
-                <!-- need to do dymatic avatar -->
+                <img :src="'http://localhost:3001/user/get_avatar?avatar=' + props.user.avatar" class="card-img-top avatar-pic" alt="avatar">
             </RouterLink>
         </div>
 
@@ -33,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+import { ref, defineProps } from 'vue';
 import ButtonsFriend from '@/components/ButtonsFriend.vue';
 import ButtonsBlock from '@/components/ButtonsBlock.vue';
 
@@ -51,6 +50,8 @@ const props = defineProps({
 
 .avatar-pic {
     width: 10rem;
+    height: 10rem;
+    object-fit: cover;
     margin: 1rem auto 0rem;
     border-radius: 50%;
 

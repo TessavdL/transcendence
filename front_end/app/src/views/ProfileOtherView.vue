@@ -2,17 +2,17 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-sm-3 col-md-2 profile-sidebar">
-                <ProfileSideBar :userProflie="userProflie" />
+                <ProfileSideBar :userProfile="userProfile" />
 
                 <div class="profile-buttons">
-                    <ButtonsFriend :friendStatus="userProflie.friendStatus" :intraId="props.intraId" />
-                    <ButtonsBlock :blockedState="userProflie.blockedState" :intraId="props.intraId" />
+                    <ButtonsFriend :friendStatus="userProfile.friendStatus" :intraId="props.intraId" />
+                    <ButtonsBlock :blockedState="userProfile.blockedState" :intraId="props.intraId" />
                 </div>
                 
             </div>
 
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-                <ProfileMainTab :currentIntraId="userProflie.intraId" :currentName="userProflie.username" :currentAvatar="userProflie.avatar" />
+                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username" :currentAvatar="userProfile.avatar" />
             </div>
 
         </div>
@@ -31,9 +31,9 @@ const props = defineProps({
     intraId: String,
 });
 
-const userProflie = ref({
+const userProfile = ref({
     intraId: 0,
-    avatar: "http://localhost:5173/src/assets/logo_klein.png", //for testing
+    avatar: "http://localhost:3001/user/get_avatar?avatar=",
     username: "",
     activityStatus: "ONLINE",
     blockedState: false,
@@ -53,24 +53,21 @@ async function getUserProfile() {
             withCredentials: true,
         })
         .then(async (response) =>  {
-            userProflie.value.intraId = response.data.intraId;
-            // userProflie.value.avatar = response.data.avatar; //for testing, use the default avatar
-            userProflie.value.username = response.data.username;
-            userProflie.value.activityStatus = response.data.activityStatus;
-            userProflie.value.blockedState = response.data.blockedState;
-            userProflie.value.friendStatus = response.data.friendStatus;
-            // userProflie.value.win = response.data.win;
-            // userProflie.value.loss = response.data.loss;
-            // userProflie.value.ladderLevel = response.data.ladderLevel;
+            userProfile.value.intraId = response.data.intraId;
+            userProfile.value.avatar = userProfile.value.avatar + response.data.avatar;
+            userProfile.value.username = response.data.username;
+            userProfile.value.activityStatus = response.data.activityStatus;
+            userProfile.value.blockedState = response.data.blockedState;
+            userProfile.value.friendStatus = response.data.friendStatus;
+            // userProfile.value.win = response.data.win;
+            // userProfile.value.loss = response.data.loss;
+            // userProfile.value.ladderLevel = response.data.ladderLevel;
         })
         .catch(() => {
             console.log("cannot get users profile infomation");
         });
 };
 
-function watchGame() {
-    console.log(userProflie.value);
-}
 </script>
 
 <style scoped>
