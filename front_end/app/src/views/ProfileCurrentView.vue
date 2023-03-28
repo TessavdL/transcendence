@@ -29,7 +29,7 @@ import ProfileMainTab from "@/components/ProfileMainTab.vue";
 
 const userProfile = ref({
     intraId: 0,
-    avatar: "http://localhost:3001/user/get_avatar?avatar=",
+    avatar: "",
     username: "",
     activityStatus: "ONLINE",
     win: "00",
@@ -48,7 +48,7 @@ async function getCurrentUserProfile() {
         })
         .then(async (response) =>  {
             userProfile.value.intraId = response.data.intraId;
-            userProfile.value.avatar = userProfile.value.avatar + response.data.avatar;
+            userProfile.value.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar;
             userProfile.value.username = response.data.name;
             userProfile.value.activityStatus = response.data.activityStatus;
             // userProfile.value.win = response.data.win;

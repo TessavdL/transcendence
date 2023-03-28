@@ -5,34 +5,32 @@
     
                     <div class="col-sm-3 col-md-2 chat-sidebar">
                         <ul class="nav flex-column">
-                            <li class="nav-item">
-                                <h2 class="nav-element" @click="changeChatMain('allChannels')">
+                            <li class="nav-item ">
+                                <h2 class="nav-element" @click="openRoute('/chat/ChatChannelList')">
                                     <i class="bi bi-border-all" style="font-size: 1.5rem; color: #ffffff;"></i>
                                     View All Channels</h2>
                             </li>
                             <li class="nav-item">
                                 <h2 class="nav-element">My Channels
-                                    <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="changeChatMain('mychannels')"></i>
+                                    <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="openRoute('/chat/ChatCreateChannel')"></i>
                                 </h2>
-                                </li>
+                                <div class="chanel-list" v-for="channel in myChannels" :key="channel.id">
+                                    <span>{{ channel.channelName }}</span>
+                                </div>
+                            </li>
                             <li class="nav-item">
                                 <h2 class="nav-element">Direct Messages
-                                    <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="changeChatMain('dm')"></i>
+                                    <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="openRoute('/chat/ChatUserList')"></i>
                                 </h2>
+                                <div class="chanel-list" v-for="channel in myDms" :key="channel.id">
+                                    <span>{{ channel.channelName }}</span>
+                                </div>
                             </li>
                         </ul>
                     </div>
                     
-                    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 chat-main" :key="componentKey">
-                        <div v-if="chatMain==='allChannels'">
-                            <h2>All Channels</h2>
-                        </div>
-                        <div v-if="chatMain==='mychannels'">
-                            <h2>My Channels</h2>
-                        </div>
-                        <div v-if="chatMain==='dm'">
-                            <h2>Direct Msg</h2>
-                        </div>
+                    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 chat-main">
+                        <router-view />
                     </div>
     
                 </div>
@@ -41,50 +39,85 @@
 </template>
     
 <script setup lang="ts">
-    import axios from "axios";
-    import { ref, onMounted } from "vue";
-    
-    const componentKey = ref(0);
-    const componentRerender = () => {
-        componentKey.value += 1;
-    }
-    
-    let chatMain = ref<String>("");
-    function changeChatMain(chatType: String) {
-        chatMain.value = chatType;
-        console.log(chatType);
-        componentRerender();
-    }
-    
-    // const users = ref([]);
-    // const filteredUsers= ref([]);
-    // const filterCat = ref<String>('none');
-    
-    // onMounted(async () => {
-    //     await getUsers();
-    //     filteredUsers.value = [...users.value];
-    // });
-    
-    // async function getUsers() {
-    //     await axios
-    //         .get("http://localhost:3001/user/users", {
-    //             withCredentials: true,
-    //         })
-    //         .then(async (response) =>  {
-    //             users.value = response.data;
-    //         })
-    //         .catch(() => {
-    //             console.log("failed get users infomation");
-    //         });
-    // };
+import axios from "axios";
+import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import type { Channel } from "../types/ChatType";
+
+const router = useRouter();
+function openRoute(routePath: string) {
+    router.push(routePath);
+}
+
+onMounted(async () => {
+    await getMyChannels();
+    await getMyDms();
+
+});
+
+const myChannels = ref<Channel[]>([]);
+const myDms = ref<Channel[]>([]);
+
+async function getMyChannels(): Promise<void> {
+    await axios
+        .get("http://localhost:3001/chat/getAllChannels", {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            const channels = response.data;
+            const normalChannels: Channel[] = channels.filter((type) => {
+				return (type.channelType === 'NORMAL');
+			});
+            myChannels.value = normalChannels.map(channel => {
+				return {
+					id: channel.id,
+					channelName: channel.channelName,
+                    channelMode: channel.channelMode,
+				};
+			});
+            console.log(myChannels.value); //testing
+        })
+        .catch((error: any) => {
+            console.log(error?.response?.data?.reason);
+        });
+};
+
+async function getMyDms(): Promise<void> {
+    await axios
+        .get("http://localhost:3001/chat/getAllChannels", {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            const channels = response.data;
+            const DmChannels: Channel[] = channels.filter((type) => {
+				return (type.channelType === 'DM');
+			});
+            myDms.value = DmChannels.map(channel => {
+				return {
+					id: channel.id,
+					channelName: channel.channelName,
+                    channelMode: channel.channelMode,
+				};
+			});
+            console.log(myDms.value);
+        })
+        .catch((error: any) => {
+            console.log(error?.response?.data?.reason);
+        });
+};
+
+
 </script>
     
 <style scoped>
     h2 {
         color: #ffffff;
+        text-align: start;
     }
+
     .nav-item {
-        margin: 10px auto;
+        margin-top: 10px;
+        margin-bottom: 10px;
     }
     
     .nav-element {
@@ -92,10 +125,21 @@
         color: #ffffff;
         font-weight: bold;
     }
+
+    .chanel-list{
+        margin-top: 10px;
+        margin-bottom: 10px;
+        margin-left: 10px;
+        font-size: 16px;
+        color: #ffffff;
+        font-weight: bold;
+        text-align: start;
+
+    }
     
     .chat-sidebar {
         position: fixed;
-        width: 230px;
+        width: 240px;
         top: 70px;
         bottom: 0;
         left: 0;
@@ -108,7 +152,7 @@
     }
     
     .chat-main {
-        padding-left: 230px;
+        padding-left: 240px;
         color: #ffffff;
     }
     

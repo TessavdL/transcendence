@@ -10,6 +10,11 @@ import ProfileEditView from "@/views/ProfileEditView.vue";
 
 import ChatView0 from "@/views/ChatView0.vue";
 import ChatView from "@/views/ChatViewTest.vue";
+import ChatUserList from "@/components/ChatUserList.vue";
+import ChatChannelList from "@/components/ChatChannelList.vue";
+import ChatCreateChannel from "@/components/ChatCreateChannel.vue";
+import ChatBox from "@/components/ChatBox.vue";
+
 
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
@@ -61,7 +66,29 @@ const router = createRouter({
     {
       path: '/chat',
       name: 'Chat',
-      component: ChatView
+      component: ChatView,
+      children: [
+        {
+          path: '/chat/ChatUserList',
+          name: 'ChatUserList',
+          component: ChatUserList,
+        },
+        {
+          path: '/chat/ChatChannelList',
+          name: 'ChatChannelList',
+          component: ChatChannelList,
+        },
+        {
+          path: '/chat/ChatCreateChannel',
+          name: 'ChatCreateChannel',
+          component: ChatCreateChannel,
+        },
+        {
+          path: '/chat/Chatbox',
+          name: 'ChatBox',
+          component: ChatBox,
+        },
+      ],
     },
   ]
 })

@@ -33,7 +33,7 @@ const props = defineProps({
 
 const userProfile = ref({
     intraId: 0,
-    avatar: "http://localhost:3001/user/get_avatar?avatar=",
+    avatar: "",
     username: "",
     activityStatus: "ONLINE",
     blockedState: false,
@@ -54,7 +54,7 @@ async function getUserProfile() {
         })
         .then(async (response) =>  {
             userProfile.value.intraId = response.data.intraId;
-            userProfile.value.avatar = userProfile.value.avatar + response.data.avatar;
+            userProfile.value.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar;
             userProfile.value.username = response.data.username;
             userProfile.value.activityStatus = response.data.activityStatus;
             userProfile.value.blockedState = response.data.blockedState;
