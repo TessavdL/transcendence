@@ -22,7 +22,7 @@
                             <RouterLink class="nav-link" to="/users">User</RouterLink>
                         </li>
                         <li class="nav-item">
-                            <RouterLink class="nav-link" to="/chat0">Chat</RouterLink>
+                            <RouterLink class="nav-link" to="/chat">Chat</RouterLink>
                         </li>
 
                         <li class="nav-item dropdown">
