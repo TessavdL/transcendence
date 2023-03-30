@@ -13,7 +13,7 @@ import ChatView from "@/views/ChatViewTest.vue";
 import ChatUserList from "@/components/ChatUserList.vue";
 import ChatChannelList from "@/components/ChatChannelList.vue";
 import ChatCreateChannel from "@/components/ChatCreateChannel.vue";
-import ChatBox from "@/components/ChatBox.vue";
+import ChatBoxDm from "@/components/ChatBoxDm.vue";
 
 
 import LogoutView from "@/views/LogoutView.vue";
@@ -84,9 +84,10 @@ const router = createRouter({
           component: ChatCreateChannel,
         },
         {
-          path: '/chat/Chatbox',
-          name: 'ChatBox',
-          component: ChatBox,
+          path: '/chat/ChatboxDm/:channelName',
+          name: 'ChatBoxDm',
+          component: ChatBoxDm,
+          props: true,
         },
       ],
     },

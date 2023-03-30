@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref } from "vue";
+import { ref, defineEmits } from "vue";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import { ChannelMode } from "@/types/ChatType"
@@ -43,6 +43,10 @@ const toast = useToast();
 const channelName = ref('');
 const channelType = ref(ChannelMode.PUBLIC);
 const channelPassword = ref('');
+
+const emit = defineEmits<{
+    (event: "isActionSuccess"): boolean;
+}>();
 
 function createChannel() {
     createRequestBody();
@@ -76,9 +80,10 @@ async function sendCreateChannelRequest() {
             toast.add({
                 severity: "success",
                 summary: "Success",
-                detail: "Done",
+                detail: "Created",
                 life: 3000,
-            })
+            });
+            emit("isActionSuccess", true);
         })
         .catch(() => {
             toast.add({
@@ -86,8 +91,9 @@ async function sendCreateChannelRequest() {
                 summary: "Error",
                 detail: errorMessage(ErrorType.CREATE_CHANNEL_FAILED),
                 life: 3000,
-            });        
-    });
+            });
+            emit("isActionSuccess", false);
+        });
 };
 
 </script>

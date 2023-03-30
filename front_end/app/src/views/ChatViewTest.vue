@@ -15,7 +15,12 @@
                                     <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="openRoute('/chat/ChatCreateChannel')"></i>
                                 </h2>
                                 <div class="chanel-list" v-for="channel in myChannels" :key="channel.id">
-                                    <span>{{ channel.channelName }}</span>
+                                    <span @click="openRoute('/chat/ChatboxDm/' + channel.channelName)">
+                                        <i class="bi bi-broadcast-pin" v-if="channel.channelMode==='PUBLIC'"></i>
+                                        <i class="bi bi-shield-fill" v-if="channel.channelMode==='PRIVATE'"></i>
+                                        <i class="bi bi-lock-fill" v-if="channel.channelMode==='PROTECTED'"></i>
+                                        {{ channel.channelName }}
+                                    </span>
                                 </div>
                             </li>
                             <li class="nav-item">
@@ -23,14 +28,14 @@
                                     <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="openRoute('/chat/ChatUserList')"></i>
                                 </h2>
                                 <div class="chanel-list" v-for="channel in myDms" :key="channel.id">
-                                    <span>{{ channel.channelName }}</span>
+                                    <span @click="openDm(channel.channelName)">{{ channel.channelName }}</span>
                                 </div>
                             </li>
                         </ul>
                     </div>
                     
                     <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 chat-main">
-                        <router-view />
+                        <router-view :key="$route.fullPath" @isActionSuccess="catchEvent($event)"/>
                     </div>
     
                 </div>
@@ -43,20 +48,33 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
 import type { Channel } from "../types/ChatType";
+import ChatBoxDm from "@/components/ChatBoxDm.vue";
+
+const myChannels = ref<Channel[]>([]);
+const myDms = ref<Channel[]>([]);
 
 const router = useRouter();
 function openRoute(routePath: string) {
     router.push(routePath);
 }
+function openDm(subpath: string) {
+    router.push({
+        name: 'ChatBoxDm',
+        params: { channelName: subpath }
+    });
+}
 
 onMounted(async () => {
     await getMyChannels();
     await getMyDms();
-
 });
 
-const myChannels = ref<Channel[]>([]);
-const myDms = ref<Channel[]>([]);
+function catchEvent(event) {
+    if (event)  {
+        getMyDms();
+        getMyChannels();
+    }
+}
 
 async function getMyChannels(): Promise<void> {
     await axios
@@ -75,7 +93,6 @@ async function getMyChannels(): Promise<void> {
                     channelMode: channel.channelMode,
 				};
 			});
-            console.log(myChannels.value); //testing
         })
         .catch((error: any) => {
             console.log(error?.response?.data?.reason);
@@ -99,14 +116,11 @@ async function getMyDms(): Promise<void> {
                     channelMode: channel.channelMode,
 				};
 			});
-            console.log(myDms.value);
         })
         .catch((error: any) => {
             console.log(error?.response?.data?.reason);
         });
 };
-
-
 </script>
     
 <style scoped>
