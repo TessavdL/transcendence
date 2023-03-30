@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { Messages } from './types';
+import { Member, Messages } from './types';
 import * as argon2 from "argon2";
 
 @Injectable()
@@ -48,7 +48,7 @@ export class ChatService {
 				},
 			});
 			return (newChannel.channelName);
-		} catch (error) {
+		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
@@ -102,7 +102,7 @@ export class ChatService {
 			throw new HttpException({ reason: 'Channel already exists' }, HttpStatus.BAD_REQUEST);
 
 		try {
-			const newChannel = await this.prisma.channel.create({
+			await this.prisma.channel.create({
 				data: {
 					channelMode: 'PRIVATE',
 					channelName: channelName,
@@ -120,12 +120,12 @@ export class ChatService {
 			});
 			this.addUserToChannel(otherIntraId, channelName);
 			return channelName;
-		} catch (error) {
+		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
 
-	async getChannel(channelName: string): Promise<Channel> | null {
+	async getChannel(channelName: string): Promise<Channel> {
 		try {
 			const channel: Channel = await this.prisma.channel.findUnique({
 				where: {
@@ -133,9 +133,24 @@ export class ChatService {
 				},
 			});
 			return channel;
-		} catch (error) {
-			this.logger.log(error);
-			return null;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find channel: ${channelName}`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	async getMembersWithUser(channelName: string): Promise<(Membership & { user: User; })[]> {
+		try {
+			const members: (Membership & { user: User })[] = await this.prisma.membership.findMany({
+				where: {
+					channelName: channelName,
+				},
+				include: {
+					user: true,
+				},
+			});
+			return members;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find channel: ${channelName} with members`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -143,12 +158,12 @@ export class ChatService {
 		try {
 			const channels: Channel[] = await this.prisma.channel.findMany({});
 			return channels;
-		} catch (error) {
-			throw new InternalServerErrorException(error.message);
+		} catch (error: any) {
+			throw new HttpException('Cannot find channels', HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	async getMyChannels(user: User): Promise<Channel[]> | null {
+	async getMyChannels(user: User): Promise<Channel[]> {
 		try {
 			const memberships: { channelName: string }[] = await this.prisma.membership.findMany({
 				where: {
@@ -165,15 +180,16 @@ export class ChatService {
 				)
 			);
 			return channels;
-		} catch (error) {
-			this.logger.log(error);
-			return null;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find ${user.name}'s channels`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	async getAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
 		try {
-			const channel: Channel & { userMessages: UserMessage[]; } = await this.prisma.channel.findUnique({
+			const channel: Channel & {
+				userMessages: UserMessage[];
+			} = await this.prisma.channel.findUnique({
 				where: {
 					channelName: channelName,
 				},
@@ -182,8 +198,8 @@ export class ChatService {
 				}
 			});
 			return channel.userMessages;
-		} catch (error) {
-			throw new InternalServerErrorException(error.message);
+		} catch (error: any) {
+			throw new HttpException(`Cannot find messages in ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -211,7 +227,7 @@ export class ChatService {
 		try {
 			this.addMessageToChannel(intraId, channelName, user.name, text);
 			return (message);
-		} catch (error) {
+		} catch (error: any) {
 			throw new WsException(error.message);
 		}
 	}
@@ -233,7 +249,7 @@ export class ChatService {
 					},
 				},
 			});
-		} catch (error) {
+		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
@@ -306,7 +322,7 @@ export class ChatService {
 	}
 
 	private async checkCredentials(user: User, channelName: string, password: string) {
-		if (await this.getRole(user, channelName) !== 'OWNER') {
+		if (await this.getRole(user.intraId, channelName) !== 'OWNER') {
 			throw new HttpException('User is not the owner of the channel and does not have the rights to change password', HttpStatus.BAD_REQUEST);
 		}
 		if (await this.getChannelType(channelName) === 'DM') {
@@ -317,34 +333,98 @@ export class ChatService {
 		}
 	}
 
-	private async getRole(user: User, channelName: string): Promise<Role> {
+	private async getRole(intraId: number, channelName: string): Promise<Role> {
 		try {
-			const membership: Membership = await this.prisma.membership.findFirst({
+			const membership: Membership = await this.prisma.membership.findUnique({
 				where: {
-					channelName: channelName,
-					user: {
-						intraId: user.intraId,
+					intraId_channelName: {
+						intraId: intraId,
+						channelName: channelName,
 					},
 				},
 			});
 			const role: Role = membership.role;
 			return (role);
 		} catch (error: any) {
-			throw new InternalServerErrorException();
+			throw new HttpException(`Cannot find membership of user with intraId: ${intraId} to ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	private async getChannelType(channelName): Promise<ChannelType> {
+	private async getChannelType(channelName: string): Promise<ChannelType> {
 		try {
 			const channel: Channel = await this.getChannel(channelName);
 			return (channel.channelType);
 		} catch (error: any) {
-			throw new InternalServerErrorException();
+			throw new HttpException(`Cannot find type of channel: ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	private async createHashedPassword(password: string): Promise<string> {
 		const hashed_password: string = await argon2.hash(password);
 		return (hashed_password);
+	}
+
+	async getMembersInChannel(channelName: string): Promise<Member[]> {
+		const membershipsWithUser: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
+		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User })) => ({
+			intraId: member.user.intraId,
+			name: member.user.name,
+			avatar: member.user.avatar,
+			role: member.role,
+		}));
+		return members;
+	}
+
+	async promoteMemberToAdmin(user: User, channelName: string, otherIntraId: number): Promise<void> {
+		const userRole: Role = await this.getRole(user.intraId, channelName);
+		const otherUserRole: Role = await this.getRole(otherIntraId, channelName);
+		if (userRole !== 'OWNER') {
+			throw new HttpException('User is not the owner of the channel and does not have the rights to promote member', HttpStatus.BAD_REQUEST);
+		}
+		if (otherUserRole !== 'MEMBER') {
+			throw new HttpException('Other user is not a member', HttpStatus.BAD_REQUEST);
+		}
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: {
+						intraId: otherIntraId,
+						channelName: channelName,
+					},
+				},
+				data: {
+					role: 'ADMIN',
+				},
+			});
+		}
+		catch (error: any) {
+			throw new InternalServerErrorException();
+		}
+	}
+
+	async demoteAdminToMember(user: User, channelName: string, otherIntraId: number): Promise<void> {
+		const userRole: Role = await this.getRole(user.intraId, channelName);
+		const otherUserRole: Role = await this.getRole(otherIntraId, channelName);
+		if (userRole !== 'OWNER') {
+			throw new HttpException('User is not the owner of the channel and does not have the rights to demote admin', HttpStatus.BAD_REQUEST);
+		}
+		if (otherUserRole !== 'ADMIN') {
+			throw new HttpException('Other user is not an admin', HttpStatus.BAD_REQUEST);
+		}
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: {
+						intraId: otherIntraId,
+						channelName: channelName,
+					},
+				},
+				data: {
+					role: 'MEMBER',
+				},
+			});
+		} catch (error: any) {
+			throw new InternalServerErrorException();
+		}
 	}
 }
