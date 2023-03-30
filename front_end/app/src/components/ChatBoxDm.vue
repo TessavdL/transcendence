@@ -66,6 +66,7 @@ onMounted(async () => {
 onUnmounted(() => {
   socket.off("joinChannel");
   socket.off("sendMessageToChannel");
+  socket.off("message");
 });
 
 const toast = useToast();
