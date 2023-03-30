@@ -15,7 +15,7 @@
                                     <i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;" @click="openRoute('/chat/ChatCreateChannel')"></i>
                                 </h2>
                                 <div class="chanel-list" v-for="channel in myChannels" :key="channel.id">
-                                    <span @click="openRoute('/chat/ChatboxDm/' + channel.channelName)">
+                                    <span @click="openChannel(channel.channelName)">
                                         <i class="bi bi-broadcast-pin" v-if="channel.channelMode==='PUBLIC'"></i>
                                         <i class="bi bi-shield-fill" v-if="channel.channelMode==='PRIVATE'"></i>
                                         <i class="bi bi-lock-fill" v-if="channel.channelMode==='PROTECTED'"></i>
@@ -48,7 +48,6 @@ import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
 import type { Channel } from "../types/ChatType";
-import ChatBoxDm from "@/components/ChatBoxDm.vue";
 
 const myChannels = ref<Channel[]>([]);
 const myDms = ref<Channel[]>([]);
@@ -60,6 +59,12 @@ function openRoute(routePath: string) {
 function openDm(subpath: string) {
     router.push({
         name: 'ChatBoxDm',
+        params: { channelName: subpath }
+    });
+}
+function openChannel(subpath: string) {
+    router.push({
+        name: 'ChatBoxChannel',
         params: { channelName: subpath }
     });
 }
@@ -135,7 +140,7 @@ async function getMyDms(): Promise<void> {
     }
     
     .nav-element {
-        font-size: 20px;
+        font-size: 18px;
         color: #ffffff;
         font-weight: bold;
     }

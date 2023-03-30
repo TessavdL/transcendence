@@ -1,24 +1,24 @@
 <template>
-    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 chatbox-dm">
+    <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 chatbox-ch">
         <div class="row">
-            <div class="dm-header d-inline-flex">
-                <div class="dm-avatar dm-header-item">
-                    <img src="../assets/logo_klein.png" class="avatar-pic-mini" alt="avatar">
+            <div class="ch-header d-inline-flex">
+                <!-- <div class="ch-avatar ch-header-item">
+                    <i class="bi bi-wechat"></i>
+                </div> -->
+                <div class="ch-name ch-header-item flex-grow-1">
+                    <h3><i class="bi bi-wechat" style="font-size: 2rem; color: #ffffff;"></i> {{ props.channelName }}</h3>
                 </div>
-                <div class="dm-name dm-header-item flex-grow-1">
-                    <h3>{{ props.channelName }}</h3>
-                </div>
-                <div class="dm-dropdown dm-header-item">
+                <div class="ch-dropdown ch-header-item">
                     <i class="bi bi-sliders2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 2rem; color: #ffffff;"></i>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#">Invite for Game</a></li>
-                        <li><a class="dropdown-item" href="#">View Profile</a></li>
+                        <li><a class="dropdown-item" href="#">View All Members</a></li>
+                        <li><a class="dropdown-item" href="#">Channel Settings</a></li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        <div class="dm-body" id="messageBody">
+        <div class="ch-body" id="messageBody">
             <div class="msg-container" v-for="msg in allMessages" :key="msg.text">
                 <div class="single-msg d-flex flex-column">
                     <div class="msg-userinfo d-inline-flex">
@@ -33,7 +33,7 @@
             </div>
         </div>
 
-        <div class="dm-input">
+        <div class="ch-input">
             <div class="input-group mb-3">
                 <input type="text" class="form-control" placeholder="type in messages here" v-model="messageText" @keyup.enter="sendMessage()" >
                 <button class="btn btn-outline-secondary" type="button" id="button-msg" @click="sendMessage()">Send</button>
@@ -85,7 +85,7 @@ const messageText = ref('');
 async function joinChannel(channelName: string): Promise<void> {
     socket.emit('joinChannel', channelName);
     activeChannel.value = channelName;
-    activeChannelType.value = 'DM';
+    activeChannelType.value = 'NORMAL';
     await loadAllMessages();
 };
 
@@ -131,18 +131,11 @@ async function sendMessage() {
 </script>
 
 <style scoped>
-.chatbox-dm {
+.chatbox-ch {
     margin-left: 30px;
     margin-top: 10px;
     min-height: 760px;
     min-width: 500px;
-}
-
-.avatar-pic-mini {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
 }
 
 h3 {
@@ -152,10 +145,10 @@ h3 {
     text-align: left;
 }
 
-.dm-header-item {
+.ch-header-item {
     margin-right: 10px;
 }
-.dm-header{
+.ch-header{
     border-bottom: #c8b8b8 2px solid;
 }
 
@@ -179,13 +172,13 @@ h3 {
     margin-top: 15px;
 }
 
-.dm-input {
+.ch-input {
     position: fixed;
     bottom: 0;
     width: 50%;
     min-width: 500px;
 }
-.dm-body {
+.ch-body {
     display: flex; 
     flex-direction: column;
     overflow: auto;
