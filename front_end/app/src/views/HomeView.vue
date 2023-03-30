@@ -15,11 +15,6 @@
           @click="playGame">
             Play Game
         </button>
-        <button type="button" class="btn btn-outline-primary watch-button" 
-          style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;"
-          @click="watchGame">
-            Watch Game
-        </button>
       </div>
     </div>
     <div v-else>
