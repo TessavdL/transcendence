@@ -6,7 +6,6 @@ import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChann
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { Member } from './types';
 
-
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
