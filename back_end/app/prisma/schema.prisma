@@ -9,6 +9,7 @@ enum ActivityStatus {
 
 enum FriendStatus {
     NOT_FRIENDS
+    REQUESTED
     PENDING
     FRIENDS
 }
