@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
 import { Channel, ChannelMode, User, UserMessage } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
+import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { Member } from './types';
-
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -36,6 +36,14 @@ export class ChatController {
 		const intraId: number = user.intraId;
 		const channelName: string = addUserToChannel.channelName;
 		return await this.chatService.addUserToChannel(intraId, channelName);
+	}
+
+	@Delete('removeUserFromChannel')
+	async removeUserFromChannel(@Req() request, @Body() removeUserFromChannelDto: RemoveUserFromChannelDto): Promise<void> {
+		const user: User = request.user;
+		const intraId: number = user.intraId;
+		const channelName: string = removeUserFromChannelDto.channelName;
+		return await this.chatService.removeUserFromChannel(intraId, channelName);
 	}
 
 	@Get('getAllChannels')

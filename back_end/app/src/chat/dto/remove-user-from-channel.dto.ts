@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty } from 'class-validator';
 
-export class AddUserToChannelDto {
+export class RemoveUserFromChannelDto {
 	@IsString()
 	@IsNotEmpty()
 	channelName: string;

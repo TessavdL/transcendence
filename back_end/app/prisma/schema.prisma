@@ -78,7 +78,7 @@ model Membership {
     role        Role    @default(MEMBER)
     user        User    @relation("UserMembership", fields: [intraId], references: [intraId])
     intraId     Int
-    channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName])
+    channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
     channelName String
 
     @@unique([intraId, channelName])
@@ -89,7 +89,7 @@ model UserMessage {
     intraId     Int
     name        String
     text        String
-    channel     Channel? @relation(fields: [channelName], references: [channelName])
+    channel     Channel? @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
     channelName String?
 }
 

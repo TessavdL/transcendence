@@ -53,6 +53,42 @@ export class ChatService {
 		}
 	}
 
+	async createDMChannel(user: User, otherIntraId: number): Promise<string> {
+		const getChannel = (intraId: number, otherIntraId: number): string => {
+			let members: string[] = [intraId.toString(), otherIntraId.toString()];
+			members = members.sort();
+			return (`${members.at(0)}&${members.at(1)}`);
+		}
+		const channelName: string = getChannel(user.intraId, otherIntraId);
+
+		const existingChannel: Channel = await this.getChannel(channelName);
+		if (existingChannel)
+			throw new HttpException({ reason: 'Channel already exists' }, HttpStatus.BAD_REQUEST);
+
+		try {
+			await this.prisma.channel.create({
+				data: {
+					channelMode: 'PRIVATE',
+					channelName: channelName,
+					channelType: 'DM',
+					memberships: {
+						create: {
+							user: {
+								connect: {
+									intraId: user.intraId
+								},
+							},
+						},
+					},
+				},
+			});
+			this.addUserToChannel(otherIntraId, channelName);
+			return channelName;
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async addUserToChannel(intraId: number, channelName: string): Promise<void> {
 		try {
 			const channel: Channel = await this.getChannel(channelName);
@@ -89,37 +125,73 @@ export class ChatService {
 		}
 	}
 
-	async createDMChannel(user: User, otherIntraId: number): Promise<string> {
-		const getChannel = (intraId: number, otherIntraId: number): string => {
-			let members: string[] = [intraId.toString(), otherIntraId.toString()];
-			members = members.sort();
-			return (`${members.at(0)}&${members.at(1)}`);
-		}
-		const channelName: string = getChannel(user.intraId, otherIntraId);
-
-		const existingChannel: Channel = await this.getChannel(channelName);
-		if (existingChannel)
-			throw new HttpException({ reason: 'Channel already exists' }, HttpStatus.BAD_REQUEST);
-
+	async removeUserFromChannel(intraId: number, channelName: string): Promise<void> {
 		try {
-			await this.prisma.channel.create({
-				data: {
-					channelMode: 'PRIVATE',
+			const role: Role = await this.getRole(intraId, channelName);
+			const count: number = await this.getAmountOfMembersInChannel(channelName);
+			console.log(role, count);
+			if (count === 1) {
+				return (this.deleteChannel(channelName));
+			}
+			await this.prisma.membership.delete({
+				where: {
+					intraId_channelName: {
+						intraId: intraId,
+						channelName: channelName,
+					}
+				}
+			});
+			if (role === 'OWNER') {
+				return (this.transferOwnership(channelName));
+			}
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	private async deleteChannel(channelName: string): Promise<void> {
+		try {
+			await this.prisma.channel.delete({
+				where: {
 					channelName: channelName,
-					channelType: 'DM',
-					memberships: {
-						create: {
-							user: {
-								connect: {
-									intraId: user.intraId
-								},
-							},
-						},
-					},
+				}
+			})
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	private async transferOwnership(channelName: string): Promise<void> {
+		try {
+			let member: Membership = await this.prisma.membership.findFirst({
+				where: {
+					channelName: channelName,
+					role: 'ADMIN',
 				},
 			});
-			this.addUserToChannel(otherIntraId, channelName);
-			return channelName;
+			if (!member) {
+				member = await this.prisma.membership.findFirst({
+					where: {
+						channelName: channelName,
+					},
+				});
+			}
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: {
+						intraId: member.intraId,
+						channelName: channelName,
+					},
+				},
+				data: {
+					role: 'OWNER',
+				},
+			});
+			member = await this.prisma.membership.findFirst({
+				where: {
+					channelName: channelName,
+				},
+			});
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
@@ -330,6 +402,19 @@ export class ChatService {
 		}
 		if (password !== '' && await this.checkPassword(channelName, password) === false) {
 			throw new HttpException('Old password is not correct', HttpStatus.BAD_REQUEST);
+		}
+	}
+
+	private async getAmountOfMembersInChannel(channelName: string) {
+		try {
+			const count: number = await this.prisma.membership.count({
+				where: {
+					channelName: channelName,
+				},
+			});
+			return (count);
+		} catch (error: any) {
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
