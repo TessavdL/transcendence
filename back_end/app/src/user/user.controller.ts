@@ -67,7 +67,7 @@ export class UserController {
 			storage: diskStorage({
 				destination: './uploads',
 				filename: (req, file, cb) => {
-					const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+					const uniqueSuffix = Date.now();
 					cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
 				},
 			}),
@@ -80,6 +80,9 @@ export class UserController {
 		}),
 	)
 	async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+		if (!file || !file.filename) {
+			throw new BadRequestException('No file uploaded');
+		}
 		return file.filename;
 	}
 }

@@ -8,6 +8,7 @@ export class UpdateUserProfileDto {
     @Matches(/^[ A-Za-z0-9_@./#&+-]*$/)
     username: string
 
+    @
     @IsString()
     @IsNotEmpty()
     avatar: string
