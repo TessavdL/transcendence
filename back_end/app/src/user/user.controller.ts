@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Res } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
@@ -8,6 +8,9 @@ import { UserElement } from './types';
 import { UserService } from './user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { UploadAvatarDto } from './dto/upload-avatar-dto';
+
+export const UPLOADS_DIRECTORY = './uploads';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -65,7 +68,7 @@ export class UserController {
 	@UseInterceptors(
 		FileInterceptor('avatar', {
 			storage: diskStorage({
-				destination: './uploads',
+				destination: UPLOADS_DIRECTORY,
 				filename: (_, file, cb) => {
 					const uniqueSuffix = Date.now()
 					cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
@@ -83,13 +86,18 @@ export class UserController {
 		}),
 	)
 
-	async uploadAvatar(@Req() request, @UploadedFile() file: Express.Multer.File) {
+	async uploadAvatar(
+		@Req() request,
+		@UploadedFile() file: Express.Multer.File): Promise<UploadAvatarDto> {
 		if (!file || !file.filename) {
 			throw new BadRequestException('No file uploaded');
 		}
-
 		const userId = request.user.id;
-		await this.userService.uploadAvatar(userId, file);
-		return file.filename;
+		const filePath = `${UPLOADS_DIRECTORY}/${file.filename}`;
+		await this.userService.uploadAvatar(userId, filePath);
+
+		const uploadAvatarDto = new UploadAvatarDto();
+		uploadAvatarDto.avatarFileName = filePath;
+		return uploadAvatarDto;
 	}
 }

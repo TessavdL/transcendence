@@ -232,11 +232,10 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
-	async uploadAvatar(id: number, file: Express.Multer.File): Promise<void> {
-		const avatarFilePath: string = `uploads/${file.filename}`;
+	async uploadAvatar(id: number, filePath: string): Promise<void> {
 		await this.prisma.user.update({
 			where: { id: id },
-			data: { avatar: avatarFilePath },
+			data: { avatar: filePath },
 		});
 	}
 }
