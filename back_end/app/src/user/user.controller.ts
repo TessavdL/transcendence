@@ -49,10 +49,10 @@ export class UserController {
 		return (this.userService.createDummyUser());
 	}
 
-    @Get('get_avatar')
-    getAvatar(@Query('avatar') avatar: string): StreamableFile {
-        return (this.userService.getAvatar(avatar));
-    }
+	@Get('get_avatar')
+	getAvatar(@Query('avatar') avatar: string): StreamableFile {
+		return (this.userService.getAvatar(avatar));
+	}
 
 	@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
@@ -66,23 +66,30 @@ export class UserController {
 		FileInterceptor('avatar', {
 			storage: diskStorage({
 				destination: './uploads',
-				filename: (req, file, cb) => {
-					const uniqueSuffix = Date.now();
+				filename: (_, file, cb) => {
+					const uniqueSuffix = Date.now()
 					cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
 				},
 			}),
-			fileFilter: (req, file, cb) => {
+			fileFilter: (_, file, cb) => {
 				if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
 					return cb(new BadRequestException('Only image files are allowed!'), false);
 				}
 				cb(null, true);
 			},
+			// limits: {
+			// 	fileSize: 1048576 // 1MB in bytes
+			// }
 		}),
 	)
-	async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
+
+	async uploadAvatar(@Req() request, @UploadedFile() file: Express.Multer.File) {
 		if (!file || !file.filename) {
 			throw new BadRequestException('No file uploaded');
 		}
+
+		const userId = request.user.id;
+		await this.userService.uploadAvatar(userId, file);
 		return file.filename;
 	}
 }

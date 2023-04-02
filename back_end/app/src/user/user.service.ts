@@ -227,8 +227,16 @@ export class UserService {
 		return (userElement);
 	}
 
-    getAvatar(avatar: string): StreamableFile {
-        const file = createReadStream(join(process.cwd(), avatar));
-        return new StreamableFile(file);
-    }
+	getAvatar(avatar: string): StreamableFile {
+		const file = createReadStream(join(process.cwd(), avatar));
+		return new StreamableFile(file);
+	}
+
+	async uploadAvatar(id: number, file: Express.Multer.File): Promise<void> {
+		const avatarFilePath: string = `uploads/${file.filename}`;
+		await this.prisma.user.update({
+			where: { id: id },
+			data: { avatar: avatarFilePath },
+		});
+	}
 }
