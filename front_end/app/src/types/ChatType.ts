@@ -4,9 +4,11 @@ export interface Channel {
 	channelType: string;
 }
 
-export interface Messages {
+export interface Message {
+	channelName: string;
 	intraId: number;
 	name: string;
+	avatar: string;
 	text: string;
 }
 
@@ -14,3 +16,10 @@ export interface User {
 	intraId: number;
 	name: string;
 }
+
+export interface DMInfo {
+	channelName: string;
+	otherUserAvatar: string;
+	otherUserIntraId: number;
+	otherUserName: string;
+}	

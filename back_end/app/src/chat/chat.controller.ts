@@ -1,10 +1,10 @@
 import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
-import { Channel, ChannelMode, User, UserMessage } from '@prisma/client';
+import { Channel, ChannelMode, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
-import { Member } from './types';
+import { DMChannel, Member, Message } from './types';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -57,10 +57,16 @@ export class ChatController {
 		return await this.chatService.getMyChannels(user);
 	}
 
+	@Get('getMyDMChannelsWithUser')
+	async getMyDMChannelsWithUser(@Req() request): Promise<DMChannel[]> {
+		const user: User = request.user;
+		return await this.chatService.getMyDMChannelsWithUser(user);
+	}
+
 	@Get('getAllMessagesInChannel')
-	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<UserMessage[]> {
+	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<Message[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.getAllMessagesInChannel(channelName);
+		return await this.chatService.getMessages(channelName);
 	}
 
 	@Get('checkPassword')

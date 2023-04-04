@@ -17,7 +17,7 @@ import { JwtStrategy } from 'src/auth/strategy';
 import { ActivityStatus, User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { ChatService } from './chat.service';
-import { Messages } from './types';
+import { Message } from './types';
 
 @WebSocketGateway({
 	cors: {
@@ -85,8 +85,8 @@ export class ChatGateway
 	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }) {
 		const text = data.messageText;
 		const channelName = data.channelName;
-		const message: Messages = await this.chatService.handleChannelMessage(client, channelName, text);
-
+		const message: Message = await this.chatService.handleChannelMessage(client, channelName, text);
+		console.log(message);
 		this.server.to(channelName).emit('message', message);
 	}
 
