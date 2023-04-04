@@ -56,8 +56,8 @@
 	<div class="all-dmchannels" v-if="!joined">
 		<h2>All My DMChannels</h2>
 		<ul style="list-style: none;">
-			<li v-for="dmchannel in allDMChannels" :key="dmchannel.channelName">
-				<a @click="joinDMChannel(dmchannel.channelName)" class="button">{{ dmchannel.channelName }}</a>
+			<li v-for="dmchannel in dmInfo" :key="dmchannel.channelName">
+				<a @click="joinDMChannel(dmchannel.channelName)" class="button">{{ dmchannel.otherUserName }}</a>
 			</li>
 		</ul>
 	</div>
@@ -73,7 +73,7 @@
 
 	<div class="chat" v-if="joined">
 		<div class="message-container">
-			<h2>All Messages in {{ activeChannel }}:</h2>
+			<h2>All Messages from {{ getActiveChannelName(activeChannel) }}:</h2>
 			<div v-for="mes in allMessages" :key="mes.intraId">
 				[{{ mes.name }}]: {{ mes.text }}
 			</div>
@@ -90,7 +90,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Message, User } from "../types/ChatType";
+import type { Channel, Message, User, DMInfo } from "../types/ChatType";
 
 export default {
 	data() {
@@ -99,7 +99,7 @@ export default {
 			activeChannelType: ref(''),
 
 			allUsers: ref<User[]>([]),
-			allDMChannels: ref<Channel[]>([]),
+			dmInfo: ref<DMInfo[]>([]),
 
 			allNormalChannels: ref<Channel[]>([]),
 			allMyNormalChannels: ref<Channel[]>([]),
@@ -107,7 +107,7 @@ export default {
 			channelName: ref(''),
 			channelMode: 'PUBLIC',
 			channelPassword: '',
-			dmChannelName: ref(''),
+
 			joined: false,
 			errorMessage: ref(''),
 			messageText: ref(''),
@@ -264,15 +264,17 @@ export default {
 
 		async getDMChannels(): Promise<void> {
 			try {
-				const channels: Channel[] = await this.getAllMyChannels();
-				const myDMChannels: Channel[] = channels.filter((type) => {
-					return (type.channelType === 'DM');
-				})
-				this.allDMChannels = myDMChannels.map(({ id, channelName, channelType }) => ({
-					id,
-					channelName,
-					channelType: channelType.toString(),
-				}));
+				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
+				const channels = response.data;
+				const dmInfo: DMInfo[] = channels.map((item) => {
+					return {
+						channelName: item.channel.channelName,
+						otherUserAvatar: item.otherUser.avatar,
+						otherUserIntraId: item.otherUser.intraId,
+						otherUserName: item.otherUser.name,
+					};
+				});
+				this.dmInfo = dmInfo;
 			} catch (error: any) {
 				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
 			}
@@ -283,7 +285,7 @@ export default {
 		},
 
 		isDMMember(otherIntraId: number) {
-			return this.allDMChannels.some((myDMChannel) => myDMChannel.channelName.includes(otherIntraId.toString()));
+			return this.dmInfo.some((item) => item.otherUserIntraId === otherIntraId);
 		},
 
 		async joinChannel(channel: string): Promise<void> {
@@ -316,7 +318,6 @@ export default {
 					channelType: this.activeChannelType,
 				}
 				const response = await this.axiosInstance.get('chat/getAllMessagesInChannel', { params: request });
-				console.log(response.data);
 				const allMessages: Message[] = response.data;
 				this.allMessages = allMessages;
 			} catch (error: any) {
@@ -328,6 +329,16 @@ export default {
 			const user = this.allUsers.find(x => x.intraId === otherIntraId);
 			return user?.name;
 		},
+
+		getActiveChannelName(channelName: string) {
+			const channel = this.dmInfo.find((x) => x.channelName === channelName);
+			if (channel) {
+				return (channel.otherUserName);
+			}
+			else {
+				return (channelName);
+			}
+		}
 	},
 }
 </script>

@@ -16,3 +16,10 @@ export interface User {
 	intraId: number;
 	name: string;
 }
+
+export interface DMInfo {
+	channelName: string;
+	otherUserAvatar: string;
+	otherUserIntraId: number;
+	otherUserName: string;
+}	
