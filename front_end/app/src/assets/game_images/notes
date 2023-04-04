@@ -1,0 +1,15 @@
+update() {
+	const ballPosition = {
+		top: this.ballPosition.top + this.ballVelocity.y,
+		left: this.ballPosition.left + this.ballVelocity.x,
+	};
+	if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
+	this.ballVelocity.y = -this.ballVelocity.y;
+	}
+	if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
+		this.ballVelocity.x = -this.ballVelocity.x;
+	}
+	this.socket.emit('updateBallPosition', ballPosition);
+	this.ballPosition = ballPosition;
+	requestAnimationFrame(this.update);
+	},
