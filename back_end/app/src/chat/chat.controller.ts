@@ -4,7 +4,8 @@ import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
-import { Member, Message } from './types';
+import { DMChannel, Member, Message } from './types';
+import { request } from 'http';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -55,6 +56,12 @@ export class ChatController {
 	async getMyChannels(@Req() request): Promise<Channel[]> {
 		const user = request.user;
 		return await this.chatService.getMyChannels(user);
+	}
+
+	@Get('getMyDMChannelsWithUser')
+	async getMyDMChannelsWithUser(@Req() request): Promise<DMChannel[]> {
+		const user: User = request.user;
+		return await this.chatService.getMyDMChannelsWithUser(user);
 	}
 
 	@Get('getAllMessagesInChannel')

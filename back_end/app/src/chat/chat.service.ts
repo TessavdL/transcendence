@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { Member, Message } from './types';
+import { DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
 
 @Injectable()
@@ -257,23 +257,43 @@ export class ChatService {
 		}
 	}
 
-	// async getAllMessagesInChannel(channelName: string): Promise<Message[]> {
-	// 	try {
-	// 		const channel: Channel & {
-	// 			userMessages: UserMessage[];
-	// 		} = await this.prisma.channel.findUnique({
-	// 			where: {
-	// 				channelName: channelName,
-	// 			},
-	// 			include: {
-	// 				userMessages: true,
-	// 			},
-	// 		});
-	// 		return channel.userMessages;
-	// 	} catch (error: any) {
-	// 		throw new HttpException(`Cannot find messages in ${channelName}`, HttpStatus.BAD_REQUEST);
-	// 	}
-	// }
+	async getMyDMChannelsWithUser(user: User): Promise<DMChannel[]> {
+		try {
+			const channelsWithMemberships: (Channel & { memberships: (Membership & { user: User; })[]; })[] =
+				await this.prisma.channel.findMany({
+					where: {
+						channelType: 'DM',
+					},
+					include: {
+						memberships: {
+							where: {
+								NOT: {
+									intraId: user.intraId,
+								},
+							},
+							include: {
+								user: true,
+							},
+						},
+					},
+				});
+
+			const DMChannels: DMChannel[] = channelsWithMemberships.map((channel) => {
+				const otherUser = channel.memberships[0]?.user;
+
+				return {
+					channel,
+					otherUser: otherUser,
+					user: user,
+				};
+			});
+			console.log(DMChannels);
+			return (DMChannels);
+		} catch (error: any) {
+			throw new HttpException(`Cannot find ${user.name}'s direct messages`, HttpStatus.BAD_REQUEST);
+
+		}
+	}
 
 	async getMessages(channelName: string): Promise<Message[]> {
 		try {

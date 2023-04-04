@@ -1,3 +1,5 @@
+import { Channel, User } from "@prisma/client";
+
 export interface Member {
 	intraId: number;
 	name: string;
@@ -11,4 +13,10 @@ export interface Message {
 	name: string;
 	avatar: string;
 	text: string;
+}
+
+export interface DMChannel {
+	channel: Channel;
+	otherUser: User;
+	user: User;
 }
