@@ -22,4 +22,11 @@ export interface DMInfo {
 	otherUserAvatar: string;
 	otherUserIntraId: number;
 	otherUserName: string;
-}	
+}
+
+export interface Member {
+	intraId: number;
+	name: string;
+	avatar: string;
+	role: "OWNER" | "ADMIN" | "MEMBER";
+}

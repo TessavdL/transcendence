@@ -92,6 +92,7 @@ export class ChatGateway
 
 	@SubscribeMessage('kickUser')
 	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }) {
+		console.log(data.otherIntraId, data.channelName);
 		const user: User = await this.userClientService.getUser(client.id);
 		const otherUserClientId = await this.userClientService.getClientId(data.otherIntraId);
 		const canBeKicked: boolean = await this.chatService.canBeKicked(user, data.otherIntraId, data.channelName);

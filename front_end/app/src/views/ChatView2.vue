@@ -82,6 +82,11 @@
 			<input v-model="messageText" type="text" placeholder="" />
 			<button type="submit">Send Message</button>
 		</form>
+		<div class="filterchanneltype" v-if="activeChannelType === 'NORMAL'">
+			<li v-for="member in allMembers" :key="member.intraId">
+				<a @click="kickUser(member.intraId, activeChannel)" class="button">{{ member.name }}</a>
+			</li>
+		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
 	</div>
 </template>
@@ -90,7 +95,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Message, User, DMInfo } from "../types/ChatType";
+import type { Channel, Message, User, DMInfo, Member } from "../types/ChatType";
 
 export default {
 	data() {
@@ -111,6 +116,7 @@ export default {
 			joined: false,
 			errorMessage: ref(''),
 			messageText: ref(''),
+			allMembers: ref<Member[]>([]),
 			allMessages: ref<Message[]>([]),
 		}
 	},
@@ -134,6 +140,9 @@ export default {
 	created() {
 		this.socket.on('message', (data) => {
 			this.allMessages.push(data);
+		});
+		this.socket.on('leaveChannel', (data) => {
+			this.leaveChannel();
 		});
 	},
 
@@ -266,6 +275,7 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
+				console.log(channels);
 				const dmInfo: DMInfo[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
@@ -294,6 +304,9 @@ export default {
 			this.activeChannelType = 'NORMAL';
 			this.joined = true;
 			await this.loadAllMessages();
+			const response = await this.axiosInstance.get('chat/getMembersInChannel', { params: { channelName: channel } });
+			this.allMembers = response.data;
+			console.log(this.allMembers);
 		},
 
 		async joinDMChannel(channel: string): Promise<void> {
@@ -309,6 +322,10 @@ export default {
 			this.activeChannel = '';
 			this.activeChannelType = '';
 			this.joined = false;
+		},
+
+		async kickUser(otherIntraId: number, channelName: string): Promise<void> {
+			this.socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
 
 		async loadAllMessages(): Promise<void> {

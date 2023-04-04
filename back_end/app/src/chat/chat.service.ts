@@ -263,6 +263,11 @@ export class ChatService {
 				await this.prisma.channel.findMany({
 					where: {
 						channelType: 'DM',
+						memberships: {
+							some: {
+								intraId: user.intraId,
+							},
+						},
 					},
 					include: {
 						memberships: {
@@ -509,6 +514,7 @@ export class ChatService {
 			avatar: member.user.avatar,
 			role: member.role,
 		}));
+		console.log(members);
 		return members;
 	}
 
@@ -571,11 +577,12 @@ export class ChatService {
 				intraId: {
 					in: [user.intraId, otherIntraId],
 				},
+				channelName: channelName,
 			},
-		})
+		});
 
-		const userRole: Role = memberships.find((id) => { id.intraId === user.intraId }).role;
-		const otherUserRole: Role = memberships.find((id) => { id.intraId === otherIntraId }).role;
+		const userRole: Role = memberships.find((member: Membership) => member.intraId === user.intraId).role;
+		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
 
 		const rank = {
 			OWNER: 3,
