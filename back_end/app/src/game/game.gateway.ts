@@ -2,30 +2,28 @@ import { ConnectedSocket, OnGatewayConnection, OnGatewayInit, SubscribeMessage, 
 import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
 
-
 @WebSocketGateway({
 	origin: 'http://localhost:5173',
 	credentials: true,
 	namespace: "pong-game",
 })
 export class GameGateway
-  implements OnGatewayInit, OnGatewayConnection {
-  constructor(private readonly gameService: GameService) {}
+	implements OnGatewayInit, OnGatewayConnection {
+	constructor(private readonly gameService: GameService) { }
 
-  afterInit(): void {
-	console.log('ChatGateway Initialized');
-}
+	afterInit(): void {
+		console.log('ChatGateway Initialized');
+	}
 
 	handleConnection(client: Socket, ...args: any[]) {
 		console.log("hi from backend");
 	}
 
-  @WebSocketServer()
-  server: Server;
+	@WebSocketServer()
+	server: Server;
 
-  @SubscribeMessage('movePaddle')
-  handlePaddleUp(@ConnectedSocket() client: Socket) {
-	  console.log('Reached backend');
-  }
-
+	@SubscribeMessage('movePaddle')
+	handlePaddleUp(@ConnectedSocket() client: Socket) {
+		console.log('Reached backend');
+	}
 }
