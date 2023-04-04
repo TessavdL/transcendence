@@ -512,4 +512,33 @@ export class ChatService {
 			throw new InternalServerErrorException();
 		}
 	}
+
+	async canBeKicked(user: User, otherIntraId: number, channelName: string): Promise<boolean> {
+		const memberships: Membership[] = await this.prisma.membership.findMany({
+			where: {
+				intraId: {
+					in: [user.intraId, otherIntraId],
+				},
+			},
+		})
+
+		const userRole: Role = memberships.find((id) => { id.intraId === user.intraId }).role;
+		const otherUserRole: Role = memberships.find((id) => { id.intraId === otherIntraId }).role;
+
+		const rank = {
+			OWNER: 3,
+			ADMIN: 2,
+			MEMBER: 1,
+		};
+
+		const userRank: number = rank[userRole];
+		const otherUserRank: number = rank[otherUserRole];
+
+		if (userRank > otherUserRank) {
+			return (true);
+		}
+		else {
+			return (false);
+		}
+	}
 }

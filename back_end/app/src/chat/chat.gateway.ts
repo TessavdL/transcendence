@@ -89,4 +89,14 @@ export class ChatGateway
 
 		this.server.to(channelName).emit('message', message);
 	}
+
+	@SubscribeMessage('kickUser')
+	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }) {
+		const user: User = await this.userClientService.getUser(client.id);
+		const otherUserClientId = await this.userClientService.getClientId(data.otherIntraId);
+		const canBeKicked: boolean = await this.chatService.canBeKicked(user, data.otherIntraId, data.channelName);
+		if (canBeKicked === true) {
+			this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
+		}
+	}
 }
