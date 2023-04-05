@@ -1,12 +1,12 @@
-import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { DMChannel, Member, Message } from './types';
+import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
 import * as argon2 from "argon2";
-import { BANMINUTES } from './constants';
+import { BANMINUTES, MUTEMINUTES } from './constants';
 
 @Injectable()
 export class ChatService {
@@ -555,6 +555,7 @@ export class ChatService {
 		if (otherUserRole !== 'ADMIN') {
 			throw new HttpException('Other user is not an admin', HttpStatus.BAD_REQUEST);
 		}
+
 		try {
 			await this.prisma.membership.update({
 				where: {
@@ -572,7 +573,7 @@ export class ChatService {
 		}
 	}
 
-	async canBeKicked(user: User, otherIntraId: number, channelName: string): Promise<boolean> {
+	async canBeKickedOrMuted(user: User, otherIntraId: number, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
 				intraId: {
@@ -582,31 +583,31 @@ export class ChatService {
 			},
 		});
 
+		if (!memberships) {
+			throw new HttpException('Could not find user and otheruser', HttpStatus.BAD_REQUEST);
+		}
+
 		const userRole: Role = memberships.find((member: Membership) => member.intraId === user.intraId).role;
 		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
 
+		return this.hasAuthority(userRole, otherUserRole);
+	}
+
+	private hasAuthority(userRole: Role, otherUserRole: Role): boolean {
 		const rank = {
 			OWNER: 3,
 			ADMIN: 2,
 			MEMBER: 1,
 		};
 
-		const userRank: number = rank[userRole];
-		const otherUserRank: number = rank[otherUserRole];
-
-		if (userRank > otherUserRank) {
-			return (true);
-		}
-		else {
-			return (false);
-		}
+		return rank[userRole] > rank[otherUserRole];
 	}
 
-	async banUser(otherIntraId: number, channelName: string): Promise<void> {
+	async banUser(intraId: number, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: otherIntraId, channelName: channelName },
+					intraId_channelName: { intraId: intraId, channelName: channelName },
 				},
 				data: {
 					banStatus: true,
@@ -615,7 +616,7 @@ export class ChatService {
 			});
 
 			setTimeout(async () => {
-				await this.unbanUser(otherIntraId, channelName);
+				await this.unbanUser(intraId, channelName);
 			},
 				60 * BANMINUTES * 1000,
 			);
@@ -624,11 +625,11 @@ export class ChatService {
 		}
 	}
 
-	async unbanUser(otherIntraId: number, channelName: string): Promise<void> {
+	async unbanUser(intraId: number, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: otherIntraId, channelName: channelName },
+					intraId_channelName: { intraId: intraId, channelName: channelName },
 				},
 				data: {
 					banStatus: false,
@@ -637,6 +638,102 @@ export class ChatService {
 			});
 		} catch (error: any) {
 			throw new InternalServerErrorException('Failed to set banStatus and banTimer');
+		}
+	}
+
+	async muteUser(intraId: number, channelName: string): Promise<void> {
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				data: {
+					muteStatus: true,
+					muteTimer: new Date(),
+				},
+			});
+
+			setTimeout(async () => {
+				await this.unmuteUser(intraId, channelName);
+			},
+				60 * MUTEMINUTES * 1000,
+			);
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to set muteStatus and muteTimer');
+		}
+	}
+
+	async unmuteUser(intraId: number, channelName: string): Promise<void> {
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				data: {
+					muteStatus: false,
+					muteTimer: null,
+				},
+			});
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to set muteStatus and muteTimer');
+		}
+	}
+
+	async isMemberBanned(intraId: number, channelName: string): Promise<BanInfo> {
+		try {
+			const { banStatus, banTimer }: { banStatus: boolean, banTimer: Date } = await this.prisma.membership.findUnique({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				select: {
+					banStatus: true,
+					banTimer: true,
+				},
+			});
+			if (banStatus === true) {
+				const banTime: number = (Math.floor(banTimer.getTime() - new Date().getTime())) / 1000;
+				return {
+					banStatus: banStatus,
+					banTime: banTime,
+				};
+			}
+			else {
+				return {
+					banStatus: false,
+					banTime: null,
+				};
+			}
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to get mute status and mute time information');
+		}
+	}
+
+	async isMemberMuted(intraId: number, channelName: string): Promise<MuteInfo> {
+		try {
+			const { muteStatus, muteTimer }: { muteStatus: boolean, muteTimer: Date } = await this.prisma.membership.findUnique({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				select: {
+					muteStatus: true,
+					muteTimer: true,
+				},
+			});
+			if (muteStatus === true) {
+				const muteTime: number = (Math.floor(muteTimer.getTime() - new Date().getTime())) / 1000;
+				return {
+					muteStatus: muteStatus,
+					muteTime: muteTime,
+				};
+			}
+			else {
+				return {
+					muteStatus: false,
+					muteTime: null,
+				};
+			}
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to get mute status and mute time information');
 		}
 	}
 }
