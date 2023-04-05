@@ -263,6 +263,11 @@ export class ChatService {
 				await this.prisma.channel.findMany({
 					where: {
 						channelType: 'DM',
+						memberships: {
+							some: {
+								intraId: user.intraId,
+							},
+						},
 					},
 					include: {
 						memberships: {
