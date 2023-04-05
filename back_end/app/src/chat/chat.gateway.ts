@@ -90,14 +90,30 @@ export class ChatGateway
 		this.server.to(channelName).emit('message', message);
 	}
 
+	// currently only users that are in the channel can be kicked, otherUserClientId needs to exist
 	@SubscribeMessage('kickUser')
-	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }) {
-		console.log(data.otherIntraId, data.channelName);
+	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		const user: User = await this.userClientService.getUser(client.id);
-		const otherUserClientId = await this.userClientService.getClientId(data.otherIntraId);
+		const otherUserClientId: string = await this.userClientService.getClientId(data.otherIntraId);
 		const canBeKicked: boolean = await this.chatService.canBeKicked(user, data.otherIntraId, data.channelName);
 		if (canBeKicked === true) {
 			this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
 		}
 	}
+
+	// currently users are banned, whether they are in the channel or not
+	// if they are in the channel they are also kicked
+	@SubscribeMessage('banUser')
+	async banUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
+		const user: User = await this.userClientService.getUser(client.id);
+		const otherUserClientId: string = await this.userClientService.getClientId(data.otherIntraId);
+		const canBeKicked: boolean = await this.chatService.canBeKicked(user, data.otherIntraId, data.channelName);
+		if (canBeKicked === true) {
+			if (otherUserClientId) {
+				this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
+			}
+			await this.chatService.banUser(data.otherIntraId, data.channelName);
+		}
+	}
+
 }

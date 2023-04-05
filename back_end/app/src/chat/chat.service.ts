@@ -6,6 +6,7 @@ import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
+import { BANMINUTES } from './constants';
 
 @Injectable()
 export class ChatService {
@@ -598,6 +599,44 @@ export class ChatService {
 		}
 		else {
 			return (false);
+		}
+	}
+
+	async banUser(otherIntraId: number, channelName: string): Promise<void> {
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: { intraId: otherIntraId, channelName: channelName },
+				},
+				data: {
+					banStatus: true,
+					banTimer: new Date(),
+				},
+			});
+
+			setTimeout(async () => {
+				await this.unbanUser(otherIntraId, channelName);
+			},
+				60 * BANMINUTES * 1000,
+			);
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to set banStatus and banTimer');
+		}
+	}
+
+	async unbanUser(otherIntraId: number, channelName: string): Promise<void> {
+		try {
+			await this.prisma.membership.update({
+				where: {
+					intraId_channelName: { intraId: otherIntraId, channelName: channelName },
+				},
+				data: {
+					banStatus: false,
+					banTimer: null,
+				},
+			});
+		} catch (error: any) {
+			throw new InternalServerErrorException('Failed to set banStatus and banTimer');
 		}
 	}
 }

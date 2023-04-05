@@ -75,11 +75,15 @@ model Channel {
 }
 
 model Membership {
-    id          Int     @id @default(autoincrement())
-    role        Role    @default(MEMBER)
-    user        User    @relation("UserMembership", fields: [intraId], references: [intraId])
+    id          Int       @id @default(autoincrement())
+    role        Role      @default(MEMBER)
+    banStatus   Boolean   @default(false)
+    banTimer    DateTime?
+    muteStatus  Boolean   @default(false)
+    muteTimer   DateTime?
+    user        User      @relation("UserMembership", fields: [intraId], references: [intraId])
     intraId     Int
-    channel     Channel @relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
+    channel     Channel   @relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
     channelName String
 
     @@unique([intraId, channelName])
