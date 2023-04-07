@@ -18,7 +18,9 @@ const props = defineProps({
 
 <style scoped>
 .avatar-pic-mini {
+    object-fit: cover;
     width: 40px;
+    height: 40px;
     margin: 1rem auto 0rem;
     border-radius: 50%;
 }

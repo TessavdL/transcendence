@@ -2,7 +2,7 @@
     <div class="match-history d-flex flex-row justify-content-around align-items-center">
         <MiniProfile :avatar="props.currentAvatar" :username="props.currentName" />
         <p class="match-score">{{ props.matchRecord.currentScore }} - {{ props.matchRecord.otherScore }}</p>
-        <MiniProfile :avatar="props.matchRecord.otherAvatar" :username="props.matchRecord.otherName" />
+        <MiniProfile :avatar="avatarPrefix + props.matchRecord.otherAvatar" :username="props.matchRecord.otherName" />
     </div>
 </template>
 
@@ -15,6 +15,8 @@ const props = defineProps({
     currentAvatar: String,
     matchRecord: Object,
 });
+
+const avatarPrefix = ref("http://localhost:3001/user/get_avatar?avatar=");
 
 </script>
 

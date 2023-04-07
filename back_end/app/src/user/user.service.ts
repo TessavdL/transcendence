@@ -4,7 +4,7 @@ import { createReadStream } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UserElement } from './types';
+import { FriendRequestList, UserElement } from './types';
 
 @Injectable()
 export class UserService {
@@ -42,7 +42,25 @@ export class UserService {
 			blockedState: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).blockedStatus,
 			friendStatus: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).friendStatus,
 		}
+		
+		return (singleElement);
+	}
 
+	async getFriendRequests(user: User): Promise<FriendRequestList[]> {
+		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+		const friendRequestList: FriendRequestList[] = await Promise.all(userlist.filter(friend => friend.allOtherUsers.find(x => x.friendStatus === 'REQUESTED')).map(otherUser => this.createFriendRequestListElement(otherUser, userWithAllOtherUsers)))
+
+		return (friendRequestList);
+	}
+
+	async createFriendRequestListElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User & { allOtherUsers: AllOtherUsers[]; }): Promise<FriendRequestList> {
+		const singleElement: FriendRequestList = {
+			intraId: otherUser.intraId,
+			username: otherUser.intraName,
+			avatar: otherUser.avatar,
+		}
+		
 		return (singleElement);
 	}
 
@@ -87,7 +105,7 @@ export class UserService {
 	async handleFriendRequest(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
 		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherUserIntraId);
 
-		if (otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus === 'PENDING') {
+		if (otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus === 'REQUESTED') {
 			return (this.befriendBothUsers(user, otherUser));
 		}
 		return (this.setRequestToPending(user, otherUserIntraId));
@@ -125,6 +143,17 @@ export class UserService {
 					intraId_otherIntraId: {
 						intraId: user.intraId,
 						otherIntraId: otherUserIntraId,
+					},
+				},
+				data: {
+					friendStatus: 'REQUESTED',
+				},
+			});
+			await this.prisma.allOtherUsers.update({
+				where: {
+					intraId_otherIntraId: {
+						intraId: otherUserIntraId,
+						otherIntraId: user.intraId,
 					},
 				},
 				data: {

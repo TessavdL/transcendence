@@ -4,7 +4,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { Member, Messages } from './types';
+import { Member, Message } from './types';
 import * as argon2 from "argon2";
 
 @Injectable()
@@ -257,55 +257,68 @@ export class ChatService {
 		}
 	}
 
-	async getAllMessagesInChannel(channelName: string): Promise<UserMessage[]> {
+	async getMessages(channelName: string): Promise<Message[]> {
 		try {
-			const channel: Channel & {
-				userMessages: UserMessage[];
-			} = await this.prisma.channel.findUnique({
+			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; intraName: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
 				where: {
 					channelName: channelName,
 				},
 				include: {
-					userMessages: true,
-				}
+					userMessages: {
+						include: {
+							user: {
+								select: {
+									intraId: true,
+									intraName: true,
+									avatar: true,
+								},
+							},
+						},
+					},
+				},
 			});
-			return channel.userMessages;
+
+			const messages: Message[] = channel.userMessages.map((mes) => ({
+				channelName: channelName,
+				intraId: mes.user.intraId,
+				name: mes.user.intraName,
+				avatar: mes.user.avatar,
+				text: mes.text,
+			}));
+			return messages;
 		} catch (error: any) {
 			throw new HttpException(`Cannot find messages in ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
-	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Messages> {
-		const intraId: number = await this.userClientService.getClientIntraId(client.id);
-		if (!intraId)
-			throw new WsException({ reason: `Client is invalid` });
-
-		const user: User = await this.prisma.user.findUnique({
-			where: {
-				intraId: intraId,
-			},
-		});
-
+	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Message> {
+		const user: User = await this.userClientService.getUser(client.id);
 		if (!user) {
 			throw new WsException({ reason: `Client is invalid` });
 		}
 
-		const message: Messages = {
-			intraId: intraId,
+		const message: Message = {
+			channelName: channelName,
+			intraId: user.intraId,
 			name: user.name,
+			avatar: user.avatar,
 			text: text,
 		};
 
 		try {
-			this.addMessageToChannel(intraId, channelName, user.name, text);
+			this.addMessageToChannel(user.intraId, channelName, text);
 			return (message);
 		} catch (error: any) {
 			throw new WsException(error.message);
 		}
 	}
 
-	async addMessageToChannel(intraId: number, channelName: string, name: string, text: string): Promise<void> {
-		const channel = await this.prisma.channel.findUnique({ where: { channelName } });
+	async addMessageToChannel(intraId: number, channelName: string, text: string): Promise<void> {
+		const channel = await this.prisma.channel.findUnique({
+			where: {
+				channelName
+			}
+		});
 		if (!channel) {
 			throw new HttpException({ reason: `Channel ${channelName} was not found` }, HttpStatus.BAD_REQUEST);
 		}
@@ -313,12 +326,13 @@ export class ChatService {
 		try {
 			await this.prisma.userMessage.create({
 				data: {
-					intraId: intraId,
-					name: name,
 					text: text,
 					channel: {
 						connect: { channelName },
 					},
+					user: {
+						connect: { intraId },
+					}
 				},
 			});
 		} catch (error: any) {

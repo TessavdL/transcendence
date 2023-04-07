@@ -4,7 +4,7 @@ import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
-import { Member } from './types';
+import { Member, Message } from './types';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -58,9 +58,9 @@ export class ChatController {
 	}
 
 	@Get('getAllMessagesInChannel')
-	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<UserMessage[]> {
+	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<Message[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.getAllMessagesInChannel(channelName);
+		return await this.chatService.getMessages(channelName);
 	}
 
 	@Get('checkPassword')

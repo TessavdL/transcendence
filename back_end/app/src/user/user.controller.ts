@@ -3,7 +3,7 @@ import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';
-import { UserElement } from './types';
+import { FriendRequestList, UserElement } from './types';
 import { UserService } from './user.service';
 import { UploadAvatarDto } from './dto/upload-avatar-dto';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
@@ -42,6 +42,11 @@ export class UserController {
 	@Get('usersexceptself')
 	getUserListExceptSelf(@Req() request): Promise<User[]> {
 		return (this.userService.getUserListExceptSelf(request.user));
+	}
+
+	@Get('friend_request_list')
+	getFriendRequests(@Req() request): Promise<FriendRequestList[]> {
+		return (this.userService.getFriendRequests(request.user));
 	}
 
 	@Get('createdummy')
