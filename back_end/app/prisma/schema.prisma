@@ -50,6 +50,7 @@ model User {
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
     memberships    Membership[]    @relation("UserMembership")
+    userMessage    UserMessage[]   @relation("UserMessage")
 }
 
 model AllOtherUsers {
@@ -85,12 +86,12 @@ model Membership {
 }
 
 model UserMessage {
-    id          Int      @id @default(autoincrement())
-    intraId     Int
-    name        String
+    id          Int     @id @default(autoincrement())
     text        String
-    channel     Channel? @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
-    channelName String?
+    channel     Channel @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
+    channelName String
+    user        User    @relation("UserMessage", fields: [intraId], references: [intraId])
+    intraId     Int
 }
 
 model Client {
