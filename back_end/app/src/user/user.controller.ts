@@ -4,7 +4,7 @@ import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';
-import { UserElement } from './types';
+import { FriendRequestList, UserElement } from './types';
 import { UserService } from './user.service';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -44,15 +44,20 @@ export class UserController {
 		return (this.userService.getUserListExceptSelf(request.user));
 	}
 
+	@Get('friend_request_list')
+	getFriendRequests(@Req() request): Promise<FriendRequestList[]> {
+		return (this.userService.getFriendRequests(request.user));
+	}
+
 	@Get('createdummy')
 	async createDummyUser(): Promise<void> {
 		return (this.userService.createDummyUser());
 	}
 
-    @Get('get_avatar')
-    getAvatar(@Query('avatar') avatar: string): StreamableFile {
-        return (this.userService.getAvatar(avatar));
-    }
+	@Get('get_avatar')
+	getAvatar(@Query('avatar') avatar: string): StreamableFile {
+		return (this.userService.getAvatar(avatar));
+	}
 
 	@Get(':id')
 	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
@@ -79,6 +84,7 @@ export class UserController {
 			},
 		}),
 	)
+	
 	async uploadAvatar(@UploadedFile() file: Express.Multer.File) {
 		return file.filename;
 	}
