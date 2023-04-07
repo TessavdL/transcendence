@@ -86,7 +86,6 @@ export class ChatGateway
 		const text = data.messageText;
 		const channelName = data.channelName;
 		const message: Message = await this.chatService.handleChannelMessage(client, channelName, text);
-		console.log(message);
 		this.server.to(channelName).emit('message', message);
 	}
 }

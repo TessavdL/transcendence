@@ -257,24 +257,6 @@ export class ChatService {
 		}
 	}
 
-	// async getAllMessagesInChannel(channelName: string): Promise<Message[]> {
-	// 	try {
-	// 		const channel: Channel & {
-	// 			userMessages: UserMessage[];
-	// 		} = await this.prisma.channel.findUnique({
-	// 			where: {
-	// 				channelName: channelName,
-	// 			},
-	// 			include: {
-	// 				userMessages: true,
-	// 			},
-	// 		});
-	// 		return channel.userMessages;
-	// 	} catch (error: any) {
-	// 		throw new HttpException(`Cannot find messages in ${channelName}`, HttpStatus.BAD_REQUEST);
-	// 	}
-	// }
-
 	async getMessages(channelName: string): Promise<Message[]> {
 		try {
 			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; intraName: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
