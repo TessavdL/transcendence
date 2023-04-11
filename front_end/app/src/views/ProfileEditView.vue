@@ -61,6 +61,7 @@ const avatar = ref<string>(storeUser.state.user.avatar);
 const twoFactor = ref<boolean>(storeUser.state.user.twoFactorEnabled);
 
 function handleFileUpload(event:any) {
+    console.log(event.target.files);
     avatar.value = event.target.files[0].name;
 }
 

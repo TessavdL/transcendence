@@ -40,6 +40,7 @@ body {
   font-family: var(--font-family);
   font-weight: 400;
   color: var(--text-color);
+  padding-top: 80px;
   background-image: url('./assets/design_photos/home_bg.jpg');
   background-repeat: no-repeat;
   background-attachment: fixed;
