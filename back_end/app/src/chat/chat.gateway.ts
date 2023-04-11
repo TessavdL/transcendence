@@ -117,10 +117,10 @@ export class ChatGateway
 			const otherUserClientId: string = await this.userClientService.getClientId(data.otherIntraId);
 			const canBeKicked: boolean = await this.chatService.canBeKickedOrMuted(user, data.otherIntraId, data.channelName);
 			if (canBeKicked === true) {
+				await this.chatService.banUser(data.otherIntraId, data.channelName);
 				if (otherUserClientId) {
 					this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
 				}
-				await this.chatService.banUser(data.otherIntraId, data.channelName);
 			}
 		} catch (error) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway banUser');
