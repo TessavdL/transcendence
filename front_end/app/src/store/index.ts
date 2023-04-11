@@ -61,6 +61,7 @@ const storeUser = createStore({
                         commit("updateId", response.data.id);
                         commit("updateIntraId", response.data.intraId);
                         commit("updateUserName", response.data.name);
+                        commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
                         // if (
                         //     response.data.isTwoFactorAuthEnabled &&
                         //     !response.data.isTwoFactorAuthenticated

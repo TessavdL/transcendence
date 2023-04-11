@@ -1,7 +1,14 @@
+export enum ChannelMode {
+    PRIVATE,
+	PROTECTED, 
+	PUBLIC
+}
+
 export interface Channel {
 	id: number;
 	channelName: string;
 	channelType: string;
+	channelMode: string;
 }
 
 export interface Message {
@@ -15,6 +22,7 @@ export interface Message {
 export interface User {
 	intraId: number;
 	name: string;
+	avatar: string;
 }
 
 export interface DMInfo {

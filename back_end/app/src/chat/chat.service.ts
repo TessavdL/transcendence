@@ -258,49 +258,6 @@ export class ChatService {
 		}
 	}
 
-	async getMyDMChannelsWithUser(user: User): Promise<DMChannel[]> {
-		try {
-			const channelsWithMemberships: (Channel & { memberships: (Membership & { user: User; })[]; })[] =
-				await this.prisma.channel.findMany({
-					where: {
-						channelType: 'DM',
-						memberships: {
-							some: {
-								intraId: user.intraId,
-							},
-						},
-					},
-					include: {
-						memberships: {
-							where: {
-								NOT: {
-									intraId: user.intraId,
-								},
-							},
-							include: {
-								user: true,
-							},
-						},
-					},
-				});
-
-			const DMChannels: DMChannel[] = channelsWithMemberships.map((channel) => {
-				const otherUser = channel.memberships[0]?.user;
-
-				return {
-					channel,
-					otherUser: otherUser,
-					user: user,
-				};
-			});
-			console.log(DMChannels);
-			return (DMChannels);
-		} catch (error: any) {
-			throw new HttpException(`Cannot find ${user.name}'s direct messages`, HttpStatus.BAD_REQUEST);
-
-		}
-	}
-
 	async getMessages(channelName: string): Promise<Message[]> {
 		try {
 			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; intraName: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
