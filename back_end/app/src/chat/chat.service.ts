@@ -83,7 +83,7 @@ export class ChatService {
 					},
 				},
 			});
-			this.addUserToChannel(otherIntraId, channelName);
+			await this.addUserToChannel(otherIntraId, channelName);
 			return channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
@@ -130,7 +130,6 @@ export class ChatService {
 		try {
 			const role: Role = await this.getRole(intraId, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
-			console.log(role, count);
 			if (count === 1) {
 				return (this.deleteChannel(channelName));
 			}
