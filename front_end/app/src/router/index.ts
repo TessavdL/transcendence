@@ -3,10 +3,17 @@ import storeUser from "@/store";
 
 import HomeView from '@/views/HomeView.vue';
 import GameView from "@/views/GameView.vue";
-import ChatView from "@/views/ChatView.vue";
+
 import ProfileCurrentView from "@/views/ProfileCurrentView.vue";
 import ProfileOtherView from "@/views/ProfileOtherView.vue";
 import ProfileEditView from "@/views/ProfileEditView.vue";
+
+import ChatView from "@/views/ChatView.vue";
+import ChatUserList from "@/components/ChatUserList.vue";
+import ChatChannelList from "@/components/ChatChannelList.vue";
+import ChatCreateChannel from "@/components/ChatCreateChannel.vue";
+import ChatBoxDm from "@/components/ChatBoxDm.vue";
+import ChatBoxChannel from "@/components/ChatBoxChannel.vue";
 
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
@@ -23,11 +30,6 @@ const router = createRouter({
       path: '/game',
       name: 'Game',
       component: GameView
-    },
-    {
-      path: '/chat',
-      name: 'Chat',
-      component: ChatView
     },
     {
       path: '/profile/current',
@@ -54,6 +56,40 @@ const router = createRouter({
       path: '/logout',
       name: 'Logout',
       component: LogoutView
+    },
+    {
+      path: '/chat',
+      name: 'Chat',
+      component: ChatView,
+      children: [
+        {
+          path: '/chat/ChatUserList',
+          name: 'ChatUserList',
+          component: ChatUserList,
+        },
+        {
+          path: '/chat/ChatChannelList',
+          name: 'ChatChannelList',
+          component: ChatChannelList,
+        },
+        {
+          path: '/chat/ChatCreateChannel',
+          name: 'ChatCreateChannel',
+          component: ChatCreateChannel,
+        },
+        {
+          path: '/chat/ChatboxDm/:channelName',
+          name: 'ChatBoxDm',
+          component: ChatBoxDm,
+          props: true,
+        },
+        {
+          path: '/chat/ChatBoxChannel/:channelName',
+          name: 'ChatBoxChannel',
+          component: ChatBoxChannel,
+          props: true,
+        },
+      ],
     },
   ]
 })
