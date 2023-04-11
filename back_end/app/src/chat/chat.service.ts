@@ -82,7 +82,7 @@ export class ChatService {
 					},
 				},
 			});
-			this.addUserToChannel(otherIntraId, channelName);
+			await this.addUserToChannel(otherIntraId, channelName);
 			return channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
@@ -129,7 +129,6 @@ export class ChatService {
 		try {
 			const role: Role = await this.getRole(intraId, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
-			console.log(role, count);
 			if (count === 1) {
 				return (this.deleteChannel(channelName));
 			}
@@ -292,7 +291,6 @@ export class ChatService {
 					user: user,
 				};
 			});
-			console.log(DMChannels);
 			return (DMChannels);
 		} catch (error: any) {
 			throw new HttpException(`Cannot find ${user.name}'s direct messages`, HttpStatus.BAD_REQUEST);
