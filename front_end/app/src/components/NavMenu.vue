@@ -1,6 +1,6 @@
 <template>
     <div>
-        <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
             <div class="container-fluid">
                 <!-- Logo -->
                 <a class="navbar-brand me-auto" href="#">
@@ -27,13 +27,13 @@
 
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img src="../assets/logo_klein.png" alt="Avatar" class="avatar d-inline-block align-text-center">
+                                <img :src="storeUser.state.user.avatar" alt="Avatar" class="avatar d-inline-block align-text-center">
                                 {{ storeUser.state.user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                                 <li><RouterLink class="nav-link" 
                                     :to="{name: 'ProfileCurrent'}">
-                                    View Proflie</RouterLink></li>
+                                    View Profile</RouterLink></li>
                                 <li><RouterLink class="nav-link" to="/logout">Log Out</RouterLink></li>
                             </ul>
                         </li>
@@ -61,7 +61,7 @@ import storeUser from "@/store";
     font-size: 20px;
 }
 .avatar {
-    /* vertical-align: middle; */
+    object-fit: cover;
     width: 35px;
     height: 35px;
     border-radius: 50%;

@@ -1,15 +1,15 @@
 <template>
-    <div class="friend-buttons">
-        <div class="d-grid gap-2" v-if="friendState === 'NOT_FRIENDS' ">
+    <div class="friend-buttons" :key="componentKey">
+        <div class="d-grid gap-2" v-if="friendtype === 'NOT_FRIENDS' ">
             <button type="button" class="btn btn-light" style="color:#042d3f;"
                  @click="addFriend">
                  Add Friend</button>
         </div>
-        <div class="d-grid gap-2" v-if="friendState === 'PENDING'">
+        <div class="d-grid gap-2" v-if="friendtype === 'PENDING'">
             <button type="button" class="btn btn-light disabled" style="color:#094b5f; background-color: #aab9ba;">
                  Requested</button>
             </div>
-        <div class="d-grid gap-2" v-if="friendStatus === 'FRIENDS'">
+        <div class="d-grid gap-2" v-if="friendtype === 'FRIENDS'">
             <button type="button" class="btn btn-light disabled" style="color:#ffffff; background-color: #147a99">
                 Friend</button>
         </div>
@@ -37,18 +37,18 @@ const componentRerender = () => {
     componentKey.value += 1;
 }
 
-let friendState = props.friendStatus;
+let friendtype = props.friendStatus;
 
 
 const addFriend = () => {
     console.log(props.intraId);
-    // confirm.require({
-    //   message: "Are you sure you want to add this user as user?",
-    //   header: "Confirmation",
-    //   accept: () => {
-    //     sendFriendRequest();
-    //   },
-    // });
+    confirm.require({
+      message: "Are you sure you want to add this user as user?",
+      header: "Confirmation",
+      accept: () => {
+        sendFriendRequest();
+      },
+    });
 }
 
 const friendRequestBody = {
@@ -62,7 +62,7 @@ async function sendFriendRequest() {
         })
         .then(async (response) =>  {
             console.log(response.data);
-            friendState = "PENDING";
+            friendtype = "PENDING";
             componentRerender();
             toast.add({
                 severity: "success",

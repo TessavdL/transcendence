@@ -43,9 +43,9 @@ const props = defineProps({
 });
 
 const matches = ref([
-    { otherName: 'John', otherAvatar: 'http://localhost:5173/src/assets/logo_klein.png', otherScore: 5, currentScore: 10, id: 1 },
-    { otherName: 'Mark', otherAvatar: 'http://localhost:5173/src/assets/logo_klein.png', otherScore: 10, currentScoreScore: 9, id: 2 },
-    { otherName: 'Peter', otherAvatar: 'http://localhost:5173/src/assets/logo_klein.png', otherScore: 7, currentScoreScore: 10, id: 3 }
+    { otherName: 'John', otherAvatar: 'src/assets/default_avatars/Cody_Sleepy.jpeg', otherScore: 5, currentScore: 10, id: 1 },
+    { otherName: 'Mark', otherAvatar: 'src/assets/default_avatars/Cody_Seal.jpeg', otherScore: 10, currentScore: 9, id: 2 },
+    { otherName: 'Peter', otherAvatar: 'src/assets/default_avatars/Cody_Sad.jpeg', otherScore: 7, currentScore: 10, id: 3 }
 ])
 
 </script>
