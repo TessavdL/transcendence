@@ -14,11 +14,10 @@ import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
-import { ActivityStatus, User } from '@prisma/client';
+import { ActivityStatus, Membership, User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { ChatService } from './chat.service';
 import { Message } from './types';
-import { ClientNotFoundError } from 'src/user/client/error';
 
 @WebSocketGateway({
 	cors: {
@@ -31,18 +30,15 @@ export class ChatGateway
 	constructor(
 		private readonly authService: AuthService,
 		private readonly chatService: ChatService,
-		private readonly userClientService: UserClientService,
 		private readonly userService: UserService,
 		private readonly jwtStrategy: JwtStrategy,
-	) { }
+	) {
+		this.clientToIntraId = new Map<string, number>();
+		this.channelToClientIds = new Map<string, string[]>();
+	}
 	private readonly logger: Logger = new Logger('WebsocketGateway');
-
-	// for easy access of clientId and intraId
 	private clientToIntraId: Map<string, number>;
-	private intraIdToClientId: Map<number, string>;
-
-	// channelName and clients (map of intraId and clientIds)
-	private clientChannel = new Map<string, Map<number, string[]>>;
+	private channelToClientIds: Map<string, string[]>;
 
 	@WebSocketServer()
 	server: Server;
@@ -56,13 +52,11 @@ export class ChatGateway
 
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
-			const payload: { name: string; sub: number } =
-				await this.authService.verifyToken(token);
+			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			const user: User = await this.jwtStrategy.validate(payload);
 
-			// add client to maps
+			// add client to map
 			this.clientToIntraId.set(client.id, user.intraId);
-			this.intraIdToClientId.set(user.intraId, client.id);
 
 			// set status to online
 			const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
@@ -77,16 +71,12 @@ export class ChatGateway
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
 			const intraId: number = this.clientToIntraId.get(client.id);
-			if (intraId === undefined) {
-				return;
-			}
 
-			const status: ActivityStatus = await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
-
-			// remove client from maps
+			// remove client from map
 			this.clientToIntraId.delete(client.id);
-			this.intraIdToClientId.delete(intraId);
 
+			// set status to offline			
+			const status: ActivityStatus = await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 			this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
 		} catch (error: any) {
 			this.logger.error(error);
@@ -94,32 +84,75 @@ export class ChatGateway
 	}
 
 	@SubscribeMessage('joinChannel')
-	handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+		const intraId: number = this.clientToIntraId.get(client.id);
+		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
+
+		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
+
+		const otherJoinedMembersInChannel = this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
+
+		// add client to channel map
+		this.channelToClientIds.set(channelName, [...otherClientsInChannel, client.id]);
+
+		// join channel
 		client.join(channelName);
+
+		// inform all other users in the channel that a user joined
+		this.server.to(channelName).emit('userJoined', member);
+
+		// inform current user which other members are in the channel
+		client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
+	}
+
+	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]) {
+		const otherUserIntraIds: number[] = otherClientsInChannel.map(clientId => this.clientToIntraId.get(clientId));
+
+		const otherMembersInChannel: (Membership & { user: User })[] = await this.chatService.getMembersWithUser(channelName);
+
+		const otherJoinedMembersInChannel: (Membership & { user: User })[] = otherMembersInChannel.filter(member => {
+			if (otherUserIntraIds.find(intraId => { intraId === member.user.intraId })) {
+				return member;
+			}
+		});
+
+		return otherJoinedMembersInChannel;
 	}
 
 	@SubscribeMessage('leaveChannel')
-	handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+		const intraId: number = this.clientToIntraId.get(client.id);
+		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
+
+		const clientsInChannel: string[] = this.channelToClientIds.get(channelName);
+		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
+		this.channelToClientIds.set(channelName, updatedClientsInChannel);
+
+		// leave channel
 		client.leave(channelName);
+
+		// inform all other users in the channel that a user left
+		this.server.to(channelName).emit('userLeft', member);
 	}
 
 	@SubscribeMessage('sendMessageToChannel')
 	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }) {
 		const text = data.messageText;
 		const channelName = data.channelName;
-		const message: Message = await this.chatService.handleChannelMessage(client, channelName, text);
+		const intraId = this.clientToIntraId.get(client.id)
+		const message: Message = await this.chatService.handleChannelMessage(intraId, channelName, text);
 		this.server.to(channelName).emit('message', message);
 	}
 
-	// currently only users that are in the channel can be kicked, otherUserClientId needs to exist
 	@SubscribeMessage('kickUser')
 	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		try {
-			const user: User = await this.userClientService.getUser(client.id);
-			const otherUserClientId: string = await this.userClientService.getClientId(data.otherIntraId);
-			const canBeKicked: boolean = await this.chatService.canBeKickedOrMuted(user, data.otherIntraId, data.channelName);
+			const intraId: number = this.clientToIntraId.get(client.id);
+			const clientIdsInChannel: string[] = this.channelToClientIds.get(data.channelName);
+			const canBeKicked: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
+			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeKicked === true) {
-				this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
+				this.server.to(clientIds).emit('leaveChannel', { channelName: data.channelName });
 			}
 			else {
 				this.server.to(client.id).emit('error', { message: 'Cannot kick user' });
@@ -134,13 +167,12 @@ export class ChatGateway
 	@SubscribeMessage('banUser')
 	async banUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		try {
-			const user: User = await this.userClientService.getUser(client.id);
-			const otherUserClientId: string = await this.userClientService.getClientId(data.otherIntraId);
-			const canBeKicked: boolean = await this.chatService.canBeKickedOrMuted(user, data.otherIntraId, data.channelName);
-			if (canBeKicked === true) {
-				if (otherUserClientId) {
-					this.server.to(otherUserClientId).emit('leaveChannel', { channelName: data.channelName });
-				}
+			const intraId: number = this.clientToIntraId.get(client.id);
+			const clientIdsInChannel: string[] = this.channelToClientIds.get(data.channelName);
+			const canBeBanned: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
+			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
+			if (canBeBanned === true) {
+				this.server.to(clientIds).emit('leaveChannel', { channelName: data.channelName });
 				await this.chatService.banUser(data.otherIntraId, data.channelName);
 			}
 		} catch (error) {
@@ -149,17 +181,27 @@ export class ChatGateway
 	}
 
 	// currently users are muted, whether they are in the channel or not
-	// techinally we can remove the error emit and put this function in the controller
+	// technically we can remove the error emit and put this function in the controller
 	@SubscribeMessage('muteUser')
 	async muteUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		try {
-			const user: User = await this.userClientService.getUser(client.id);
-			const canBeMuted: boolean = await this.chatService.canBeKickedOrMuted(user, data.otherIntraId, data.channelName);
+			const intraId: number = this.clientToIntraId.get(client.id);
+			const canBeMuted: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			if (canBeMuted === true) {
 				await this.chatService.muteUser(data.otherIntraId, data.channelName);
 			}
 		} catch (error) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
+	}
+
+	private getClientIds(clientIdsInChannel: string[], otherIntraId: number): string[] {
+		let clientIds: string[] = [];
+		for (const clientId of clientIdsInChannel) {
+			if (otherIntraId === this.clientToIntraId.get(clientId)) {
+				clientIds.push(clientId);
+			}
+		}
+		return clientIds;
 	}
 }

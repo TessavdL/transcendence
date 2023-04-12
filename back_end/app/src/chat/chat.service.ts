@@ -211,6 +211,22 @@ export class ChatService {
 		}
 	}
 
+	async getMemberWithUser(channelName: string, intraId: number): Promise<(Membership & { user: User; })> {
+		try {
+			const member: (Membership & { user: User; }) = await this.prisma.membership.findUnique({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				include: {
+					user: true,
+				},
+			});
+			return member;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find user`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
 	async getMembersWithUser(channelName: string): Promise<(Membership & { user: User; })[]> {
 		try {
 			const members: (Membership & { user: User })[] = await this.prisma.membership.findMany({
@@ -335,11 +351,8 @@ export class ChatService {
 		}
 	}
 
-	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Message> {
-		const user: User = await this.userClientService.getUser(client.id);
-		if (!user) {
-			throw new WsException({ reason: `Client is invalid` });
-		}
+	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
+		const user: User = await this.prisma.user.findUnique({ where: { intraId: intraId } });
 
 		const message: Message = {
 			channelName: channelName,
@@ -573,11 +586,11 @@ export class ChatService {
 		}
 	}
 
-	async canBeKickedOrMuted(user: User, otherIntraId: number, channelName: string): Promise<boolean> {
+	async canBePunished(intraId: number, otherIntraId: number, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
 				intraId: {
-					in: [user.intraId, otherIntraId],
+					in: [intraId, otherIntraId],
 				},
 				channelName: channelName,
 			},
@@ -587,7 +600,7 @@ export class ChatService {
 			throw new HttpException('Could not find user and otheruser', HttpStatus.BAD_REQUEST);
 		}
 
-		const userRole: Role = memberships.find((member: Membership) => member.intraId === user.intraId).role;
+		const userRole: Role = memberships.find((member: Membership) => member.intraId === intraId).role;
 		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
 
 		return this.hasAuthority(userRole, otherUserRole);
