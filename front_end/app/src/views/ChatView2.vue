@@ -288,7 +288,6 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
-				console.log(channels);
 				const dmInfo: DMInfo[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
@@ -314,14 +313,12 @@ export default {
 		async isBanned(channelName: string): Promise<Punishment> {
 			const response = await this.axiosInstance.get('chat/amIBanned', { params: { channelName: channelName } });
 			const ban: Punishment = response.data;
-			console.log(`${ban.status} ${ban.time}`);
 			return ban;
 		},
 
 		async isMuted(channelName: string): Promise<Punishment> {
 			const response = await this.axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
 			const mute: Punishment = response.data;
-			console.log(`${mute.status} ${mute.time}`);
 			return mute;
 		},
 

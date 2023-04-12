@@ -513,7 +513,6 @@ export class ChatService {
 			avatar: member.user.avatar,
 			role: member.role,
 		}));
-		console.log(members);
 		return members;
 	}
 
@@ -624,7 +623,6 @@ export class ChatService {
 	}
 
 	async unbanUser(intraId: number, channelName: string): Promise<void> {
-		console.log("unbanning user");
 		try {
 			await this.prisma.membership.update({
 				where: {
