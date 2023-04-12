@@ -92,7 +92,7 @@ const router = createRouter({
       ],
     },
     {
-      path: '/chat',
+      path: '/chat2',
       name: 'Chat2',
       component: ChatView2,
     },
