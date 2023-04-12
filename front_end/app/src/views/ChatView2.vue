@@ -307,6 +307,13 @@ export default {
 			return ban;
 		},
 
+		async isMuted(channelName: string): Promise<Punishment> {
+			const response = await this.axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
+			const mute: Punishment = response.data;
+			console.log(`${mute.status} ${mute.time}`);
+			return mute;
+		}
+
 		async joinChannel(channel: string): Promise<void> {
 			const ban: Punishment = await this.isBanned(channel);
 			if (ban.status === true) {

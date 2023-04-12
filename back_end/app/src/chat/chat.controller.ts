@@ -123,6 +123,9 @@ export class ChatController {
 		return await this.chatService.demoteAdminToMember(user, channelName, otherIntraId);
 	}
 
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
 	@Get('amIBanned')
 	async amIBanned(@Req() request, @Query() params: { channelName: string }): Promise<Punishment> {
 		const intraId: number = request.user.intraId;
@@ -130,7 +133,9 @@ export class ChatController {
 		return await this.chatService.isMemberBanned(intraId, channelName);
 	}
 
-	// returns a banStatus boolean and a banTime in seconds if banStatus is true, otherwise banTime is null
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
 	@Get('isMemberBanned')
 	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
 		const intraId: number = params.intraId;
@@ -138,7 +143,12 @@ export class ChatController {
 		return await this.chatService.isMemberBanned(intraId, channelName);
 	}
 
-	// returns a muteStatus boolean and a muteTime in seconds if muteStatus is true, otherwise muteTime is null
+	// @Get('amIMuted')
+	// async amIMuted(@Req)
+
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
 	@Get('isMemberMuted')
 	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
 		const intraId: number = params.intraId;
