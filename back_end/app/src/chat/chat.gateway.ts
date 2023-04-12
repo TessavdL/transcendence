@@ -37,6 +37,13 @@ export class ChatGateway
 	) { }
 	private readonly logger: Logger = new Logger('WebsocketGateway');
 
+	// for easy access of clientId and intraId
+	private clientToIntraId: Map<string, number>;
+	private intraIdToClientId: Map<number, string>;
+
+	// channelName and clients (map of intraId and clientIds)
+	private clientChannel = new Map<string, Map<number, string[]>>;
+
 	@WebSocketServer()
 	server: Server;
 
@@ -52,7 +59,12 @@ export class ChatGateway
 			const payload: { name: string; sub: number } =
 				await this.authService.verifyToken(token);
 			const user: User = await this.jwtStrategy.validate(payload);
-			await this.userClientService.updateOrCreateclient(client.id, user.intraId);
+
+			// add client to maps
+			this.clientToIntraId.set(client.id, user.intraId);
+			this.intraIdToClientId.set(user.intraId, client.id);
+
+			// set status to online
 			const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
 			this.logger.log(`Client connected: ${client.id}, status: ${status}`);
 		} catch (error) {
@@ -64,8 +76,17 @@ export class ChatGateway
 
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
-			const user: User = await this.userClientService.getUser(client.id);
-			const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.OFFLINE);
+			const intraId: number = this.clientToIntraId.get(client.id);
+			if (intraId === undefined) {
+				return;
+			}
+
+			const status: ActivityStatus = await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
+
+			// remove client from maps
+			this.clientToIntraId.delete(client.id);
+			this.intraIdToClientId.delete(intraId);
+
 			this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
 		} catch (error: any) {
 			this.logger.error(error);
