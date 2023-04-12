@@ -5,6 +5,7 @@ import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { Punishment, DMChannel, Member, Message } from './types';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -143,8 +144,15 @@ export class ChatController {
 		return await this.chatService.isMemberBanned(intraId, channelName);
 	}
 
-	// @Get('amIMuted')
-	// async amIMuted(@Req)
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
+	@Get('amIMuted')
+	async amIMuted(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
+		const intraId: number = user.intraId;
+		const channelName: string = params.channelName;
+		return await this.chatService.isMemberMuted(intraId, channelName);
+	}
 
 	// returns a Punishment object
 	// - status: boolean

@@ -6,7 +6,7 @@ import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { Punishment, DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
-import { BANMINUTES, MUTEMINUTES } from './constants';
+import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from './constants';
 
 @Injectable()
 export class ChatService {
@@ -692,8 +692,7 @@ export class ChatService {
 
 			let ban: Punishment;
 			if (banStatus === true) {
-				const banTime: number = (banTimer.getTime() - new Date().getTime()) / 1000;
-				console.log(`ban status is true ban time is ${banTime}`);
+				const banTime: number = Math.floor(BANSECONDS + ((banTimer.getTime() - new Date().getTime()) / 1000));
 				ban = {
 					status: banStatus,
 					time: banTime,
@@ -725,7 +724,7 @@ export class ChatService {
 
 			let mute: Punishment;
 			if (muteStatus === true) {
-				const muteTime: number = (Math.floor(new Date().getTime() - muteTimer.getTime())) / 1000;
+				const muteTime: number = Math.floor(MUTESECONDS - ((Math.floor(new Date().getTime() - muteTimer.getTime())) / 1000));
 				mute = {
 					status: muteStatus,
 					time: muteTime,

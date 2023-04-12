@@ -149,12 +149,23 @@ export default {
 	},
 
 	methods: {
-		sendMessage() {
-			const messageData = {
-				messageText: this.messageText,
-				channelName: this.activeChannel,
-			};
-			this.socket.emit('sendMessageToChannel', messageData);
+		async sendMessage() {
+			const mute: Punishment = await this.isMuted(this.activeChannel);
+			if (mute.status === true) {
+				if (mute.time === 0) {
+					console.log(`You are still muted for one second`);
+				}
+				else {
+					console.log(`You are still muted for ${mute.time} seconds`);
+				}
+			}
+			else {
+				const messageData = {
+					messageText: this.messageText,
+					channelName: this.activeChannel,
+				};
+				this.socket.emit('sendMessageToChannel', messageData);
+			}
 			this.messageText = '';
 		},
 
@@ -312,27 +323,26 @@ export default {
 			const mute: Punishment = response.data;
 			console.log(`${mute.status} ${mute.time}`);
 			return mute;
-		}
+		},
 
 		async joinChannel(channel: string): Promise<void> {
 			const ban: Punishment = await this.isBanned(channel);
 			if (ban.status === true) {
-				const timeLeft: number = Math.floor(ban.time + 120);
-				if (timeLeft === 0) {
-					console.log(`User is still banned for 1 second`);
+				if (ban.time === 0) {
+					console.log(`You are still banned for one second`);
 				}
-				console.log(`User is still banned for ${timeLeft} seconds`);
+				else {
+					console.log(`You are still banned for ${ban.time} seconds`);
+				}
 				return;
 			}
-			else {
-				this.socket.emit('joinChannel', channel);
-				this.activeChannel = channel;
-				this.activeChannelType = 'NORMAL';
-				this.joined = true;
-				await this.loadAllMessages();
-				const response = await this.axiosInstance.get('chat/getMembersInChannel', { params: { channelName: channel } });
-				this.allMembers = response.data;
-			}
+			this.socket.emit('joinChannel', channel);
+			this.activeChannel = channel;
+			this.activeChannelType = 'NORMAL';
+			this.joined = true;
+			await this.loadAllMessages();
+			const response = await this.axiosInstance.get('chat/getMembersInChannel', { params: { channelName: channel } });
+			this.allMembers = response.data;
 		},
 
 		async joinDMChannel(channel: string): Promise<void> {
