@@ -1,5 +1,8 @@
 <template>
 	<div class="pong-game">
+		<div class="start-button-container">
+		<button @click="toggleGame">{{ gameStarted ? 'Stop' : 'Start' }}</button>
+	</div>
 	<div class="player1-paddle" :style="{ top: player1Position + 'px' }"></div>
 	<div class="player2-paddle" :style="{ top: player2Position + 'px' }"></div>
 	<div class="ball" :style="{ top: ballPosition.top + 'px', left: ballPosition.left + 'px' }"></div>
@@ -14,9 +17,10 @@
 		return {
 		player1Position: 0,
 		player2Position: 0,
-		ballPosition: { top: 0, left: 0 },
+		ballPosition: { top: 290, left: 390 },
 		ballVelocity: { x: 5, y: 5 },
 		socket: null,
+		gameStarted: false,
 		};
 	},
 	mounted() {
@@ -25,48 +29,58 @@
 		this.player1Position = gameState.player1Position;
 		this.player2Position = gameState.player2Position;
 		this.ballPosition = gameState.ballPosition;
-		});
-		window.addEventListener('keydown', (event) => {
+	});
+	window.addEventListener('keydown', (event) => {
 		if (event.key === 'ArrowUp') {
-			this.movePaddle(-15); // move the paddle up by 10 pixels
+		  this.movePaddle(-15); // move the paddle up by 10 pixels
 		} else if (event.key === 'ArrowDown') {
-			this.movePaddle(15); // move the paddle down by 10 pixels
-		} //else if (event.key === ' ') {
-		// 	this.ballVelocity = { x: 5, y: 5 };
-		// }
-		});
-		this.socket.on('movePaddle', (position) => {
+		  this.movePaddle(15); // move the paddle down by 10 pixels
+		}
+	});
+	this.socket.on('movePaddle', (position) => {
 		// Update the position of the paddle based on the position received from the socket
 		this.player2Position += position;
-		});
-		this.update(); // call the update method to start the game loop
+	});
 	},
 	methods: {
-    movePaddle(position) {
-		const newPosition = this.player1Position + position;
-		if (newPosition <= (600 - 100) && newPosition >= 0){
-		this.socket.emit('movePaddle', position);
-		this.player1Position = newPosition;
+		toggleGame() {
+		if (this.gameStarted) {
+			this.gameStarted = false;
+		} else {
+			this.gameStarted = true;
+		  this.update(); // call the update method to start the game loop
 		}
-    },
-	update() {
-	const ballPosition = {
-		top: this.ballPosition.top + this.ballVelocity.y,
-		left: this.ballPosition.left + this.ballVelocity.x,
-	};
-	
-	if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
-		this.ballVelocity.y = -this.ballVelocity.y;
-	}
-	if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
-		this.ballVelocity.x = -this.ballVelocity.x;
-	}
-	this.socket.emit('updateBallPosition', ballPosition);
-	this.ballPosition = ballPosition;
-	console.log('Ball position:', ballPosition);
-	requestAnimationFrame(this.update);
 	},
-  },
+		movePaddle(position) {
+		const newPosition = this.player1Position + position;
+		if (newPosition <= 500 && newPosition >= 0) {
+			this.socket.emit('movePaddle', position);
+			this.player1Position = newPosition;
+		}
+	},
+		update() {
+		if (!this.gameStarted) return;
+		
+		const paddleLeftEdge = this.player1Position;
+		const paddleRightEdge = this.player1Position + 100; // paddle width is 100 pixels
+
+		const ballPosition = {
+			top: this.ballPosition.top + this.ballVelocity.y,
+			left: this.ballPosition.left + this.ballVelocity.x,
+		};
+	
+		if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
+		this.ballVelocity.y = -this.ballVelocity.y;
+		}
+		if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
+		this.ballVelocity.x = -this.ballVelocity.x;
+		}
+		this.socket.emit('updateBallPosition', ballPosition);
+		this.ballPosition = ballPosition;
+		console.log('Ball position:', ballPosition);
+		requestAnimationFrame(this.update);
+		},
+	},
 };
 
 </script>
@@ -79,7 +93,7 @@
 	transform: translate(-50%, -50%);
 	height: 600px;
 	width: 800px;
-	background: url("../assets/game_images/Atari_Pong_Console_logo.jpeg") no-repeat fixed;
+	background: url("../assets/game_images/skyline.png") no-repeat fixed;
 	background-size: contain;
 	background-position: center;
 	background-color: rgb(250, 247, 244);
@@ -98,6 +112,14 @@
 	max-height: 100%;
 }
 
+.start-button-container {
+	position: absolute;
+	width: 100px;
+	height: 30px;
+	top: calc(600px);
+	left: calc(360px);
+ 	z-index: 1; /* make sure the button is on top of the canvas */
+}
 .player1-paddle,
 .player2-paddle {
 	position: absolute;
@@ -118,6 +140,8 @@
 	position: absolute;
 	width: 20px;
 	height: 20px;
+	/* top: calc(300px);
+	left: calc(360px); */
 	background-color: rgb(64, 36, 3);
 }
 </style>
