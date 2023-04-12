@@ -94,13 +94,13 @@ export class ChatGateway
 	}
 
 	@SubscribeMessage('joinChannel')
-	handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-		client.join(data);
+	handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+		client.join(channelName);
 	}
 
 	@SubscribeMessage('leaveChannel')
-	handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() data: string) {
-		client.leave(data);
+	handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+		client.leave(channelName);
 	}
 
 	@SubscribeMessage('sendMessageToChannel')
