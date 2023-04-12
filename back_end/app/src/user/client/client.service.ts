@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Client, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { ClientNotFoundError } from './error';
 
 @Injectable()
 export class UserClientService {
@@ -77,9 +78,13 @@ export class UserClientService {
           intraId: intraId,
         },
       });
+      if (!client) {
+        throw new ClientNotFoundError('ClientId was not found based on intraId')
+      }
       return client.id;
     } catch (error) {
       this.logger.error('Error finding the client based on intraId');
+      throw new InternalServerErrorException('Prisma client failed');
     }
   }
 

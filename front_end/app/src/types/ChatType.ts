@@ -11,9 +11,11 @@ export interface Channel {
 	channelMode: string;
 }
 
-export interface Messages {
+export interface Message {
+	channelName: string;
 	intraId: number;
 	name: string;
+	avatar: string;
 	text: string;
 }
 
@@ -21,4 +23,18 @@ export interface User {
 	intraId: number;
 	name: string;
 	avatar: string;
+}
+
+export interface DMInfo {
+	channelName: string;
+	otherUserAvatar: string;
+	otherUserIntraId: number;
+	otherUserName: string;
+}
+
+export interface Member {
+	intraId: number;
+	name: string;
+	avatar: string;
+	role: "OWNER" | "ADMIN" | "MEMBER";
 }
