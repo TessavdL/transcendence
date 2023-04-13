@@ -7,12 +7,10 @@ import {
 	WebSocketGateway,
 	WebSocketServer,
 	SubscribeMessage,
-	WsException,
 } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
-import { UserClientService } from 'src/user/client/client.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { ActivityStatus, Membership, User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
@@ -55,12 +53,15 @@ export class ChatGateway
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			const user: User = await this.jwtStrategy.validate(payload);
 
+			// set status to online if there is no other client of the user currently connected
+			if (this.isActive(user.intraId) === false) {
+				await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
+			}
+
 			// add client to map
 			this.clientToIntraId.set(client.id, user.intraId);
 
-			// set status to online
-			const status: ActivityStatus = await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
-			this.logger.log(`Client connected: ${client.id}, status: ${status}`);
+			this.logger.log(`Client connected: ${client.id}`);
 		} catch (error) {
 			this.logger.error(error);
 			this.logger.error(`Client connection refused: ${client.id}`);
@@ -75,12 +76,24 @@ export class ChatGateway
 			// remove client from map
 			this.clientToIntraId.delete(client.id);
 
-			// set status to offline			
-			const status: ActivityStatus = await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
-			this.logger.log(`Client disconnected: ${client.id}, status: ${status}`);
+			// set status to offline if the final client of the user disconnected
+			if (this.isActive(intraId) === false) {
+				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
+			}
+
+			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
 			this.logger.error(error);
 		}
+	}
+
+	private isActive(intraId: number): boolean {
+		for (const [clientId, clientIntraId] of this.clientToIntraId.entries()) {
+			if (clientIntraId === intraId) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@SubscribeMessage('joinChannel')
@@ -180,6 +193,16 @@ export class ChatGateway
 		}
 	}
 
+	private getClientIds(clientIdsInChannel: string[], otherIntraId: number): string[] {
+		let clientIds: string[] = [];
+		for (const clientId of clientIdsInChannel) {
+			if (otherIntraId === this.clientToIntraId.get(clientId)) {
+				clientIds.push(clientId);
+			}
+		}
+		return clientIds;
+	}
+
 	// currently users are muted, whether they are in the channel or not
 	// technically we can remove the error emit and put this function in the controller
 	@SubscribeMessage('muteUser')
@@ -193,15 +216,5 @@ export class ChatGateway
 		} catch (error) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
-	}
-
-	private getClientIds(clientIdsInChannel: string[], otherIntraId: number): string[] {
-		let clientIds: string[] = [];
-		for (const clientId of clientIdsInChannel) {
-			if (otherIntraId === this.clientToIntraId.get(clientId)) {
-				clientIds.push(clientId);
-			}
-		}
-		return clientIds;
 	}
 }
