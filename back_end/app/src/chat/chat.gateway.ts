@@ -48,25 +48,29 @@ export class ChatGateway
 
 	async handleConnection(@ConnectedSocket() client: Socket): Promise<void> {
 		this.logger.log(`Client is trying to connect: ${client.id}`);
+		let user: User;
 
 		try {
+			// verify client
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
-			const user: User = await this.jwtStrategy.validate(payload);
-
-			// set status to online if there is no other client of the user currently connected
+			user = await this.jwtStrategy.validate(payload);
+		} catch (error: any) {
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+		}
+		try {
+			// if this is the first client of the user, set activity status to online
 			if (this.isActive(user.intraId) === false) {
 				await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
 			}
 
 			// add client to map
 			this.sharedService.clientToIntraId.set(client.id, user.intraId);
-
 			this.logger.log(`Client connected: ${client.id}`);
-		} catch (error) {
-			this.logger.error(error);
-			this.logger.error(`Client connection refused: ${client.id}`);
-			client.disconnect();
+		} catch (error: any) {
+			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleConnection');
 		}
 	}
 
@@ -75,17 +79,16 @@ export class ChatGateway
 		try {
 			const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 
-			// remove client from map
+			// delete client from map
 			this.sharedService.clientToIntraId.delete(client.id);
 
-			// set status to offline if the final client of the user disconnected
+			// if this was the last client of the user, set activity to offline
 			if (this.isActive(intraId) === false) {
 				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 			}
-
 			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
-			this.logger.error(error);
+			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleDisconnect');
 		}
 	}
 
