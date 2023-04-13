@@ -1,8 +1,6 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Socket } from 'socket.io';
-import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
 import * as argon2 from "argon2";
@@ -12,7 +10,6 @@ import { BANMINUTES, MUTEMINUTES } from './constants';
 export class ChatService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly userClientService: UserClientService
 	) { }
 
 	private readonly logger: Logger = new Logger('UserService initialized');
@@ -130,7 +127,6 @@ export class ChatService {
 		try {
 			const role: Role = await this.getRole(intraId, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
-			console.log(role, count);
 			if (count === 1) {
 				return (this.deleteChannel(channelName));
 			}
@@ -309,7 +305,6 @@ export class ChatService {
 					user: user,
 				};
 			});
-			console.log(DMChannels);
 			return (DMChannels);
 		} catch (error: any) {
 			throw new HttpException(`Cannot find ${user.name}'s direct messages`, HttpStatus.BAD_REQUEST);
@@ -528,7 +523,6 @@ export class ChatService {
 			avatar: member.user.avatar,
 			role: member.role,
 		}));
-		console.log(members);
 		return members;
 	}
 
