@@ -275,7 +275,6 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
-				console.log(channels);
 				const dmInfo: DMInfo[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
@@ -306,7 +305,6 @@ export default {
 			await this.loadAllMessages();
 			const response = await this.axiosInstance.get('chat/getMembersInChannel', { params: { channelName: channel } });
 			this.allMembers = response.data;
-			console.log(this.allMembers);
 		},
 
 		async joinDMChannel(channel: string): Promise<void> {
