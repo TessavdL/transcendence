@@ -103,7 +103,7 @@ export class ChatGateway
 
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('joinChannel')
-	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
 
@@ -124,13 +124,15 @@ export class ChatGateway
 		client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
 	}
 
-	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]) {
+	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]): Promise<(Membership & { user: User })[]> {
 		const otherUserIntraIds: number[] = otherClientsInChannel.map(clientId => this.sharedService.clientToIntraId.get(clientId));
+
+		const uniqueUserIntraIds: number[] = [...new Set(otherUserIntraIds)];
 
 		const otherMembersInChannel: (Membership & { user: User })[] = await this.chatService.getMembersWithUser(channelName);
 
 		const otherJoinedMembersInChannel: (Membership & { user: User })[] = otherMembersInChannel.filter(member => {
-			if (otherUserIntraIds.find(intraId => { intraId === member.user.intraId })) {
+			if (uniqueUserIntraIds.find(intraId => { intraId === member.user.intraId })) {
 				return member;
 			}
 		});
@@ -140,7 +142,7 @@ export class ChatGateway
 
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('leaveChannel')
-	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string) {
+	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
 
@@ -157,7 +159,7 @@ export class ChatGateway
 
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('sendMessageToChannel')
-	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }) {
+	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }): Promise<void> {
 		const text = data.messageText;
 		const channelName = data.channelName;
 		const intraId = this.sharedService.clientToIntraId.get(client.id)
