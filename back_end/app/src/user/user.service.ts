@@ -260,4 +260,11 @@ export class UserService {
 		const file = createReadStream(join(process.cwd(), avatar));
 		return new StreamableFile(file);
 	}
+
+	async uploadAvatar(id: number, filePath: string): Promise<void> {
+		await this.prisma.user.update({
+			where: { id: id },
+			data: { avatar: filePath },
+		});
+	}
 }

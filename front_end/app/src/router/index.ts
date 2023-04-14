@@ -3,12 +3,12 @@ import storeUser from "@/store";
 
 import HomeView from '@/views/HomeView.vue';
 import GameView from "@/views/GameView.vue";
-
+import ChatView from "@/views/ChatView.vue";
+import ChatView2 from "@/views/ChatView2.vue";
 import ProfileCurrentView from "@/views/ProfileCurrentView.vue";
 import ProfileOtherView from "@/views/ProfileOtherView.vue";
 import ProfileEditView from "@/views/ProfileEditView.vue";
 
-import ChatView from "@/views/ChatView.vue";
 import ChatUserList from "@/components/ChatUserList.vue";
 import ChatChannelList from "@/components/ChatChannelList.vue";
 import ChatCreateChannel from "@/components/ChatCreateChannel.vue";
@@ -90,6 +90,11 @@ const router = createRouter({
           props: true,
         },
       ],
+    },
+    {
+      path: '/chat2',
+      name: 'Chat2',
+      component: ChatView2,
     },
   ]
 })
