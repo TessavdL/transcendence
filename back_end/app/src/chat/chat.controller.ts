@@ -6,6 +6,7 @@ import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChann
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
 import { request } from 'http';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -65,9 +66,9 @@ export class ChatController {
 	}
 
 	@Get('getAllMessagesInChannel')
-	async getAllMessagesInChannel(@Query() params: { channelName: string }): Promise<Message[]> {
+	async getAllMessagesInChannel(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Message[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.getMessages(channelName);
+		return await this.chatService.getFilteredMessages(user, channelName);
 	}
 
 	@Get('checkPassword')

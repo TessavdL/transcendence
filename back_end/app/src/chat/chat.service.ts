@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
+import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role, AllOtherUsers } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WsException } from '@nestjs/websockets';
 import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
@@ -344,6 +344,49 @@ export class ChatService {
 		} catch (error: any) {
 			throw new HttpException(`Cannot find messages in ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	async getFilteredMessages(user: User, channelName: string): Promise<Message[]> {
+		const messages: (UserMessage & { user: User })[] = await this.prisma.userMessage.findMany({
+			where: {
+				channelName: channelName,
+			},
+			include: {
+				user: true,
+			},
+		});
+
+		const otherUsers: { intraId: number, blockedStatus: boolean; otherIntraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+			where: {
+				intraId: user.intraId,
+			},
+			select: {
+				intraId: true,
+				blockedStatus: true,
+				otherIntraId: true,
+			},
+		});
+
+		const filteredMessages: Message[] = [];
+
+		messages.forEach((message) => {
+			const messageIntraId: number = message.user.intraId;
+
+			const goodUser = otherUsers.find((user) => {
+				return (user.intraId === user.intraId && user.otherIntraId === messageIntraId && user.blockedStatus === false);
+			});
+			if (messageIntraId === user.intraId || goodUser) {
+				filteredMessages.push({
+					channelName: channelName,
+					intraId: message.user.intraId,
+					name: message.user.intraName,
+					avatar: message.user.avatar,
+					text: message.text,
+				});
+			}
+		});
+
+		return filteredMessages;
 	}
 
 	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
