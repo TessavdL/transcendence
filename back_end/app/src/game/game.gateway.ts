@@ -16,6 +16,7 @@ export class GameGateway
 	}
 
 	handleConnection(client: Socket, ...args: any[]) {
+		console.log(`Client id = ${client.id}`);
 		console.log("hi from backend");
 	}
 
