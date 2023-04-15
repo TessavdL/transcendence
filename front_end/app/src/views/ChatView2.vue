@@ -84,7 +84,9 @@
 		</form>
 		<div class="filterchanneltype" v-if="activeChannelType === 'NORMAL'">
 			<li v-for="member in allMembers" :key="member.intraId">
-				<a @click="kickUser(member.intraId, activeChannel)" class="button">{{ member.name }}</a>
+				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
+				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
+				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
 			</li>
 		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
@@ -95,7 +97,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Message, User, DMInfo, Member } from "../types/ChatType";
+import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
 
 export default {
 	data() {
@@ -147,12 +149,23 @@ export default {
 	},
 
 	methods: {
-		sendMessage() {
-			const messageData = {
-				messageText: this.messageText,
-				channelName: this.activeChannel,
-			};
-			this.socket.emit('sendMessageToChannel', messageData);
+		async sendMessage() {
+			const mute: Punishment = await this.isMuted(this.activeChannel);
+			if (mute.status === true) {
+				if (mute.time === 0) {
+					console.log(`You are still muted for one second`);
+				}
+				else {
+					console.log(`You are still muted for ${mute.time} seconds`);
+				}
+			}
+			else {
+				const messageData = {
+					messageText: this.messageText,
+					channelName: this.activeChannel,
+				};
+				this.socket.emit('sendMessageToChannel', messageData);
+			}
 			this.messageText = '';
 		},
 
@@ -297,7 +310,29 @@ export default {
 			return this.dmInfo.some((item) => item.otherUserIntraId === otherIntraId);
 		},
 
+		async isBanned(channelName: string): Promise<Punishment> {
+			const response = await this.axiosInstance.get('chat/amIBanned', { params: { channelName: channelName } });
+			const ban: Punishment = response.data;
+			return ban;
+		},
+
+		async isMuted(channelName: string): Promise<Punishment> {
+			const response = await this.axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
+			const mute: Punishment = response.data;
+			return mute;
+		},
+
 		async joinChannel(channel: string): Promise<void> {
+			const ban: Punishment = await this.isBanned(channel);
+			if (ban.status === true) {
+				if (ban.time === 0) {
+					console.log(`You are still banned for one second`);
+				}
+				else {
+					console.log(`You are still banned for ${ban.time} seconds`);
+				}
+				return;
+			}
 			this.socket.emit('joinChannel', channel);
 			this.activeChannel = channel;
 			this.activeChannelType = 'NORMAL';
@@ -324,6 +359,14 @@ export default {
 
 		async kickUser(otherIntraId: number, channelName: string): Promise<void> {
 			this.socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: channelName });
+		},
+
+		async banUser(otherIntraId: number, channelName: string): Promise<void> {
+			this.socket.emit('banUser', { otherIntraId: otherIntraId, channelName: channelName });
+		},
+
+		async muteUser(otherIntraId: number, channelName: string): Promise<void> {
+			this.socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
 
 		async loadAllMessages(): Promise<void> {
