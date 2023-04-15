@@ -1,6 +1,6 @@
 export enum ChannelMode {
-    PRIVATE,
-	PROTECTED, 
+	PRIVATE,
+	PROTECTED,
 	PUBLIC
 }
 
@@ -37,4 +37,9 @@ export interface Member {
 	name: string;
 	avatar: string;
 	role: "OWNER" | "ADMIN" | "MEMBER";
+}
+
+export interface Punishment {
+	status: boolean;
+	time: number | null;
 }
