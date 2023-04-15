@@ -35,9 +35,11 @@ export class ChatGateway
 		private readonly sharedService: SharedService,
 	) {
 		this.channelToClientIds = new Map<string, string[]>();
+		this.clientIdToChannel = new Map<string, string>();
 	}
 	private readonly logger: Logger = new Logger('WebsocketGateway');
 	private channelToClientIds: Map<string, string[]>;
+	private clientIdToChannel: Map<string, string>;
 
 	@WebSocketServer()
 	server: Server;
@@ -80,6 +82,7 @@ export class ChatGateway
 			const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 
 			// delete client from map
+			this.deleteFromChannels(client.id);
 			this.sharedService.clientToIntraId.delete(client.id);
 
 			// if this was the last client of the user, set activity to offline
@@ -90,6 +93,15 @@ export class ChatGateway
 		} catch (error: any) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleDisconnect');
 		}
+	}
+
+	private deleteFromChannels(clientId: string): void {
+		this.channelToClientIds.forEach(clientIds => {
+			const index: number = clientIds.findIndex((client) => { client === clientId; });
+			if (index) {
+				delete clientIds[index];
+			}
+		});
 	}
 
 	private isActive(intraId: number): boolean {
@@ -104,6 +116,15 @@ export class ChatGateway
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('joinChannel')
 	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
+		// if there is already an active channel, leave it
+		const activeChannel: string = this.clientIdToChannel.get(client.id);
+		if (activeChannel) {
+			let updatedClientIds: string[] = this.channelToClientIds.get(activeChannel);
+			updatedClientIds.filter((clientId) => { clientId !== client.id });
+			this.channelToClientIds.set(activeChannel, updatedClientIds);
+			client.leave(activeChannel);
+		}
+
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
 
@@ -149,6 +170,7 @@ export class ChatGateway
 		const clientsInChannel: string[] = this.channelToClientIds.get(channelName);
 		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
 		this.channelToClientIds.set(channelName, updatedClientsInChannel);
+		this.clientIdToChannel.delete(client.id);
 
 		// leave channel
 		client.leave(channelName);
@@ -160,11 +182,15 @@ export class ChatGateway
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('sendMessageToChannel')
 	async handleChannelMessage(@ConnectedSocket() client: Socket, @MessageBody() data: { messageText: string, channelName: string }): Promise<void> {
-		const text = data.messageText;
-		const channelName = data.channelName;
 		const intraId = this.sharedService.clientToIntraId.get(client.id)
-		const message: Message = await this.chatService.handleChannelMessage(intraId, channelName, text);
-		this.server.to(channelName).emit('message', message);
+		const message: Message = await this.chatService.handleChannelMessage(intraId, data.channelName, data.messageText);
+		const allClientIds: string[] = this.channelToClientIds.get(data.channelName);
+		console.log(`all clients in channel = ${allClientIds}`);
+		if (allClientIds) {
+			const nonBlockedClientIds: string[] = await this.chatService.getNonBlockedClientIds(intraId, client.id, allClientIds);
+			console.log(nonBlockedClientIds);
+			this.server.to(nonBlockedClientIds).emit('message', message);
+		}
 	}
 
 	@UseGuards(ClientGuard)

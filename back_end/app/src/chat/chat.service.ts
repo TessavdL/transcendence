@@ -5,11 +5,13 @@ import { WsException } from '@nestjs/websockets';
 import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
 import * as argon2 from "argon2";
 import { BANMINUTES, MUTEMINUTES } from './constants';
+import { SharedService } from './chat.map.shared.service';
 
 @Injectable()
 export class ChatService {
 	constructor(
 		private readonly prisma: PrismaService,
+		private readonly sharedMap: SharedService,
 	) { }
 
 	private readonly logger: Logger = new Logger('UserService initialized');
@@ -785,5 +787,30 @@ export class ChatService {
 		} catch (error: any) {
 			throw new InternalServerErrorException('Failed to get mute status and mute time information');
 		}
+	}
+
+	async getNonBlockedClientIds(senderIntraId: number, senderclientId: string, allClientIds: string[]): Promise<string[]> {
+		const nonBlockedClientIds: string[] = [senderclientId];
+
+		const relationships: { intraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+			where: {
+				otherIntraId: senderIntraId,
+				blockedStatus: false,
+			},
+			select: {
+				intraId: true,
+			},
+		});
+
+		console.log(relationships);
+
+		for (const clientId of allClientIds) {
+			const intraId = this.sharedMap.clientToIntraId.get(clientId);
+			if (intraId && intraId !== senderIntraId && relationships.some((relationship) => { return relationship.intraId === intraId })) {
+				nonBlockedClientIds.push(clientId);
+			}
+		}
+
+		return nonBlockedClientIds;
 	}
 }
