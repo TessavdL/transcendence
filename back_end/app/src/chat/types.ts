@@ -20,3 +20,13 @@ export interface DMChannel {
 	otherUser: User;
 	user: User;
 }
+
+export type BanInfo = {
+	banStatus: boolean,
+	banTime: number | null,
+};
+
+export type MuteInfo = {
+	muteStatus: boolean,
+	muteTime: number | null,
+};

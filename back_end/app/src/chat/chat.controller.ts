@@ -4,7 +4,8 @@ import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
-import { DMChannel, Member, Message } from './types';
+import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
+import { request } from 'http';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -121,5 +122,21 @@ export class ChatController {
 		const otherIntraId: number = demoteAdminToMember.otherIntraId;
 		const user: User = request.user;
 		return await this.chatService.demoteAdminToMember(user, channelName, otherIntraId);
+	}
+
+	// returns a banStatus boolean and a banTime in seconds if banStatus is true, otherwise banTime is null
+	@Get('isMemberBanned')
+	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<BanInfo> {
+		const intraId: number = params.intraId;
+		const channelName: string = params.channelName;
+		return await this.chatService.isMemberBanned(intraId, channelName);
+	}
+
+	// returns a muteStatus boolean and a muteTime in seconds if muteStatus is true, otherwise muteTime is null
+	@Get('isMemberMuted')
+	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<MuteInfo> {
+		const intraId: number = params.intraId;
+		const channelName: string = params.channelName;
+		return await this.chatService.isMemberMuted(intraId, channelName);
 	}
 }
