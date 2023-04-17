@@ -261,10 +261,14 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
-	async uploadAvatar(id: number, filePath: string): Promise<void> {
-		await this.prisma.user.update({
-			where: { id: id },
-			data: { avatar: filePath },
-		});
+	async updateAvatar(id: number, filePath: string): Promise<void> {
+		try {
+			await this.prisma.user.update({
+				where: { id: id },
+				data: { avatar: filePath },
+			});
+		} catch (error: any) {
+			throw new Error(error);
+		}
 	}
 }

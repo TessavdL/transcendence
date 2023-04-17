@@ -8,6 +8,7 @@ import { UserService } from './user.service';
 import { UploadAvatarDto } from './dto/upload-avatar-dto';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -15,43 +16,43 @@ export class UserController {
 	constructor(private userService: UserService, private prisma: PrismaService) { }
 
 	@Get('/')
-	getUser(@Req() request): User {
-		return (request.user);
+	async getUser(@Req() request): Promise<User> {
+		return (await request.user);
 	}
 
 	@Get('users')
-	returnUserElements(@Req() request): Promise<UserElement[]> {
-		return (this.userService.getUserElements(request.user));
+	async returnUserElements(@Req() request): Promise<UserElement[]> {
+		return (await this.userService.getUserElements(request.user));
 	}
 
 	@Post('block_user')
-	blockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.blockUser(request.user, otherUserIntraDto.otherIntraId));
+	async blockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (await this.userService.blockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
 	@Post('unblock_user')
-	unblockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
+	async unblockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (await this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
 	}
 
 	@Post('friend_request')
-	handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
+	async handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
+		return (await this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
 	}
 
 	@Get('usersexceptself')
-	getUserListExceptSelf(@Req() request): Promise<User[]> {
-		return (this.userService.getUserListExceptSelf(request.user));
+	async getUserListExceptSelf(@Req() request): Promise<User[]> {
+		return (await this.userService.getUserListExceptSelf(request.user));
 	}
 
 	@Get('friend_request_list')
-	getFriendRequests(@Req() request): Promise<FriendRequestList[]> {
-		return (this.userService.getFriendRequests(request.user));
+	async getFriendRequests(@Req() request): Promise<FriendRequestList[]> {
+		return (await this.userService.getFriendRequests(request.user));
 	}
 
 	@Get('createdummy')
 	async createDummyUser(): Promise<void> {
-		return (this.userService.createDummyUser());
+		return (await this.userService.createDummyUser());
 	}
 
 	@Get('get_avatar')
@@ -60,29 +61,23 @@ export class UserController {
 	}
 
 	@Get(':id')
-	getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
+	async getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);
-		return (this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
+		return (await this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
 	}
 
 	@Post('avatar')
 	@UseInterceptors(AvatarInterceptor)
 	async uploadAvatar(
-		@Req() request,
+		@GetUser() user: User,
 		@UploadedFile() file: Express.Multer.File
-	): Promise<UploadAvatarDto> {
+	): Promise<void> {
 		if (!file || !file.filename) {
 			throw new BadRequestException('No file uploaded');
 		}
-		const userId = request.user.id;
 		const filePath = `${UPLOADS_DIRECTORY}/${file.filename}`;
 
-		await this.userService.uploadAvatar(userId, filePath);
-
-		const uploadAvatarDto = new UploadAvatarDto();
-		uploadAvatarDto.avatarFileName = filePath;
-		
-		return uploadAvatarDto;
+		await this.userService.updateAvatar(user.intraId, filePath);
 	}
 }
