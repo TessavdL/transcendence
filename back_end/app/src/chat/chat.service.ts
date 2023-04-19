@@ -225,7 +225,7 @@ export class ChatService {
 
 	async getMembersWithUser(channelName: string): Promise<(Membership & { user: User; })[]> {
 		try {
-			const members: (Membership & { user: User })[] = await this.prisma.membership.findMany({
+			const members: (Membership & { user: User; })[] = await this.prisma.membership.findMany({
 				where: {
 					channelName: channelName,
 				},
@@ -233,6 +233,7 @@ export class ChatService {
 					user: true,
 				},
 			});
+
 			return members;
 		} catch (error: any) {
 			throw new HttpException(`Cannot find channel: ${channelName} with members`, HttpStatus.BAD_REQUEST);

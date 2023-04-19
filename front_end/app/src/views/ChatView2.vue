@@ -83,7 +83,7 @@
 			<button type="submit">Send Message</button>
 		</form>
 		<div class="filterchanneltype" v-if="activeChannelType === 'NORMAL'">
-			<li v-for="member in allMembers" :key="member.intraId">
+			<li v-for="member in allPunishableMembers" :key="member.intraId">
 				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
 				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
 				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
@@ -120,6 +120,8 @@ export default {
 			messageText: ref(''),
 			allMembers: ref<Member[]>([]),
 			allMessages: ref<Message[]>([]),
+			allPunishableMembers: ref<Member[]>([]),
+			allClientMembersInChannel: ref<Member[]>([]),
 		}
 	},
 
@@ -146,9 +148,70 @@ export default {
 		this.socket.on('leaveChannel', (data) => {
 			this.leaveChannel();
 		});
+		this.socket.on('otherJoinedMembers', (data: Member[]) => {
+			// console.log(data);
+			this.getAllClientMembersInChannel(data);
+		});
+		this.socket.on('userJoined', (data: Member) => {
+			console.log(`old client list =`);
+			this.allClientMembersInChannel.forEach((member) => {
+				console.log(member);
+			});
+			this.allClientMembersInChannel.push(data);
+			console.log(`a user joined, new client list =`);
+			this.allClientMembersInChannel.forEach((member) => {
+				console.log(member);
+			});
+		});
+		this.socket.on('userLeft', (data: Member) => {
+			console.log(`old client list =`);
+			this.allClientMembersInChannel.forEach((member) => {
+				console.log(member);
+			});
+			this.allClientMembersInChannel.filter((member) => {
+				member.intraId !== data.intraId;
+			});
+			console.log(`a user left, new client list =`);
+			this.allClientMembersInChannel.forEach((member) => {
+				console.log(member);
+			});
+		});
 	},
 
 	methods: {
+		getAllClientMembersInChannel(data: Member[]) {
+			this.allClientMembersInChannel = data;
+			console.log(`all clients already in channel =`);
+			this.allClientMembersInChannel.forEach((member) => {
+				console.log(member);
+			});
+		},
+
+		async getMembersThatCanBePunished() {
+			const response = await this.axiosInstance.get('user');
+			const me = response.data;
+			const myRole = this.allMembers.find((member) => { return member.intraId === me.intraId })?.role;
+			if (myRole === undefined || myRole === 'MEMBER') {
+				this.allPunishableMembers = [];
+				return;
+			}
+			let members: Member[] = [];
+			for (const member of this.allClientMembersInChannel) {
+				const role: 'OWNER' | 'ADMIN' | 'MEMBER' = member.role;
+
+				const rank = {
+					OWNER: 3,
+					ADMIN: 2,
+					MEMBER: 1,
+				};
+
+				if (rank[myRole] > rank[role]) {
+					members.push(member);
+				}
+			}
+			this.allPunishableMembers = members;
+		},
+
 		async sendMessage() {
 			const mute: Punishment = await this.isMuted(this.activeChannel);
 			if (mute.status === true) {
@@ -340,6 +403,7 @@ export default {
 			await this.loadAllMessages();
 			const response = await this.axiosInstance.get('chat/getMembersInChannel', { params: { channelName: channel } });
 			this.allMembers = response.data;
+			await this.getMembersThatCanBePunished();
 		},
 
 		async joinDMChannel(channel: string): Promise<void> {
