@@ -168,7 +168,7 @@ export default {
 			this.allClientMembersInChannel.forEach((member) => {
 				console.log(member);
 			});
-			this.allClientMembersInChannel.filter((member) => {
+			this.allClientMembersInChannel = this.allClientMembersInChannel.filter((member) => {
 				member.intraId !== data.intraId;
 			});
 			console.log(`a user left, new client list =`);
