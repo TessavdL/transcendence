@@ -4,8 +4,8 @@ import { JwtAuthGuard } from 'src/auth/guards';
 import { ChatService } from './chat.service';
 import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
-import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
-import { request } from 'http';
+import { Punishment, DMChannel, Member, Message } from './types';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
@@ -124,17 +124,41 @@ export class ChatController {
 		return await this.chatService.demoteAdminToMember(user, channelName, otherIntraId);
 	}
 
-	// returns a banStatus boolean and a banTime in seconds if banStatus is true, otherwise banTime is null
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
+	@Get('amIBanned')
+	async amIBanned(@Req() request, @Query() params: { channelName: string }): Promise<Punishment> {
+		const intraId: number = request.user.intraId;
+		const channelName: string = params.channelName;
+		return await this.chatService.isMemberBanned(intraId, channelName);
+	}
+
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
 	@Get('isMemberBanned')
-	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<BanInfo> {
+	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
 		const intraId: number = params.intraId;
 		const channelName: string = params.channelName;
 		return await this.chatService.isMemberBanned(intraId, channelName);
 	}
 
-	// returns a muteStatus boolean and a muteTime in seconds if muteStatus is true, otherwise muteTime is null
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
+	@Get('amIMuted')
+	async amIMuted(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
+		const intraId: number = user.intraId;
+		const channelName: string = params.channelName;
+		return await this.chatService.isMemberMuted(intraId, channelName);
+	}
+
+	// returns a Punishment object
+	// - status: boolean
+	// - time: number | null, duration of punishment that is left in seconds
 	@Get('isMemberMuted')
-	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<MuteInfo> {
+	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
 		const intraId: number = params.intraId;
 		const channelName: string = params.channelName;
 		return await this.chatService.isMemberMuted(intraId, channelName);

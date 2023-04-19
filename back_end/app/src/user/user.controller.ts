@@ -8,6 +8,7 @@ import { UserService } from './user.service';
 import { UploadAvatarDto } from './dto/upload-avatar-dto';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -15,8 +16,8 @@ export class UserController {
 	constructor(private userService: UserService, private prisma: PrismaService) { }
 
 	@Get('/')
-	getUser(@Req() request): User {
-		return (request.user);
+	getUser(@GetUser() user: User): User {
+		return (user);
 	}
 
 	@Get('users')
@@ -82,7 +83,7 @@ export class UserController {
 
 		const uploadAvatarDto = new UploadAvatarDto();
 		uploadAvatarDto.avatarFileName = filePath;
-		
+
 		return uploadAvatarDto;
 	}
 }
