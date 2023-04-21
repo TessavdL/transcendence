@@ -1,12 +1,12 @@
-import { BadRequestException, HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
 import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
-import { BanInfo, DMChannel, Member, Message, MuteInfo } from './types';
+import { Punishment, DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
-import { BANMINUTES, MUTEMINUTES } from './constants';
+import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from './constants';
 
 @Injectable()
 export class ChatService {
@@ -83,7 +83,7 @@ export class ChatService {
 					},
 				},
 			});
-			this.addUserToChannel(otherIntraId, channelName);
+			await this.addUserToChannel(otherIntraId, channelName);
 			return channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
@@ -130,7 +130,6 @@ export class ChatService {
 		try {
 			const role: Role = await this.getRole(intraId, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
-			console.log(role, count);
 			if (count === 1) {
 				return (this.deleteChannel(channelName));
 			}
@@ -293,7 +292,6 @@ export class ChatService {
 					user: user,
 				};
 			});
-			console.log(DMChannels);
 			return (DMChannels);
 		} catch (error: any) {
 			throw new HttpException(`Cannot find ${user.name}'s direct messages`, HttpStatus.BAD_REQUEST);
@@ -515,7 +513,6 @@ export class ChatService {
 			avatar: member.user.avatar,
 			role: member.role,
 		}));
-		console.log(members);
 		return members;
 	}
 
@@ -679,7 +676,7 @@ export class ChatService {
 		}
 	}
 
-	async isMemberBanned(intraId: number, channelName: string): Promise<BanInfo> {
+	async isMemberBanned(intraId: number, channelName: string): Promise<Punishment> {
 		try {
 			const { banStatus, banTimer }: { banStatus: boolean, banTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
@@ -690,25 +687,28 @@ export class ChatService {
 					banTimer: true,
 				},
 			});
+
+			let ban: Punishment;
 			if (banStatus === true) {
-				const banTime: number = (Math.floor(banTimer.getTime() - new Date().getTime())) / 1000;
-				return {
-					banStatus: banStatus,
-					banTime: banTime,
+				const banTime: number = Math.floor(BANSECONDS + ((banTimer.getTime() - new Date().getTime()) / 1000));
+				ban = {
+					status: banStatus,
+					time: banTime,
 				};
 			}
 			else {
-				return {
-					banStatus: false,
-					banTime: null,
+				ban = {
+					status: false,
+					time: null,
 				};
 			}
+			return ban;
 		} catch (error: any) {
-			throw new InternalServerErrorException('Failed to get mute status and mute time information');
+			throw new InternalServerErrorException('Failed to get ban status and ban time information');
 		}
 	}
 
-	async isMemberMuted(intraId: number, channelName: string): Promise<MuteInfo> {
+	async isMemberMuted(intraId: number, channelName: string): Promise<Punishment> {
 		try {
 			const { muteStatus, muteTimer }: { muteStatus: boolean, muteTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
@@ -719,19 +719,22 @@ export class ChatService {
 					muteTimer: true,
 				},
 			});
+
+			let mute: Punishment;
 			if (muteStatus === true) {
-				const muteTime: number = (Math.floor(muteTimer.getTime() - new Date().getTime())) / 1000;
-				return {
-					muteStatus: muteStatus,
-					muteTime: muteTime,
+				const muteTime: number = Math.floor(MUTESECONDS - ((Math.floor(new Date().getTime() - muteTimer.getTime())) / 1000));
+				mute = {
+					status: muteStatus,
+					time: muteTime,
 				};
 			}
 			else {
-				return {
-					muteStatus: false,
-					muteTime: null,
+				mute = {
+					status: false,
+					time: null,
 				};
 			}
+			return mute;
 		} catch (error: any) {
 			throw new InternalServerErrorException('Failed to get mute status and mute time information');
 		}

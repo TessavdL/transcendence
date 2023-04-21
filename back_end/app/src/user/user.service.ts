@@ -42,7 +42,7 @@ export class UserService {
 			blockedState: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).blockedStatus,
 			friendStatus: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).friendStatus,
 		}
-		
+
 		return (singleElement);
 	}
 
@@ -60,7 +60,7 @@ export class UserService {
 			username: otherUser.intraName,
 			avatar: otherUser.avatar,
 		}
-		
+
 		return (singleElement);
 	}
 
@@ -223,7 +223,7 @@ export class UserService {
 
 	private generateNumber(length: number): number {
 		const characters = '0123456789';
-		let result = ' ';
+		let result = '';
 		const charactersLength = characters.length;
 		for (let i = 0; i < length; i++) {
 			result += characters.charAt(Math.floor(Math.random() * charactersLength));
