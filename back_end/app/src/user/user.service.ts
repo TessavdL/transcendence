@@ -261,6 +261,21 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
+	async updateUsername(user: User, newUsername: string) {
+		try {
+			await this.prisma.user.update({
+				where: {
+					intraId: user.intraId,
+				},
+				data: {
+					name: newUsername,
+				},
+			});
+		} catch (error: any) {
+			throw new Error(error);
+		}
+	}
+
 	async updateAvatar(id: number, filePath: string): Promise<void> {
 		try {
 			await this.prisma.user.update({

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,6 +9,7 @@ import { UploadAvatarDto } from './dto/upload-avatar-dto';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
 import { GetUser } from 'src/decorators/get-user.decorator';
+import { UpdateUsernameDto } from './dto/update-username-dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -65,6 +66,11 @@ export class UserController {
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);
 		return (await this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
+	}
+
+	@Put('update_username')
+	async updateUsername(@GetUser() user: User, @Body() updateUsernameDto: UpdateUsernameDto) {
+		return (await this.userService.updateUsername(user, updateUsernameDto.username))
 	}
 
 	@Post('avatar')
