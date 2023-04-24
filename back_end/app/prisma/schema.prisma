@@ -98,8 +98,3 @@ model UserMessage {
     user        User    @relation("UserMessage", fields: [intraId], references: [intraId])
     intraId     Int
 }
-
-model Client {
-    id      String @unique
-    intraId Int    @unique
-}
