@@ -5,11 +5,14 @@ import { WsException } from '@nestjs/websockets';
 import { Punishment, DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
 import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from './constants';
+import { SharedService } from './chat.map.shared.service';
+import { isEmpty } from 'class-validator';
 
 @Injectable()
 export class ChatService {
 	constructor(
 		private readonly prisma: PrismaService,
+		private readonly sharedService: SharedService,
 	) { }
 
 	private readonly logger: Logger = new Logger('UserService initialized');
@@ -205,6 +208,46 @@ export class ChatService {
 		} catch (error: any) {
 			throw new HttpException(`Cannot find channel: ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	async getMember(channelName: string, clientId: string): Promise<Member> {
+		const intraId: number = this.sharedService.clientToIntraId.get(clientId);
+		const memberShipAndUser: (Membership & { user: User; }) = await this.getMemberWithUser(channelName, intraId);
+		return this.getMemberObject(memberShipAndUser);
+	}
+
+	async getMembers(channelName: string): Promise<Member[]> {
+		const allMemberShipsAndUsers: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
+		const members: Member[] = allMemberShipsAndUsers.map((membershipAndUser: (Membership & { user: User; })): Member => {
+			return this.getMemberObject(membershipAndUser);
+		});
+		return members;
+	}
+
+	async getActiveMembers(channelName: string, activeClientIds: string[], myIntraId: number): Promise<Member[]> {
+		if (isEmpty(activeClientIds)) {
+			return [];
+		}
+		const activeIntraIds: number[] = this.getIntraIds(activeClientIds).filter(intraId => intraId !== myIntraId);
+		const uniqueActiveIntraIds: number[] = [...new Set(activeIntraIds)];
+		const allMembers: Member[] = await this.getMembers(channelName);
+		const activeMembers = allMembers.filter((member) => {
+			return uniqueActiveIntraIds.includes(member.intraId);
+		});
+		return activeMembers;
+	}
+
+	private getIntraIds(clientIds: string[]): number[] {
+		return clientIds.map((clientId: string): number => this.sharedService.clientToIntraId.get(clientId));
+	}
+
+	private getMemberObject(memberShipAndUser: (Membership & { user: User; })): Member {
+		return {
+			intraId: memberShipAndUser.user.intraId,
+			name: memberShipAndUser.user.name,
+			avatar: memberShipAndUser.user.avatar,
+			role: memberShipAndUser.role,
+		};
 	}
 
 	async getMemberWithUser(channelName: string, intraId: number): Promise<(Membership & { user: User; })> {

@@ -12,7 +12,7 @@ import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtStrategy } from 'src/auth/strategy';
-import { ActivityStatus, Membership, User } from '@prisma/client';
+import { ActivityStatus, User } from '@prisma/client';
 import { UserService } from 'src/user/user.service';
 import { ChatService } from './chat.service';
 import { Member, Message } from './types';
@@ -33,11 +33,9 @@ export class ChatGateway
 		private readonly userService: UserService,
 		private readonly jwtStrategy: JwtStrategy,
 		private readonly sharedService: SharedService,
-	) {
-		this.channelToClientIds = new Map<string, string[]>();
-	}
+	) { }
 	private readonly logger: Logger = new Logger('WebsocketGateway');
-	private channelToClientIds: Map<string, string[]>;
+	private connectedClients: { [clientId: string]: Socket } = {};
 
 	@WebSocketServer()
 	server: Server;
@@ -62,131 +60,105 @@ export class ChatGateway
 		}
 		try {
 			// if this is the first client of the user, set activity status to online
-			if (this.isActive(user.intraId) === false) {
+			const activeClientIds: string[] = [...this.sharedService.clientToIntraId.keys()];
+			if (this.isActive(activeClientIds, user.intraId) === false) {
 				await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
 			}
 
-			// add client to map
+			// add client to map and its socket
 			this.sharedService.clientToIntraId.set(client.id, user.intraId);
+			this.connectedClients[client.id] = client;
 			this.logger.log(`Client connected: ${client.id}`);
 		} catch (error: any) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleConnection');
 		}
 	}
 
-	@UseGuards(ClientGuard)
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
 			const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 
-			// delete client from map
+			// delete client from map and delete socket
 			this.sharedService.clientToIntraId.delete(client.id);
+			const activeClientIds: string[] = [...this.sharedService.clientToIntraId.keys()];
+			delete this.connectedClients[client.id];
 
 			// if this was the last client of the user, set activity to offline
-			if (this.isActive(intraId) === false) {
+			if (this.isActive(activeClientIds, intraId) === false) {
 				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 			}
+
 			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleDisconnect');
 		}
 	}
 
-	private isActive(intraId: number): boolean {
-		for (const [clientId, clientIntraId] of this.sharedService.clientToIntraId.entries()) {
-			if (clientIntraId === intraId) {
-				return true;
-			}
-		}
-		return false;
+	@UseGuards(ClientGuard)
+	@SubscribeMessage('logout')
+	async logout(@ConnectedSocket() client: Socket): Promise<void> {
+		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
+		const activeClientIds: string[] = [...this.sharedService.clientToIntraId.keys()];
+		const allClientsBelongingToUser: string[] = activeClientIds.filter((clientId) => {
+			const clientIntraId = this.sharedService.clientToIntraId.get(clientId);
+			return clientIntraId && clientIntraId === intraId;
+		});
+
+		const sockets: Socket[] = [];
+		allClientsBelongingToUser.forEach((clientId) => sockets.push(this.connectedClients[clientId]));
+		sockets.forEach((socket: Socket) => {
+			socket.emit('redirectAfterLogout');
+			socket.disconnect();
+		});
+
+		await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 	}
 
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('joinChannel')
 	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
-		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
-		const memberShipAndUser: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
-		const member: Member = {
-			intraId: memberShipAndUser.user.intraId,
-			name: memberShipAndUser.user.name,
-			avatar: memberShipAndUser.user.avatar,
-			role: memberShipAndUser.role,
-		};
+		const member: Member = await this.chatService.getMember(channelName, client.id);
 
-		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
-		// console.log(`backend otherclientsinchannel ${otherClientsInChannel}`);
+		const activeClientIds: string[] = this.sharedService.channelToClientIds.get(channelName) || [];
+		const activeMembers: Member[] = await this.chatService.getActiveMembers(channelName, activeClientIds, member.intraId);
 
-		const otherJoinedMembersInChannel: Member[] = await this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
+		// inform all other users in the channel that a user joined if first active client
+		if (this.isActive(activeClientIds, member.intraId) === false) {
+			this.server.to(channelName).emit('userJoined', member);
+		}
 
 		// add client to channel map
-		this.channelToClientIds.set(channelName, [...otherClientsInChannel, client.id]);
-
-		// inform all other users in the channel that a user joined
-		// console.log(member);
-		this.server.to(channelName).emit('userJoined', member);
+		this.sharedService.channelToClientIds.set(channelName, [...activeClientIds, client.id]);
 
 		// inform current user which other members are in the channel
-		// console.log(otherJoinedMembersInChannel);
-		client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
+		client.emit('otherActiveUsers', activeMembers);
 
 		// join channel
 		client.join(channelName);
 	}
 
-	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]): Promise<Member[]> {
-		const otherUserIntraIds: number[] = otherClientsInChannel.map(clientId => this.sharedService.clientToIntraId.get(clientId));
-
-		const uniqueUserIntraIds: number[] = [...new Set(otherUserIntraIds)];
-
-		// console.log(uniqueUserIntraIds);
-
-		const otherMembersInChannel: (Membership & { user: User })[] = await this.chatService.getMembersWithUser(channelName);
-
-		// console.log(`in chat getJoinedMembersInChannel`);
-		// otherMembersInChannel.forEach((member) => {
-		// 	console.log(member);
-		// })
-
-		const otherJoinedMembersInChannel: (Membership & { user: User; })[] = [];
-		otherMembersInChannel.forEach((member: (Membership & { user: User; })) => {
-			if (uniqueUserIntraIds.find((intraId) => { return intraId === member.user.intraId })) {
-				otherJoinedMembersInChannel.push(member);
-			}
-		});
-
-		const otherMembers: Member[] = otherJoinedMembersInChannel.map((member) => {
-			return {
-				intraId: member.user.intraId,
-				name: member.user.name,
-				avatar: member.user.avatar,
-				role: member.role,
-			};
-		});
-
-		return otherMembers;
+	private isActive(clientIds: string[], intraId: number) {
+		const activeIntraIds: number[] = clientIds.map((clientId: string): number => this.sharedService.clientToIntraId.get(clientId));
+		return activeIntraIds.includes(intraId);
 	}
 
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('leaveChannel')
 	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
-		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
-		const memberShipAndUser: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
-		const member: Member = {
-			intraId: memberShipAndUser.user.intraId,
-			name: memberShipAndUser.user.name,
-			avatar: memberShipAndUser.user.avatar,
-			role: memberShipAndUser.role,
-		};
+		const member: Member = await this.chatService.getMember(channelName, client.id);
 
-		const clientsInChannel: string[] = this.channelToClientIds.get(channelName);
-		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
-		this.channelToClientIds.set(channelName, updatedClientsInChannel);
+		// remove client from channel map
+		const activeClientIds: string[] = this.sharedService.channelToClientIds.get(channelName);
+		const updatedActiveClientIds: string[] = activeClientIds.filter(clientId => clientId !== client.id);
+		this.sharedService.channelToClientIds.set(channelName, updatedActiveClientIds);
+
+		// inform all other users in the channel that a user left if last active client
+		if (this.isActive(updatedActiveClientIds, member.intraId) === false) {
+			this.server.to(channelName).emit('userLeft', member);
+		}
 
 		// leave channel
 		client.leave(channelName);
-
-		// inform all other users in the channel that a user left
-		this.server.to(channelName).emit('userLeft', member);
 	}
 
 	@UseGuards(ClientGuard)
@@ -204,7 +176,7 @@ export class ChatGateway
 	async kickUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		try {
 			const intraId: number = this.sharedService.clientToIntraId.get(client.id);
-			const clientIdsInChannel: string[] = this.channelToClientIds.get(data.channelName);
+			const clientIdsInChannel: string[] = this.sharedService.channelToClientIds.get(data.channelName);
 			const canBeKicked: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeKicked === true) {
@@ -225,7 +197,7 @@ export class ChatGateway
 	async banUser(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number, channelName: string }): Promise<void> {
 		try {
 			const intraId: number = this.sharedService.clientToIntraId.get(client.id);
-			const clientIdsInChannel: string[] = this.channelToClientIds.get(data.channelName);
+			const clientIdsInChannel: string[] = this.sharedService.channelToClientIds.get(data.channelName);
 			const canBeBanned: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeBanned === true) {
@@ -238,7 +210,7 @@ export class ChatGateway
 	}
 
 	private getClientIds(clientIdsInChannel: string[], otherIntraId: number): string[] {
-		let clientIds: string[] = [];
+		const clientIds: string[] = [];
 		for (const clientId of clientIdsInChannel) {
 			if (otherIntraId === this.sharedService.clientToIntraId.get(clientId)) {
 				clientIds.push(clientId);

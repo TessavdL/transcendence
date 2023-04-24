@@ -121,7 +121,7 @@ export default {
 			allMembers: ref<Member[]>([]),
 			allMessages: ref<Message[]>([]),
 			allPunishableMembers: ref<Member[]>([]),
-			allClientMembersInChannel: ref<Member[]>([]),
+			allActiveUsers: ref<Member[]>([]),
 		}
 	},
 
@@ -148,31 +148,30 @@ export default {
 		this.socket.on('leaveChannel', (data) => {
 			this.leaveChannel();
 		});
-		this.socket.on('otherJoinedMembers', (data: Member[]) => {
-			// console.log(data);
+		this.socket.on('otherActiveUsers', (data: Member[]) => {
 			this.getAllClientMembersInChannel(data);
 		});
 		this.socket.on('userJoined', (data: Member) => {
 			console.log(`old client list =`);
-			this.allClientMembersInChannel.forEach((member) => {
+			this.allActiveUsers.forEach((member) => {
 				console.log(member);
 			});
-			this.allClientMembersInChannel.push(data);
+			this.allActiveUsers.push(data);
 			console.log(`a user joined, new client list =`);
-			this.allClientMembersInChannel.forEach((member) => {
+			this.allActiveUsers.forEach((member) => {
 				console.log(member);
 			});
 		});
 		this.socket.on('userLeft', (data: Member) => {
 			console.log(`old client list =`);
-			this.allClientMembersInChannel.forEach((member) => {
+			this.allActiveUsers.forEach((member) => {
 				console.log(member);
 			});
-			this.allClientMembersInChannel = this.allClientMembersInChannel.filter((member) => {
+			this.allActiveUsers = this.allActiveUsers.filter((member) => {
 				member.intraId !== data.intraId;
 			});
 			console.log(`a user left, new client list =`);
-			this.allClientMembersInChannel.forEach((member) => {
+			this.allActiveUsers.forEach((member) => {
 				console.log(member);
 			});
 		});
@@ -180,9 +179,9 @@ export default {
 
 	methods: {
 		getAllClientMembersInChannel(data: Member[]) {
-			this.allClientMembersInChannel = data;
+			this.allActiveUsers = data;
 			console.log(`all clients already in channel =`);
-			this.allClientMembersInChannel.forEach((member) => {
+			this.allActiveUsers.forEach((member) => {
 				console.log(member);
 			});
 		},
@@ -196,7 +195,7 @@ export default {
 				return;
 			}
 			let members: Member[] = [];
-			for (const member of this.allClientMembersInChannel) {
+			for (const member of this.allActiveUsers) {
 				const role: 'OWNER' | 'ADMIN' | 'MEMBER' = member.role;
 
 				const rank = {
