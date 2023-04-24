@@ -1,18 +1,17 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
+import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role, AllOtherUsers } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Socket } from 'socket.io';
-import { UserClientService } from 'src/user/client/client.service';
 import { WsException } from '@nestjs/websockets';
 import { Punishment, DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
 import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from './constants';
+import { SharedService } from './chat.map.shared.service';
 
 @Injectable()
 export class ChatService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly userClientService: UserClientService
+		private readonly sharedMap: SharedService,
 	) { }
 
 	private readonly logger: Logger = new Logger('UserService initialized');
@@ -210,6 +209,22 @@ export class ChatService {
 		}
 	}
 
+	async getMemberWithUser(channelName: string, intraId: number): Promise<(Membership & { user: User; })> {
+		try {
+			const member: (Membership & { user: User; }) = await this.prisma.membership.findUnique({
+				where: {
+					intraId_channelName: { intraId: intraId, channelName: channelName },
+				},
+				include: {
+					user: true,
+				},
+			});
+			return member;
+		} catch (error: any) {
+			throw new HttpException(`Cannot find user`, HttpStatus.BAD_REQUEST);
+		}
+	}
+
 	async getMembersWithUser(channelName: string): Promise<(Membership & { user: User; })[]> {
 		try {
 			const members: (Membership & { user: User })[] = await this.prisma.membership.findMany({
@@ -333,11 +348,51 @@ export class ChatService {
 		}
 	}
 
-	async handleChannelMessage(client: Socket, channelName: string, text: string): Promise<Message> {
-		const user: User = await this.userClientService.getUser(client.id);
-		if (!user) {
-			throw new WsException({ reason: `Client is invalid` });
-		}
+	async getFilteredMessages(user: User, channelName: string): Promise<Message[]> {
+		const messages: (UserMessage & { user: User })[] = await this.prisma.userMessage.findMany({
+			where: {
+				channelName: channelName,
+			},
+			include: {
+				user: true,
+			},
+		});
+
+		const otherUsers: { intraId: number, blockedStatus: boolean; otherIntraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+			where: {
+				intraId: user.intraId,
+			},
+			select: {
+				intraId: true,
+				blockedStatus: true,
+				otherIntraId: true,
+			},
+		});
+
+		const filteredMessages: Message[] = [];
+
+		messages.forEach((message) => {
+			const messageIntraId: number = message.user.intraId;
+
+			const goodUser = otherUsers.find((user) => {
+				return (user.intraId === user.intraId && user.otherIntraId === messageIntraId && user.blockedStatus === false);
+			});
+			if (messageIntraId === user.intraId || goodUser) {
+				filteredMessages.push({
+					channelName: channelName,
+					intraId: message.user.intraId,
+					name: message.user.intraName,
+					avatar: message.user.avatar,
+					text: message.text,
+				});
+			}
+		});
+
+		return filteredMessages;
+	}
+
+	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
+		const user: User = await this.prisma.user.findUnique({ where: { intraId: intraId } });
 
 		const message: Message = {
 			channelName: channelName,
@@ -570,11 +625,11 @@ export class ChatService {
 		}
 	}
 
-	async canBeKickedOrMuted(user: User, otherIntraId: number, channelName: string): Promise<boolean> {
+	async canBePunished(intraId: number, otherIntraId: number, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
 				intraId: {
-					in: [user.intraId, otherIntraId],
+					in: [intraId, otherIntraId],
 				},
 				channelName: channelName,
 			},
@@ -584,7 +639,7 @@ export class ChatService {
 			throw new HttpException('Could not find user and otheruser', HttpStatus.BAD_REQUEST);
 		}
 
-		const userRole: Role = memberships.find((member: Membership) => member.intraId === user.intraId).role;
+		const userRole: Role = memberships.find((member: Membership) => member.intraId === intraId).role;
 		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
 
 		return this.hasAuthority(userRole, otherUserRole);
@@ -738,5 +793,30 @@ export class ChatService {
 		} catch (error: any) {
 			throw new InternalServerErrorException('Failed to get mute status and mute time information');
 		}
+	}
+
+	async getNonBlockedClientIds(senderIntraId: number, senderclientId: string, allClientIds: string[]): Promise<string[]> {
+		const nonBlockedClientIds: string[] = [senderclientId];
+
+		const relationships: { intraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+			where: {
+				otherIntraId: senderIntraId,
+				blockedStatus: false,
+			},
+			select: {
+				intraId: true,
+			},
+		});
+
+		console.log(relationships);
+
+		for (const clientId of allClientIds) {
+			const intraId = this.sharedMap.clientToIntraId.get(clientId);
+			if (intraId && intraId !== senderIntraId && relationships.some((relationship) => { return relationship.intraId === intraId })) {
+				nonBlockedClientIds.push(clientId);
+			}
+		}
+
+		return nonBlockedClientIds;
 	}
 }
