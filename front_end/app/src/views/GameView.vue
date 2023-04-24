@@ -69,7 +69,7 @@
 	const paddleLeftEdge = this.player1Position;
 	const paddleRightEdge = this.player1Position + 15; // paddle width is 15 pixels
 	const paddleTopEdge = 0;
-	const paddleBottomEdge = 80;
+	const paddleBottomEdge = this.player1Position + 80;
 	const ballPosition = {
 		top: this.ballPosition.top + this.ballVelocity.y,
 		left: this.ballPosition.left + this.ballVelocity.x,
@@ -83,18 +83,17 @@
 		this.ballVelocity.x = -this.ballVelocity.x;
 		}
 	// Check for collision with paddle
-	if(ballPosition.left <= paddleRightEdge && 
-    ballPosition.right >= paddleLeftEdge &&
-    ballPosition.top <= paddleBottomEdge && 
-    ballPosition.bottom >= paddleTopEdge)
-	{
-		console.log('collision with paddle');
-		this.ballVelocity.x = -this.ballVelocity.x;
-		this.ballPosition.left += this.ballVelocity.x;
+	// 
+	if(ballPosition.left + 20 >= paddleLeftEdge &&
+		ballPosition.right >= paddleLeftEdge &&
+		ballPosition.top <= paddleBottomEdge && 
+		ballPosition.top + 20 >= paddleTopEdge)
+		{
+			console.log('collision with paddle');
+			this.ballVelocity.x = -this.ballVelocity.x;
+			this.ballPosition.left = paddleRightEdge;
+		}
 
-		ballPosition.left += this.ballVelocity.x;
-		ballPosition.top += this.ballVelocity.y;
-	}
 	// Check for score
 	if (ballPosition.left <= 0) {
 		this.player2Score++;
