@@ -15,12 +15,14 @@
 	export default {
 	data() {
 		return {
-		player1Position: 0,
-		player2Position: 0,
-		ballPosition: { top: 290, left: 390 },
+		player1Position: 240,
+		player2Position: 240,
+		ballPosition: { top: 300, left: 385 },
 		ballVelocity: { x: 5, y: 5 },
 		socket: null,
 		gameStarted: false,
+		player1Score: 0,
+        player2Score: 0,
 		};
 	},
 	mounted() {
@@ -29,6 +31,8 @@
 		this.player1Position = gameState.player1Position;
 		this.player2Position = gameState.player2Position;
 		this.ballPosition = gameState.ballPosition;
+		this.player1Score = gameState.player1Score;
+		this.player2Score = gameState.player2Score;
 	});
 	window.addEventListener('keydown', (event) => {
 		if (event.key === 'ArrowUp') {
@@ -57,28 +61,55 @@
 			this.socket.emit('movePaddle', position);
 			this.player1Position = newPosition;
 		}
+		console.log('position player 1:', newPosition);
 	},
-		update() {
-		if (!this.gameStarted) return;
-		
-		const paddleLeftEdge = this.player1Position;
-		const paddleRightEdge = this.player1Position + 100; // paddle width is 100 pixels
-
-		const ballPosition = {
-			top: this.ballPosition.top + this.ballVelocity.y,
-			left: this.ballPosition.left + this.ballVelocity.x,
+	update() {
+	if (!this.gameStarted)
+		return;
+	const paddleLeftEdge = this.player1Position;
+	const paddleRightEdge = this.player1Position + 15; // paddle width is 15 pixels
+	const paddleTopEdge = 0;
+	const paddleBottomEdge = 80;
+	const ballPosition = {
+		top: this.ballPosition.top + this.ballVelocity.y,
+		left: this.ballPosition.left + this.ballVelocity.x,
 		};
-	
-		if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
+	// Check for collision with top or bottom walls
+	if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
 		this.ballVelocity.y = -this.ballVelocity.y;
 		}
-		if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
+	// Check for collision with left or right walls
+	if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
 		this.ballVelocity.x = -this.ballVelocity.x;
 		}
-		this.socket.emit('updateBallPosition', ballPosition);
+	// Check for collision with paddle
+	if(ballPosition.left <= paddleRightEdge && 
+    ballPosition.right >= paddleLeftEdge &&
+    ballPosition.top <= paddleBottomEdge && 
+    ballPosition.bottom >= paddleTopEdge)
+	{
+		console.log('collision with paddle');
+		this.ballVelocity.x = -this.ballVelocity.x;
+		this.ballPosition.left += this.ballVelocity.x;
+
+		ballPosition.left += this.ballVelocity.x;
+		ballPosition.top += this.ballVelocity.y;
+	}
+	// Check for score
+	if (ballPosition.left <= 0) {
+		this.player2Score++;
+		this.gameStarted = false;
+		} 
+	else if (ballPosition.left >= 780) {
+		this.player1Score++;
+		this.gameStarted = false;
+		} 
+	else {
 		this.ballPosition = ballPosition;
-		console.log('Ball position:', ballPosition);
-		requestAnimationFrame(this.update);
+		}
+	this.socket.emit('updateBallPosition', ballPosition);
+	console.log('Ball position:', ballPosition);
+	requestAnimationFrame(this.update);
 		},
 	},
 };
@@ -86,6 +117,15 @@
 </script>
 
 <style>
+.pong-game::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	border-left: 8px solid white;
+}
+
 .pong-game {
 	position: fixed;
 	top: 50%;
@@ -93,11 +133,16 @@
 	transform: translate(-50%, -50%);
 	height: 600px;
 	width: 800px;
-	background: url("../assets/game_images/skyline.png") no-repeat fixed;
+	/* /background: url("../assets/game_images/skyline.png") no-repeat fixed; */
 	background-size: contain;
 	background-position: center;
-	background-color: rgb(250, 247, 244);
+	background-color: rgb(13, 12, 11);
 	display: flex;
+	border-top: 8px solid rgb(249, 248, 248);
+	border-bottom: 8px solid rgb(253, 251, 251);
+	border-left: 8px solid rgb(253, 251, 251);
+	border-right: 8px solid rgb(253, 251, 251);
+
 	/* justify-content: center;
 	align-items: center;
 	-webkit-background-size: cover;
@@ -123,17 +168,19 @@
 .player1-paddle,
 .player2-paddle {
 	position: absolute;
-	width: 20px;
-	height: 100px;
-	background-color: rgb(12, 14, 14);
+	width: 15px;
+	height: 80px;
+	background-color: rgb(231, 220, 208);
 }
 
 .player1-paddle {
-	left: 10px;
+	left: 20px;
+	top: 260px;
 }
 
 .player2-paddle {
-	right: 10px;
+	right: 20px;
+	top: 260px;
 }
 
 .ball {
@@ -142,6 +189,14 @@
 	height: 20px;
 	/* top: calc(300px);
 	left: calc(360px); */
-	background-color: rgb(64, 36, 3);
+	background-color: rgb(238, 221, 202);
+	/* --for round ball --*/
+	/* position: absolute;
+	width: 15px;
+	height: 15px;
+	top: 290px;
+	left: 390px;
+	background-color: white;
+	border-radius: 50%; */
 }
 </style>
