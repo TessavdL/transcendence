@@ -123,9 +123,13 @@ export class AuthService {
 				allOtherUsers: {
 					create: [],
 				},
+				achievements: {
+					create: {}
+				},
 			},
 			include: {
 				allOtherUsers: true,
+				achievements: true,
 			},
 		});
 		this.updateUsersOfNewUser(user.intraId);

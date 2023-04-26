@@ -50,7 +50,7 @@ model User {
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
-    achievements   Achievements
+    achievements   Achievements?
     memberships    Membership[]    @relation("UserMembership")
     userMessage    UserMessage[]   @relation("UserMessage")
 }
