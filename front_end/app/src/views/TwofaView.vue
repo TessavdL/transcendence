@@ -36,7 +36,7 @@ export default {
                 intraId: this.intraId,
             };
             try {
-                await axios.patch('http://localhost:3001/twofa/verify', data);
+                await axios.patch('http://localhost:3001/twofa/authenticate', data);
                 this.$router.push({ name: "Home" });
             } catch (error: any) {
                 console.log(error);
