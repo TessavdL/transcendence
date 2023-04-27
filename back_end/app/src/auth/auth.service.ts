@@ -47,7 +47,21 @@ export class AuthService {
 			httpOnly: true,
 			domain: 'localhost',
 		});
-		res.redirect('http://localhost:5173');
+		res.redirect(302, 'http://localhost:5173');
+	}
+
+	async setBearerTokenForTwofa(
+		user: User,
+		@Res({ passthrough: true }) res: Response,
+	): Promise<void> {
+		console.log(`Hello ${user.intraName}, you have logged in!`);
+
+		const token = await this.signToken(user);
+
+		res.cookie('jwt', token.access_token, {
+			httpOnly: true,
+			domain: 'localhost',
+		});
 	}
 
 	async signToken(user: User): Promise<{ access_token: string }> {

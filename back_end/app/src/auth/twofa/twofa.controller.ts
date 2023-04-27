@@ -1,13 +1,15 @@
-import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UnauthorizedException, UseGuards, Res } from '@nestjs/common';
 import { TwofaService } from './twofa.service';
 import { JwtAuthGuard } from '../guards';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { User } from '@prisma/client';
 import { TwofaCodeDto } from './dto/twofa-code-dto';
+import { AuthService } from '../auth.service';
+import { Response } from 'express';
 
 @Controller('twofa')
 export class TwofaController {
-	constructor(private readonly twofaService: TwofaService) { }
+	constructor(private readonly twofaService: TwofaService, private readonly authService: AuthService) { }
 
 	@UseGuards(JwtAuthGuard)
 	@Get('status')
@@ -37,10 +39,21 @@ export class TwofaController {
 		return await this.twofaService.createQRCodeUrl(qrcodestring);
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Patch('verify')
-	verify_code(@GetUser() user: User, @Body() twofaCodeDto: TwofaCodeDto): boolean {
+	async verify_code(@Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
 		console.log(twofaCodeDto.code);
-		return this.twofaService.isCodeValid(user, twofaCodeDto.code.toString());
+		const user: User = await this.authService.findUserById(twofaCodeDto.intraId);
+		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
+
+		if (isValid === false) {
+			throw new UnauthorizedException('Code was not valid');
+		}
+
+		if (await this.twofaService.getTwofaStatus(user) === false) {
+			await this.set_twofa_status_to_true(user);
+			await this.authService.setBearerTokenForTwofa(user, res);
+		}
+
+		return true;
 	}
 }

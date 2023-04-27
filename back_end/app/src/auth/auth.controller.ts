@@ -1,4 +1,4 @@
-import { Controller, Get, Request, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -18,6 +18,9 @@ export class AuthController {
 	@UseGuards(AuthGuard42)
 	@Get('callback')
 	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
+		if (user.twofaStatus === true) {
+			return res.redirect(`http://localhost:5173/twofa?intraId=${user.intraId}`);
+		}
 		return this.authService.setBearerToken(user, res);
 	}
 
