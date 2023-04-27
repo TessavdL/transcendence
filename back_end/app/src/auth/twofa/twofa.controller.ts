@@ -41,7 +41,6 @@ export class TwofaController {
 	@Patch('verify')
 	async verify_code(@GetUser() user: User, @Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
 		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
-
 		if (isValid === false) {
 			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
 		}
