@@ -33,9 +33,7 @@ export class TwofaController {
 	@Patch('enable')
 	async enable_twofa(@GetUser() user: User): Promise<string> {
 		const secret = await this.twofaService.setAndReturnTwofaSecret(user);
-		console.log(`secret = ${secret}`);
 		const qrcodestring: string = this.twofaService.createQRCodeString(user, secret);
-		console.log(`qrcodestring = ${qrcodestring}`);
 		return await this.twofaService.createQRCodeUrl(qrcodestring);
 	}
 
