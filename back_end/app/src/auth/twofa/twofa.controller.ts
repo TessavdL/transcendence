@@ -53,10 +53,13 @@ export class TwofaController {
 	@Patch('authenticate')
 	async verify_code_from_login(@Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
 		const user: User = await this.authService.findUserById(twofaCodeDto.intraId);
-		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
+		if (!user) {
+			throw new UnauthorizedException('Two factor authentication failed: Unknown user');
+		}
 
+		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
 		if (isValid === false) {
-			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
+			throw new UnauthorizedException('Two factor authentication failed: Code could not be verified');
 		}
 
 		await this.authService.setBearerTokenForTwofa(user, res);
