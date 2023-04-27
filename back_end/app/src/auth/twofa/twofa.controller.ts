@@ -39,21 +39,29 @@ export class TwofaController {
 		return await this.twofaService.createQRCodeUrl(qrcodestring);
 	}
 
+	@UseGuards(JwtAuthGuard)
 	@Patch('verify')
-	async verify_code(@Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
-		console.log(twofaCodeDto.code);
+	async verify_code(@GetUser() user: User, @Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
+		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
+
+		if (isValid === false) {
+			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
+		}
+
+		await this.set_twofa_status_to_true(user);
+		return true;
+	}
+
+	@Patch('authenticate')
+	async verify_code_from_login(@Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
 		const user: User = await this.authService.findUserById(twofaCodeDto.intraId);
 		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
 
 		if (isValid === false) {
-			throw new UnauthorizedException('Code was not valid');
+			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
 		}
 
-		if (await this.twofaService.getTwofaStatus(user) === false) {
-			await this.set_twofa_status_to_true(user);
-			await this.authService.setBearerTokenForTwofa(user, res);
-		}
-
+		await this.authService.setBearerTokenForTwofa(user, res);
 		return true;
 	}
 }
