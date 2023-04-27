@@ -3,9 +3,9 @@ import { TwofaService } from './twofa.service';
 import { JwtAuthGuard } from '../guards';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { User } from '@prisma/client';
-import { TwofaCodeDto } from './dto/twofa-code-dto';
 import { AuthService } from '../auth.service';
 import { Response } from 'express';
+import { TwofaAuthenticateDto, TwofaCodeDto } from './dto';
 
 @Controller('twofa')
 export class TwofaController {
@@ -39,7 +39,7 @@ export class TwofaController {
 
 	@UseGuards(JwtAuthGuard)
 	@Patch('verify')
-	async verify_code(@GetUser() user: User, @Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
+	async verify_code(@GetUser() user: User, @Body() twofaCodeDto: TwofaCodeDto): Promise<boolean> {
 		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
 		if (isValid === false) {
 			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
@@ -50,13 +50,13 @@ export class TwofaController {
 	}
 
 	@Patch('authenticate')
-	async verify_code_from_login(@Body() twofaCodeDto: TwofaCodeDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
-		const user: User = await this.authService.findUserById(twofaCodeDto.intraId);
+	async verify_code_from_login(@Body() twofaAuthenticateDto: TwofaAuthenticateDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
+		const user: User = await this.authService.findUserById(twofaAuthenticateDto.intraId);
 		if (!user) {
 			throw new UnauthorizedException('Two factor authentication failed: Unknown user');
 		}
 
-		const isValid = this.twofaService.isCodeValid(user, twofaCodeDto.code);
+		const isValid = this.twofaService.isCodeValid(user, twofaAuthenticateDto.code);
 		if (isValid === false) {
 			throw new UnauthorizedException('Two factor authentication failed: Code could not be verified');
 		}

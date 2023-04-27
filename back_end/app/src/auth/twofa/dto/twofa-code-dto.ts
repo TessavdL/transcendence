@@ -1,12 +1,8 @@
-import { IsNotEmpty, IsNumber, IsNumberString, Length } from "class-validator";
+import { IsNotEmpty, IsNumberString, Length } from "class-validator";
 
 export class TwofaCodeDto {
     @IsNotEmpty()
     @IsNumberString()
     @Length(6, 6)
     code: string;
-
-    @IsNotEmpty()
-    @IsNumber()
-    intraId: number;
 }
