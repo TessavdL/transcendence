@@ -46,6 +46,9 @@ model User {
     updatedAt      DateTime        @updatedAt
     avatar         String?
     name           String          @unique
+    wins           Int             @default(0)
+    losses         Int             @default(0)
+    elo            Int             @default(1000)
     intraId        Int             @unique
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
@@ -53,6 +56,14 @@ model User {
     achievements   Achievements?
     memberships    Membership[]    @relation("UserMembership")
     userMessage    UserMessage[]   @relation("UserMessage")
+}
+
+model MatchHistory {
+    id              Int          @id @default(autoincrement())
+    intraId         Int
+    otherIntraId    Int
+    scoreUser       Int
+    scoreOtherUser  Int
 }
 
 model AllOtherUsers {
