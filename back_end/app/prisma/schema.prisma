@@ -106,6 +106,6 @@ model UserMessage {
     text        String
     channel     Channel @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
     channelName String
-    user        User    @relation("UserMessage", fields: [intraId], references: [intraId], onUpdate: Cascade)
+    user        User    @relation("UserMessage", fields: [intraId], references: [intraId])
     intraId     Int
 }
