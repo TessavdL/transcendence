@@ -59,11 +59,11 @@ model User {
 }
 
 model MatchHistory {
-    id              Int          @id @default(autoincrement())
-    intraId         Int
-    otherIntraId    Int
-    scoreUser       Int
-    scoreOtherUser  Int
+    id             Int @id @default(autoincrement())
+    intraId        Int
+    otherIntraId   Int
+    scoreUser      Int
+    scoreOtherUser Int
 }
 
 model AllOtherUsers {
