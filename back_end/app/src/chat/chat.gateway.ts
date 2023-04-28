@@ -185,10 +185,8 @@ export class ChatGateway
 		const intraId = this.sharedService.clientToIntraId.get(client.id)
 		const message: Message = await this.chatService.handleChannelMessage(intraId, data.channelName, data.messageText);
 		const allClientIds: string[] = this.channelToClientIds.get(data.channelName);
-		console.log(`all clients in channel = ${allClientIds}`);
 		if (allClientIds) {
 			const nonBlockedClientIds: string[] = await this.chatService.getNonBlockedClientIds(intraId, client.id, allClientIds);
-			console.log(nonBlockedClientIds);
 			this.server.to(nonBlockedClientIds).emit('message', message);
 		}
 	}

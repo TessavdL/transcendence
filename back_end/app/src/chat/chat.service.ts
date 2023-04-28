@@ -808,8 +808,6 @@ export class ChatService {
 			},
 		});
 
-		console.log(relationships);
-
 		for (const clientId of allClientIds) {
 			const intraId = this.sharedMap.clientToIntraId.get(clientId);
 			if (intraId && intraId !== senderIntraId && relationships.some((relationship) => { return relationship.intraId === intraId })) {
