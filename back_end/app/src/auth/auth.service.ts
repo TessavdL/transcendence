@@ -127,10 +127,6 @@ export class AuthService {
 					create: {}
 				},
 			},
-			include: {
-				allOtherUsers: true,
-				achievements: true,
-			},
 		});
 		this.updateUsersOfNewUser(user.intraId);
 		this.updateSelfWithOtherUsers(user.intraId);
