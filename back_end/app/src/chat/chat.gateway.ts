@@ -37,7 +37,7 @@ export class ChatGateway
 		this.channelToClientIds = new Map<string, string[]>();
 		this.clientIdToChannel = new Map<string, string>();
 	}
-	private readonly logger: Logger = new Logger('WebsocketGateway');
+	private readonly logger: Logger = new Logger('ChatGateway');
 	private channelToClientIds: Map<string, string[]>;
 	private clientIdToChannel: Map<string, string>;
 

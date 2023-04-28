@@ -55,14 +55,16 @@ model User {
     allOtherUsers  AllOtherUsers[]
     memberships    Membership[]    @relation("UserMembership")
     userMessage    UserMessage[]   @relation("UserMessage")
+
+    @@unique([name, intraId])
 }
 
 model MatchHistory {
-    id              Int          @id @default(autoincrement())
-    intraId         Int
-    otherIntraId    Int
-    scoreUser       Int
-    scoreOtherUser  Int
+    id             Int @id @default(autoincrement())
+    intraId        Int
+    otherIntraId   Int
+    scoreUser      Int
+    scoreOtherUser Int
 }
 
 model AllOtherUsers {
@@ -106,6 +108,7 @@ model UserMessage {
     text        String
     channel     Channel @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
     channelName String
-    user        User    @relation("UserMessage", fields: [intraId], references: [intraId])
+    user        User    @relation("UserMessage", fields: [intraId, name], references: [intraId, name], onUpdate: Cascade)
     intraId     Int
+    name        String
 }

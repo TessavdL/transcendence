@@ -380,8 +380,8 @@ export class ChatService {
 			if (messageIntraId === user.intraId || goodUser) {
 				filteredMessages.push({
 					channelName: channelName,
-					intraId: message.user.intraId,
-					name: message.user.intraName,
+					intraId: message.intraId,
+					name: message.name,
 					avatar: message.user.avatar,
 					text: message.text,
 				});
