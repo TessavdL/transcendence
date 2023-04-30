@@ -25,6 +25,11 @@
                                 <i class="bi bi-person-fill-slash fs-4" style="font-size: 2rem; color: #ffffff;"></i>
                                 Blocked</h3>
                         </li>
+                        <li class="nav-item">
+                            <h3 class="nav-link" @click="handleFilter('friendStatus')">
+                                <i class="bi bi-person-add fs-4" style="font-size: 2rem; color: #ffffff;"></i>
+                                Pending</h3>
+                        </li>
                     </ul>
 
                 </div>
@@ -84,7 +89,7 @@ const handleFilter = async (cat: String) => {
     else if (cat === 'friendStatus') {
         filteredUsers.value = filteredUsers.value.filter((user) => {
             return (
-                user.friendStatus === "FRIENDS"
+                user.friendStatus === "PENDING"
             );
         });;
     }
@@ -130,7 +135,7 @@ h3 {
 }
 
 .users-main {
-    padding-left: 180px;
+    padding-left: 200px;
 }
 
-</style>>
+</style>
