@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Achievements, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';

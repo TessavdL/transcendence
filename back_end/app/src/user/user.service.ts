@@ -1,14 +1,15 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
-import { ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
+import { Achievements, ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { FriendRequestList, UserElement } from './types';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class UserService {
-	constructor(private prisma: PrismaService, private authService: AuthService) { }
+	constructor(private prisma: PrismaService, private authService: AuthService, private achievementsService: AchievementsService) { }
 
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
@@ -263,14 +264,18 @@ export class UserService {
 
 	async updateUsername(user: User, newUsername: string) {
 		try {
-			await this.prisma.user.update({
+			const updatedUser: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
 					intraId: user.intraId,
 				},
 				data: {
 					name: newUsername,
 				},
+				include: {
+					achievements: true,
+				},
 			});
+			this.achievementsService.checkChangedName(updatedUser);
 		} catch (error: any) {
 			throw new Error(error);
 		}
@@ -278,10 +283,18 @@ export class UserService {
 
 	async updateAvatar(id: number, filePath: string): Promise<void> {
 		try {
-			await this.prisma.user.update({
-				where: { id: id },
-				data: { avatar: filePath },
+			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
+				where: { 
+					id: id
+				},
+				data: {
+					avatar: filePath
+				},
+				include: {
+					achievements: true,
+				},
 			});
+			this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			throw new Error(error);
 		}
