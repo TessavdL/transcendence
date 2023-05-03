@@ -7,43 +7,6 @@ import { Channel, User, UserMessage } from '@prisma/client';
 export class MessageService {
 	constructor(private readonly prisma: PrismaService) { }
 
-	// check if it is still used
-	// could have been replaced by getfilteredmessages entirely
-	// remove?
-	async getMessages(channelName: string): Promise<Message[]> {
-		try {
-			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; name: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
-				where: {
-					channelName: channelName,
-				},
-				include: {
-					userMessages: {
-						include: {
-							user: {
-								select: {
-									intraId: true,
-									name: true,
-									avatar: true,
-								},
-							},
-						},
-					},
-				},
-			});
-
-			const messages: Message[] = channel.userMessages.map((mes) => ({
-				channelName: channelName,
-				intraId: mes.intraId,
-				name: mes.user.name,
-				avatar: mes.user.avatar,
-				text: mes.text,
-			}));
-			return messages;
-		} catch (error: any) {
-			throw new BadRequestException(`Cannot find messages in ${channelName}`);
-		}
-	}
-
 	async getFilteredMessages(user: User, channelName: string): Promise<Message[]> {
 		const messages: (UserMessage & { user: User })[] = await this.prisma.userMessage.findMany({
 			where: {
