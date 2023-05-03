@@ -16,8 +16,7 @@ export class RoleService {
 					},
 				},
 			});
-			const role: Role = membership.role;
-			return (role);
+			return membership.role;
 		} catch (error: any) {
 			throw new BadRequestException(`Cannot find membership of user with intraId: ${intraId} to ${channelName}`);
 		}
@@ -44,9 +43,8 @@ export class RoleService {
 					role: 'ADMIN',
 				},
 			});
-		}
-		catch (error: any) {
-			throw new InternalServerErrorException('Failed to update membership');
+		} catch (error: any) {
+			throw new InternalServerErrorException('Prisma failed to update membership');
 		}
 	}
 
@@ -73,7 +71,7 @@ export class RoleService {
 				},
 			});
 		} catch (error: any) {
-			throw new InternalServerErrorException('Failed to update memberhsip');
+			throw new InternalServerErrorException('Prisma failed to update memberhsip');
 		}
 	}
 }
