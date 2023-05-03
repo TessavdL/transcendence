@@ -36,7 +36,7 @@ export class ChannelService {
 					},
 				},
 			});
-			return (newChannel.channelName);
+			return newChannel.channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException('Prisma failed to create channel');
 		}
@@ -134,7 +134,7 @@ export class ChannelService {
 				return (this.transferOwnership(channelName));
 			}
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException(`Prisma failed to delete membership of ${channelName}`);
 		}
 	}
 
@@ -162,7 +162,7 @@ export class ChannelService {
 
 	async getMyChannels(user: User): Promise<Channel[]> {
 		try {
-			const memberships: { channelName: string }[] = await this.prisma.membership.findMany({
+			const memberships: { channelName: string; }[] = await this.prisma.membership.findMany({
 				where: {
 					intraId: user.intraId,
 				},
@@ -217,7 +217,7 @@ export class ChannelService {
 					user: user,
 				};
 			});
-			return (DMChannels);
+			return DMChannels;
 		} catch (error: any) {
 			throw new BadRequestException(`Cannot find ${user.name}'s direct messages`);
 		}
@@ -226,7 +226,7 @@ export class ChannelService {
 	async getChannelType(channelName: string): Promise<ChannelType> {
 		try {
 			const channel: Channel = await this.getChannel(channelName);
-			return (channel.channelType);
+			return channel.channelType;
 		} catch (error: any) {
 			throw new BadRequestException(`Cannot find type of channel: ${channelName}`);
 		}
@@ -237,8 +237,8 @@ export class ChannelService {
 			await this.prisma.channel.delete({
 				where: {
 					channelName: channelName,
-				}
-			})
+				},
+			});
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
@@ -251,9 +251,9 @@ export class ChannelService {
 					channelName: channelName,
 				},
 			});
-			return (count);
+			return count;
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException("Prisma failed to count memberships");
 		}
 	}
 
@@ -283,13 +283,8 @@ export class ChannelService {
 					role: 'OWNER',
 				},
 			});
-			member = await this.prisma.membership.findFirst({
-				where: {
-					channelName: channelName,
-				},
-			});
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException("Prisma failed to update ownership");
 		}
 	}
 }
