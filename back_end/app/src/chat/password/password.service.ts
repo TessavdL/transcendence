@@ -23,7 +23,7 @@ export class PasswordService {
 		try {
 			return (argon2.verify(hashed_password, password));
 		} catch (error: any) {
-			throw new InternalServerErrorException('Failed to check password');
+			throw new InternalServerErrorException('Argon2 failed to verify password');
 		}
 	}
 
@@ -31,7 +31,7 @@ export class PasswordService {
 		await this.checkCredentials(user, channelName, oldPassword);
 
 		try {
-			const hashed_password = await this.createHashedPassword(newPassword);
+			const hashed_password: string = await this.createHashedPassword(newPassword);
 
 			await this.prisma.channel.update({
 				where: {
@@ -39,10 +39,10 @@ export class PasswordService {
 				},
 				data: {
 					password: hashed_password,
-				}
-			})
+				},
+			});
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException("Prisma failed to update channel");
 		}
 	}
 
@@ -59,14 +59,14 @@ export class PasswordService {
 				},
 			});
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException('Prisma failed to update channel');
 		}
 	}
 
 	async setPasswordAndSetChannelModeToProtected(user: User, channelName: string, password: string): Promise<void> {
 		await this.checkCredentials(user, channelName, '');
 		try {
-			const hashed_password = await this.createHashedPassword(password);
+			const hashed_password: string = await this.createHashedPassword(password);
 
 			await this.prisma.channel.update({
 				where: {
@@ -78,7 +78,7 @@ export class PasswordService {
 				},
 			});
 		} catch (error: any) {
-			throw new InternalServerErrorException(error.message);
+			throw new InternalServerErrorException("Prisma failed to update channel");
 		}
 	}
 
@@ -95,7 +95,11 @@ export class PasswordService {
 	}
 
 	async createHashedPassword(password: string): Promise<string> {
-		const hashed_password: string = await argon2.hash(password);
-		return (hashed_password);
+		try {
+			const hashed_password = await argon2.hash(password);
+			return hashed_password
+		} catch (error: any) {
+			throw new InternalServerErrorException('Argon2 failed to hash password');
+		}
 	}
 }

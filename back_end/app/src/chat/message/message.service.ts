@@ -8,7 +8,7 @@ export class MessageService {
 	constructor(private readonly prisma: PrismaService) { }
 
 	async getFilteredMessages(user: User, channelName: string): Promise<Message[]> {
-		const messages: (UserMessage & { user: User })[] = await this.prisma.userMessage.findMany({
+		const messages: (UserMessage & { user: User; })[] = await this.prisma.userMessage.findMany({
 			where: {
 				channelName: channelName,
 			},
@@ -17,7 +17,11 @@ export class MessageService {
 			},
 		});
 
-		const otherUsers: { intraId: number, blockedStatus: boolean; otherIntraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+		const otherUsers: {
+			intraId: number;
+			blockedStatus: boolean;
+			otherIntraId: number;
+		}[] = await this.prisma.allOtherUsers.findMany({
 			where: {
 				intraId: user.intraId,
 			},
@@ -30,10 +34,18 @@ export class MessageService {
 
 		const filteredMessages: Message[] = [];
 
-		messages.forEach((message) => {
+		messages.forEach((message: (UserMessage & { user: User; })) => {
 			const messageIntraId: number = message.user.intraId;
 
-			const goodUser = otherUsers.find((user) => {
+			const goodUser: {
+				intraId: number;
+				blockedStatus: boolean;
+				otherIntraId: number;
+			} = otherUsers.find((user: {
+				intraId: number;
+				blockedStatus: boolean;
+				otherIntraId: number;
+			}) => {
 				return (user.intraId === user.intraId && user.otherIntraId === messageIntraId && user.blockedStatus === false);
 			});
 			if (messageIntraId === user.intraId || goodUser) {
@@ -51,7 +63,11 @@ export class MessageService {
 	}
 
 	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
-		const user: User = await this.prisma.user.findUnique({ where: { intraId: intraId } });
+		const user: User = await this.prisma.user.findUnique({
+			where: {
+				intraId: intraId,
+			}
+		});
 
 		const message: Message = {
 			channelName: channelName,
@@ -70,10 +86,10 @@ export class MessageService {
 	}
 
 	async addMessageToChannel(intraId: number, channelName: string, text: string): Promise<void> {
-		const channel = await this.prisma.channel.findUnique({
+		const channel: Channel = await this.prisma.channel.findUnique({
 			where: {
-				channelName
-			}
+				channelName: channelName,
+			},
 		});
 		if (!channel) {
 			throw new BadRequestException({ reason: `Channel ${channelName} was not found` });
