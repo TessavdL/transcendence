@@ -41,7 +41,7 @@ export class MemberService {
 
 	async getMembersInChannel(channelName: string): Promise<Member[]> {
 		const membershipsWithUser: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
-		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User })) => ({
+		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User; })) => ({
 			intraId: member.user.intraId,
 			name: member.user.name,
 			avatar: member.user.avatar,
