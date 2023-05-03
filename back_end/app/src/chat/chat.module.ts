@@ -6,14 +6,30 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { SharedService } from './chat.map.shared.service';
+import { ChannelModule } from './channel/channel.module';
+import { PasswordModule } from './password/password.module';
+import { RoleModule } from './role/role.module';
+import { MemberModule } from './member/member.module';
+import { MessageModule } from './message/message.module';
+import { PunishmentModule } from './punishment/punishment.module';
 
 @Module({
-  imports: [AuthModule, UserModule, JwtModule.register({})],
-  controllers: [ChatController],
-  providers: [
-    ChatService,
-    ChatGateway,
-    SharedService,
-  ],
+	imports: [
+		AuthModule,
+		UserModule,
+		JwtModule.register({}),
+		ChannelModule,
+		PasswordModule,
+		RoleModule,
+		MemberModule,
+		MessageModule,
+		PunishmentModule,
+	],
+	controllers: [ChatController],
+	providers: [
+		ChatService,
+		ChatGateway,
+		SharedService,
+	],
 })
 export class ChatModule { }
