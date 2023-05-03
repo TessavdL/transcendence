@@ -30,8 +30,8 @@
 								<i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;"
 									@click="openRoute('/chat/ChatUserList')"></i>
 							</h2>
-							<div class="chanel-list" v-for="channel in myDms" :key="channel.id">
-								<span @click="openDm(channel.channelName)">{{ channel.channelName }}</span>
+							<div class="chanel-list" v-for="channel in myDms" :key="channel.otheruserIntraId">
+								<span @click="openDm(channel.channelName)">{{ channel.otheruserName }}</span>
 							</div>
 						</li>
 					</ul>
@@ -50,10 +50,11 @@
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
-import type { Channel } from "../types/ChatType";
+import type { Channel, DmChannel } from "../types/ChatType";
+import { assertVariableDeclarator } from "@babel/types";
 
 const myChannels = ref<Channel[]>([]);
-const myDms = ref<Channel[]>([]);
+const myDms = ref<DmChannel[]>([]);
 
 const router = useRouter();
 function openRoute(routePath: string) {
@@ -62,13 +63,13 @@ function openRoute(routePath: string) {
 function openDm(subpath: string) {
 	router.push({
 		name: 'ChatBoxDm',
-		params: { channelName: subpath }
+		params: { channelName: subpath },
 	});
 }
 function openChannel(subpath: string) {
 	router.push({
 		name: 'ChatBoxChannel',
-		params: { channelName: subpath }
+		params: { channelName: subpath },
 	});
 }
 
@@ -109,19 +110,17 @@ async function getMyChannels(): Promise<void> {
 
 async function getMyDms(): Promise<void> {
 	await axios
-		.get("http://localhost:3001/chat/getAllChannels", {
+		.get("http://localhost:3001/chat/getMyDMChannelsWithUser", {
 			withCredentials: true,
 		})
 		.then(async (response) => {
 			const channels = response.data;
-			const DmChannels: Channel[] = channels.filter((type) => {
-				return (type.channelType === 'DM');
-			});
-			myDms.value = DmChannels.map(channel => {
+			myDms.value = channels.map(channel => {
 				return {
-					id: channel.id,
-					channelName: channel.channelName,
-					channelMode: channel.channelMode,
+					channelName: channel.channel.channelName,
+					otheruserIntraId: channel.otherUser.intraId,
+					otheruserName: channel.otherUser.name,
+					otheruserAvatar: channel.otherUser.avatar,
 				};
 			});
 		})
