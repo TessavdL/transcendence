@@ -21,7 +21,7 @@ export class PasswordService {
 
 		const hashed_password: string = channel.password;
 		try {
-			return (argon2.verify(hashed_password, password));
+			return argon2.verify(hashed_password, password);
 		} catch (error: any) {
 			throw new InternalServerErrorException('Argon2 failed to verify password');
 		}

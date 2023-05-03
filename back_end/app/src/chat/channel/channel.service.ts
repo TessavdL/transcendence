@@ -46,7 +46,7 @@ export class ChannelService {
 		const getChannelName = (intraId: number, otherIntraId: number): string => {
 			let members: string[] = [intraId.toString(), otherIntraId.toString()];
 			members = members.sort();
-			return (`${members.at(0)}&${members.at(1)}`);
+			return `${members.at(0)}&${members.at(1)}`;
 		}
 		const channelName: string = getChannelName(user.intraId, otherIntraId);
 
@@ -120,7 +120,7 @@ export class ChannelService {
 			const role: Role = await this.roleService.getRole(intraId, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
 			if (count === 1) {
-				return (this.deleteChannel(channelName));
+				return this.deleteChannel(channelName);
 			}
 			await this.prisma.membership.delete({
 				where: {
@@ -131,7 +131,7 @@ export class ChannelService {
 				}
 			});
 			if (role === 'OWNER') {
-				return (this.transferOwnership(channelName));
+				return this.transferOwnership(channelName);
 			}
 		} catch (error: any) {
 			throw new InternalServerErrorException(`Prisma failed to delete membership of ${channelName}`);

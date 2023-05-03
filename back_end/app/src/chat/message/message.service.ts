@@ -79,7 +79,7 @@ export class MessageService {
 
 		try {
 			this.addMessageToChannel(user.intraId, channelName, text);
-			return (message);
+			return message;
 		} catch (error: any) {
 			throw new Error(error.message);
 		}
