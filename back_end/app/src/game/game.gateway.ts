@@ -1,4 +1,4 @@
-import { ConnectedSocket, OnGatewayConnection, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
 
@@ -24,7 +24,10 @@ export class GameGateway
 	server: Server;
 
 	@SubscribeMessage('movePaddle')
-	handlePaddleUp(@ConnectedSocket() client: Socket) {
-		console.log('Reached backend');
+	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() movement: string) {
+		console.log(movement);
+		//this.gameService.movement(movement);
+		const position: number = this.gameService.movement(movement);
+		client.emit('updatePaddlePosition', position);
 	}
 }

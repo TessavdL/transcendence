@@ -13,42 +13,45 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 	import io from 'socket.io-client';
 
 	export default {
-	data() {
+		data() {
 		return {
 		player1Position: 240,
 		player2Position: 240,
 		ballPosition: { top: 300, left: 385 },
 		ballVelocity: { x: 5, y: 5 },
-		socket: null,
 		gameStarted: false,
 		player1Score: 0,
         player2Score: 0,
 		};
 	},
+	setup() {
+		const socket = io('http://localhost:3001/pong-game', { withCredentials: true });
+		return { socket };
+	},
 	mounted() {
-		this.socket = io('http://localhost:3001/pong-game', { withCredentials: true });
 		this.socket.on('updateGameState', (gameState) => {
-		this.player1Position = gameState.player1Position;
-		this.player2Position = gameState.player2Position;
-		this.ballPosition = gameState.ballPosition;
-		this.player1Score = gameState.player1Score;
-		this.player2Score = gameState.player2Score;
-	});
-	window.addEventListener('keydown', (event) => {
-		if (event.key === 'ArrowUp') {
-		  this.movePaddle(-25); // move the paddle up by .. pixels
-		} else if (event.key === 'ArrowDown') {
-		  this.movePaddle(25); // move the paddle down by .. pixels
-		}
-	});
-	this.socket.on('movePaddle', (position) => {
-		// Update the position of the paddle based on the position received from the socket
-		this.player2Position += position;
-	});
+			this.player1Position = gameState.player1Position;
+			this.player2Position = gameState.player2Position;
+			this.ballPosition = gameState.ballPosition;
+			this.player1Score = gameState.player1Score;
+			this.player2Score = gameState.player2Score;
+		});
+		this.socket.on('updatePaddlePosition', (position) => {
+			this.movePaddle(position);
+		});
+		window.addEventListener('keydown', (event) => {
+			if (event.key === 'ArrowUp') {
+				//this.movePaddle(-25); // move the paddle up by .. pixels
+				this.socket.emit('movePaddle', 'up');
+			} else if (event.key === 'ArrowDown') {
+				//this.movePaddle(25); // move the paddle down by .. pixels
+				this.socket.emit('movePaddle', 'down');
+			}
+		});
 	},
 	methods: {
 		toggleGame() {
@@ -62,7 +65,7 @@
 		movePaddle(position) {
 		const newPosition = this.player1Position + position;
 		if (newPosition <= 500 && newPosition >= 0) {
-			this.socket.emit('movePaddle', position);
+			//this.socket.emit('movePaddle', position);
 			this.player1Position = newPosition;
 		}
 		console.log('position player 1:', newPosition);
