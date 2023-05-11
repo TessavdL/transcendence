@@ -5,7 +5,7 @@ import { Server, Socket } from 'socket.io';
 @WebSocketGateway({
 	origin: 'http://localhost:5173',
 	credentials: true,
-	namespace: "pong-game",
+	namespace: "matchmaking",
 })
 export class GameGateway
 	implements OnGatewayInit, OnGatewayConnection {
