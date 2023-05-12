@@ -3,9 +3,14 @@
 		<div class="start-button-container">
 		<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
 	</div>
+	<div>
+		<div class="wave"></div>
+		<!-- <div class="wave"></div>
+		<div class="wave"></div> -->
+	</div>
 	<div class="scoreboard">
-		<div class="score-player1">Player 1: <span id="player-1-score">{{ game.player1Score }}</span></div>
-		<div class="score-player2">Player 2: <span id="player-2-score">{{ game.player2Score }}</span></div>
+		<div class="score-player1">Player One: <span id="player-1-score">{{ game.player1Score }}</span></div>
+		<div class="score-player2">Player Two: <span id="player-2-score">{{ game.player2Score }}</span></div>
 	</div>
 	<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
 	<div class="player2-paddle" :style="{ top: game.player2Position + 'px' }"></div>
@@ -95,55 +100,9 @@ import { computed, ref } from 'vue';
 			};
 		this.socket.emit('ballMovement', gameStatus);
 		requestAnimationFrame(this.update);
-		// if (!this.game.gameStarted)
-		// 	return;
-		// const ballPosition = {
-		// 	top: this.game.ballPosition.top + this.game.ballVelocity.y,
-		// 	left: this.game.ballPosition.left + this.game.ballVelocity.x,
-		// };
-
-		// // Check for collision with top or bottom walls
-		// if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
-		// 	this.game.ballVelocity.y = -this.game.ballVelocity.y;
-		// }
-		// // Check for collision with left or right walls
-		// if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
-		// 	this.game.ballVelocity.x = -this.game.ballVelocity.x;
-		// }
-		// // Check for score
-		// if (ballPosition.left <= 0 ) {
-		// 	this.game.ballPosition = { top: 300, left: 150 };
-		// 	this.game.ballVelocity = { x: 5, y: 5 };
-		// 	this.game.player2Score++;
-		// 	this.game.gameStarted = false;
-		// } 
-		// else if (ballPosition.left >= 780) {
-		// 	this.game.ballPosition = { top: 300, left: 650 };
-		// 	this.game.ballVelocity = { x: -5, y: -5 };
-		// 	this.game.player1Score++;
-		// 	this.game.gameStarted = false;
-		// } 
-		// else {
-		// 	this.game.ballPosition = ballPosition;
-		// }
-		// // Check for collision with player1 paddle
-		// const paddleLeft = 0;
-		// const paddleRight = 15;
-		// const paddleTop = this.game.player1Position;
-		// const paddleBottom = this.game.player1Position + 80;
-		// if (ballPosition.left <= paddleRight + 15 && 
-		// ballPosition.left >= paddleLeft &&
-		// ballPosition.top + 20 >= paddleTop && 
-		// ballPosition.top <= paddleBottom) {
-		// 	this.game.ballVelocity.x = -this.game.ballVelocity.x;
-		// }
-		// this.socket.emit('updateBallPosition', ballPosition);
-		// console.log('Ball position:', ballPosition);
-		// requestAnimationFrame(this.update);
 		},
 	},
 };
-
 </script>
 
 <style>
@@ -162,10 +121,18 @@ import { computed, ref } from 'vue';
 	transform: translate(-50%, -50%);
 	height: 600px;
 	width: 800px;
-	/* /background: url("../assets/game_images/skyline.png") no-repeat fixed; */
+	/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
 	background-size: contain;
 	background-position: center;
-	background-color: rgb(13, 12, 11);
+	background: linear-gradient(315deg,
+		rgb(0, 101, 52) 3%,
+		rgb(206, 162, 60) 38%,
+		rgb(127, 48, 238) 68%,
+		rgba(255,25,25,1) 98%);
+	animation: gradient 12s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+	/* background-color: rgb(13, 12, 11); */
 	display: flex;
 	border-top: 8px solid rgb(249, 248, 248);
 	border-bottom: 8px solid rgb(253, 251, 251);
@@ -173,8 +140,10 @@ import { computed, ref } from 'vue';
 	border-right: 8px solid rgb(253, 251, 251);
 }
 @font-face {
+	font-family: "Joy";
+	src: url("./src/assets/game_images/JoyfulEaster.ttf");
 	font-family: "arcadeFont";
-	src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	src: url("./src/assets/game_images/ARCADECLASSIC.TTF")
 }
 
 .scoreboard {
@@ -187,7 +156,7 @@ import { computed, ref } from 'vue';
 	right: 20px;
 }
 .score-player1, .score-player2 {
-	font-size: 24px;
+	font-size: 30px;
 	font-weight: normal;
 	color: rgb(217, 250, 32);
 	font-family: "arcadeFont";
@@ -207,7 +176,7 @@ import { computed, ref } from 'vue';
 	width: 100px;
 	height: 30px;
 	top: calc(600px);
-	left: calc(360px);
+	left: calc(345px);
  	z-index: 1; /* make sure the button is on top of the canvas */
 }
 .player1-paddle,
@@ -229,7 +198,7 @@ import { computed, ref } from 'vue';
 	position: absolute;
 	width: 20px;
 	height: 20px;
-	background-color: rgb(238, 221, 202);
+	background-color: rgb(33, 34, 32);
 	/* --for round ball --*/
 	/* position: absolute;
 	width: 15px;
@@ -239,4 +208,74 @@ import { computed, ref } from 'vue';
 	background-color: white;
 	border-radius: 50%; */
 }
+
+/* body {
+	margin: auto;
+	font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+	overflow: auto;
+	background: linear-gradient(315deg, rgba(101,0,94,1) 3%, rgba(60,132,206,1) 38%, rgba(48,238,226,1) 68%, rgba(255,25,25,1) 98%);
+	animation: gradient 15s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+} */
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 0%;
+	}
+	50% {
+		background-position: 100% 100%;
+	}
+	100% {
+		background-position: 0% 0%;
+	}
+}
+
+.wave {
+    /* background: rgb(255 255 255 / 25%); */
+	border-radius: 1000% 1000% 0 0;
+	position: fixed;
+	width: 200%;
+	height: 16em;
+	animation: wave 15s -2s linear infinite;
+	transform: translate3d(0, 0, 0);
+	opacity: 0.8;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+}
+
+/* .wave:nth-of-type(2) {
+	bottom: -1.25em;
+	animation: wave 18s linear reverse infinite;
+	opacity: 0.8;
+}
+
+.wave:nth-of-type(3) {
+	bottom: -2.5em;
+	animation: wave 10s -1s reverse infinite;
+	opacity: 0.9;
+}
+
+@keyframes wave {
+	2% {
+		transform: translateX(1);
+	}
+
+	25% {
+		transform: translateX(-25%);
+	}
+
+	50% {
+		transform: translateX(-50%);
+	}
+
+	75% {
+		transform: translateX(-25%);
+	}
+
+	100% {
+		transform: translateX(1);
+	}
+} */
 </style>

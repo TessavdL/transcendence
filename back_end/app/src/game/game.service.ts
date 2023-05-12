@@ -39,8 +39,13 @@ export class GameService {
 		if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
 		}
+		const paddleLeft = 0;
+		const paddleRight = 15;
+		const paddleTop = gameStatus.player1Position;
+		const paddleBottom = gameStatus.player1Position + 80;
 		// Check for score
-		if (ballPosition.left <= 0 ) {
+		if (ballPosition.left <= 0 || ballPosition.left + 20 >= paddleLeft && ballPosition.left + 20 <= paddleRight + 15 &&
+			ballPosition.top + 20 >= paddleTop && ballPosition.top <= paddleBottom ) {
 			gameStatus.ballPosition = { top: 300, left: 150 };
 			gameStatus.ballVelocity = { x: 5, y: 5 };
 			gameStatus.player2Score++;
@@ -51,20 +56,17 @@ export class GameService {
 			gameStatus.ballVelocity = { x: -5, y: -5 };
 			gameStatus.player1Score++;
 			gameStatus.gameStarted = false;
-		} 
+		}
 		else {
 			gameStatus.ballPosition = ballPosition;
 		}
 		// Check for collision with player1 paddle
-		const paddleLeft = 0;
-		const paddleRight = 15;
-		const paddleTop = gameStatus.player1Position;
-		const paddleBottom = gameStatus.player1Position + 80;
 		if (ballPosition.left <= paddleRight + 15 && 
 		ballPosition.left >= paddleLeft &&
 		ballPosition.top + 20 >= paddleTop && 
 		ballPosition.top <= paddleBottom) {
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
+			console.log('collision');
 		}
 		return (gameStatus);
 	}
