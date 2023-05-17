@@ -1,23 +1,28 @@
 import { ConnectedSocket, OnGatewayConnection, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
-	origin: 'http://localhost:5173',
-	credentials: true,
-	namespace: "matchmaking",
+	cors: {
+		origin: 'http://localhost:5173',
+		credentials: true,
+	},
+	namespace: "game",
 })
 export class GameGateway
 	implements OnGatewayInit, OnGatewayConnection {
 	constructor(private readonly gameService: GameService) { }
 
+	private readonly logger: Logger = new Logger('GameGateway');
+
 	afterInit(): void {
-		console.log('ChatGateway Initialized');
+		this.logger.log('GameGateway Initialized');
 	}
 
 	handleConnection(client: Socket, ...args: any[]) {
-		console.log(`Client id = ${client.id}`);
-		console.log("hi from backend");
+		this.logger.log(`Client id = ${client.id}`);
+		this.logger.log("hi from backend");
 	}
 
 	@WebSocketServer()
@@ -25,6 +30,6 @@ export class GameGateway
 
 	@SubscribeMessage('movePaddle')
 	handlePaddleUp(@ConnectedSocket() client: Socket) {
-		console.log('Reached backend');
+		this.logger.log('Reached backend');
 	}
 }
