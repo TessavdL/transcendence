@@ -4,7 +4,7 @@ import { GameGateway } from './game.gateway';
 import { MatchmakingModule } from './matchmaking/matchmaking.module';
 
 @Module({
-  providers: [GameGateway, GameService],
-  imports: [MatchmakingModule]
+	providers: [GameGateway, GameService],
+	imports: [MatchmakingModule]
 })
-export class GameModule {}
+export class GameModule { }

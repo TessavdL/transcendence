@@ -5,21 +5,21 @@ import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from '@prisma/client';
+import { SharedService } from '../game.shared.service';
 
 @WebSocketGateway()
 export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		private readonly authService: AuthService,
 		private readonly jwtStrategy: JwtStrategy,
+		private sharedService: SharedService,
 		// private readonly matchmakingService: MatchmakingService,
 	) {
 		this.otherclient = '';
-		this.clientIdToIntraId = new Map<string, { intraId: number, name: string }>();
 	}
 
 	private readonly logger: Logger = new Logger('MatchmakingGateway')
 	private otherclient: string;
-	private clientIdToIntraId: Map<string, { intraId: number, name: string }>;
 
 	@WebSocketServer()
 	server: Server
@@ -28,11 +28,11 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 		this.logger.log('MatchmakingGatway Initialized')
 	}
 
-	async handleConnection(client: Socket): Promise<void> {
+	async handleConnection(client: Socket, args: any): Promise<void> {
 		let user: User;
 
+		// verify client
 		try {
-			// verify client
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
@@ -42,28 +42,54 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			client.disconnect();
 		}
 
-		this.clientIdToIntraId.set(client.id, { intraId: user.intraId, name: user.name });
+		// keep track of client
+		this.sharedService.clientToIntraId.set(client.id, user.intraId);
 
+		// check if matchmaking is possible, if not save the client.id
 		if (this.otherclient.length === 0) {
 			this.otherclient = client.id;
 		}
+
+		// check if player is not trying to play a game against themselves
+		// in frontend redirect home
+		else if (this.otherclient.length > 0 && this.sharedService.clientToIntraId.get(this.otherclient) === user.intraId) {
+			client.emit('error', 'It is not possible to play a match against yourself');
+		}
+
+		// create the game
+		// in frontend redirect to game/roomName
 		else {
-			const data: { player1: { intraId: number, name: string }, player2: { intraId: number, name: string } } = {
-				player1: this.clientIdToIntraId.get(this.otherclient),
-				player2: { intraId: user.intraId, name: user.name },
+			const roomName: string = this.generateString(8);
+			const player1: { intraId: number } = {
+				intraId: this.sharedService.clientToIntraId.get(this.otherclient),
 			};
-			this.server.to(client.id).to(this.otherclient).emit('createGame', data);
+			const player2: { intraId: number } = {
+				intraId: user.intraId,
+			};
+			this.sharedService.gameData.set(roomName, { player1, player2 });
+			this.server.to(client.id).to(this.otherclient).emit('createGame', roomName);
+			this.otherclient = '';
 		}
 		console.log(`Client connected ${client.id}`);
 	}
 
+	private generateString(length: number): string {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = ' ';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+
+		return result;
+	}
+
 	handleDisconnect(client: Socket): void {
-		this.clientIdToIntraId.delete(client.id);
+		// remove client from client to intraId map
+		this.sharedService.clientToIntraId.delete(client.id);
 		if (this.otherclient === client.id) {
 			this.otherclient = '';
 		}
 		console.log(`Client disconnected ${client.id}`);
 	}
-
-
 }
