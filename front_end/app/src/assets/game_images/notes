@@ -1,3 +1,18 @@
+@SubscribeMessage('ballMovement')
+handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
+  const newBallPosition = this.gameService.ballMovement(gameStatus);
+
+  // Emit the updated ball position to the client who triggered the event
+  client.emit('gameData', gameStatus);
+
+  // Broadcast the updated ball position to other players in the same room
+  const room = gameStatus.roomName;
+  client.to(room).emit('gameData', gameStatus);
+}
+
+
+
+
 body {
     margin: auto;
     font-family: -apple-system, BlinkMacSystemFont, sans-serif;

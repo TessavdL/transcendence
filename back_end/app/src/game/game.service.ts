@@ -27,6 +27,7 @@ export class GameService {
 		};
 		return (game);
 	}
+
 	assignPlayers(roomName: string): GameData {
 		const players = this.shareService.gameData.get(roomName);
 		console.log(this.shareService.gameData.size);

@@ -39,11 +39,12 @@ export class GameGateway
 	server: Server;
 
 	@SubscribeMessage('movePaddle')
-	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() movement: string) {
-		console.log(movement);
+	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() object: { movement: string, roomName: string}) {
+		console.log(object);
 		//this.gameService.movement(movement);
-		const position: number = this.gameService.movement(movement);
+		const position: number = this.gameService.movement(object.movement);
 		client.emit('updatePaddlePosition', position);
+		client.to(object.roomName).emit('otherPlayerUpdatePaddlePosition', position);
 	}
 	@SubscribeMessage('ballMovement')
 	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
@@ -53,6 +54,7 @@ export class GameGateway
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
 		// const players: GameData = this.gameService.assignPlayers(roomname);
+		client.join(roomname);
 		const players: GameData = {
 			player1: {
 				intraId: 74757,
@@ -62,6 +64,11 @@ export class GameGateway
 			},
 		};
 		client.emit('playerisSet', players);
+	}
+	@SubscribeMessage('startGame')
+	handleGameStart(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
+		client.emit('startGame');
+		client.to(roomname).emit('startGame');
 	}
 
 }
