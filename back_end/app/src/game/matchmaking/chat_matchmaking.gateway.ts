@@ -1,4 +1,4 @@
-import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';
@@ -6,7 +6,13 @@ import { AuthService } from 'src/auth/auth.service';
 import { User } from '@prisma/client';
 import { SharedService } from '../game.shared.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+    cors: {
+        origin: 'https://localhost:5173',
+        credentials: true,
+    },
+    namespace: 'chat_matchmaking'
+})
 export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		private readonly authService: AuthService,
@@ -26,7 +32,7 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 		this.logger.log('chatMatchmakingGateway Initialized')
 	}
 
-	async handleConnection(client: Socket, args: string): Promise<void> {
+	async handleConnection(client: Socket): Promise<void> {
 		let user: User;
 
 		// verify client
@@ -40,12 +46,19 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 			client.disconnect();
 		}
 
+        // keep track of client
+        this.sharedService.clientToIntraId.set(client.id, user.intraId);
+        client.emit('connected');
+    }
+
+    @SubscribeMessage('chat_matchmaking')
+    handleChatMatchmaking(client: Socket, args: string): void {
 		const members: string[] = args.split('+');
-		if (members[0] !== user.intraId.toString() && members[1] !== user.intraId.toString())
+		if (members[0] !== this.sharedService.clientToIntraId.get(client.id).toString() && members[1] !== this.sharedService.clientToIntraId.get(client.id).toString())
 			client.emit('error', 'User does not belong in this match');
 
 		// keep track of client
-		this.sharedService.clientToIntraId.set(client.id, user.intraId);
+		this.sharedService.clientToIntraId.set(client.id, this.sharedService.clientToIntraId.get(client.id));
 
 		// check if matchmaking is possible, if not save the client.id
 		if (this.otherclient.length === 0) {
@@ -58,7 +71,7 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 
 		// check if player is not trying to play a game against themselves
 		// in frontend redirect home
-		else if (this.otherclient.length > 0 && this.sharedService.clientToIntraId.get(this.otherclient) === user.intraId) {
+		else if (this.otherclient.length > 0 && this.sharedService.clientToIntraId.get(this.otherclient) === this.sharedService.clientToIntraId.get(client.id)) {
 			client.emit('error', 'It is not possible to play a match against yourself');
 		}
 
@@ -69,7 +82,7 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 				intraId: this.sharedService.clientToIntraId.get(this.otherclient),
 			};
 			const player2: { intraId: number } = {
-				intraId: user.intraId,
+				intraId: this.sharedService.clientToIntraId.get(client.id),
 			};
 			this.sharedService.gameData.set(args, { player1, player2 });
 			this.server.to(client.id).to(this.otherclient).emit('createGame', args);

@@ -87,6 +87,7 @@
 				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
 				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
 				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
+                <a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
 			</li>
 		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
@@ -98,6 +99,9 @@ import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
 import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 export default {
 	data() {
@@ -368,6 +372,13 @@ export default {
 		async muteUser(otherIntraId: number, channelName: string): Promise<void> {
 			this.socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
+
+        gameChallenge(otherIntraId: number): void {
+            this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
+            router.push({
+                name: "chatMatchmaking",
+            });
+        },
 
 		async loadAllMessages(): Promise<void> {
 			try {

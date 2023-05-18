@@ -1,5 +1,4 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { MatchmakingService } from './matchmaking.service';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';

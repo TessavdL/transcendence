@@ -254,4 +254,10 @@ export class ChatGateway
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
 	}
+
+    @UseGuards(ClientGuard)
+    @SubscribeMessage('gameChallenge')
+    gameChallenge(@ConnectedSocket() client: Socket, @MessageBody() data: number): void {
+        
+    }
 }
