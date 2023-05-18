@@ -52,16 +52,17 @@ export class GameGateway
 	}
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
-		// const players: GameData = this.gameService.assignPlayers(roomname);
-		const players: GameData = {
-			player1: {
-				intraId: 74757,
-			},
-			player2: {
-				intraId: 64297,
-			},
-		};
-		client.emit('playerisSet', players);
+		const players1: GameData = this.gameService.assignPlayers(roomname);
+		console.log({ players1 });
+		// const players: GameData = {
+		// 	player1: {
+		// 		intraId: 63991,
+		// 	},
+		// 	player2: {
+		// 		intraId: 64297,
+		// 	},
+		// };
+		client.emit('playerisSet', players1);
 	}
 
 }
