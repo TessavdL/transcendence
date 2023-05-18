@@ -42,6 +42,11 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
+			if (user.activityStatus === 'INGAME') {
+				client.emit('error', 'Cannot play more than one game at the same time');
+				client.disconnect();
+				return;
+			}
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
@@ -61,10 +66,6 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			this.otherclient = client.id;
 		}
 
-		// check if player is not trying to play a game against themselves
-		// in frontend redirect home
-
-
 		// create the game
 		// in frontend redirect to game/roomName
 		else {
@@ -80,7 +81,7 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 				this.otherclient = '';
 				return;
 			}
-			console.log(`CREATING ROOM WITH ROOMNAME ${roomName}`);
+			console.log(`creating room: ${roomName}`);
 			this.sharedService.gameData.set(roomName, { player1, player2 });
 			this.server.to(client.id).to(this.otherclient).emit('createGame', roomName);
 			this.otherclient = '';
