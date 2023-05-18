@@ -1,122 +1,108 @@
 <template>
-	<div class="pong-game">
+	<div v-if="game" class="pong-game">
 		<div class="start-button-container">
-		<button @click="toggleGame">{{ gameStarted ? 'Stop' : 'Start' }}</button>
-	</div>
-	<div class="scoreboard">
-		<div class="score-player1">Player 1: <span id="player-1-score">{{ player1Score }}</span></div>
-		<div class="score-player2">Player 2: <span id="player-2-score">{{ player2Score }}</span></div>
-	</div>
-	<div class="player1-paddle" :style="{ top: player1Position + 'px' }"></div>
-	<div class="player2-paddle" :style="{ top: player2Position + 'px' }"></div>
-	<div class="ball" :style="{ top: ballPosition.top + 'px', left: ballPosition.left + 'px' }"></div>
+			<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
+		</div>
+		<div>
+			<div class="wave"></div>
+			<!-- <div class="wave"></div>
+		<div class="wave"></div> -->
+		</div>
+		<div class="scoreboard">
+			<div class="score-player1">Player One: <span id="player-1-score">{{ game.player1Score }}</span></div>
+			<div class="score-player2">Player Two: <span id="player-2-score">{{ game.player2Score }}</span></div>
+		</div>
+		<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
+		<div class="player2-paddle" :style="{ top: game.player2Position + 'px' }"></div>
+		<div class="ball" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
 	</div>
 </template>
 
-<script>
-	import io from 'socket.io-client';
+<script lang="ts">
+import io from 'socket.io-client';
+import type { Game } from '../types/GameType';
+import { computed, ref } from 'vue';
 
-	export default {
+export default {
 	data() {
 		return {
-		player1Position: 240,
-		player2Position: 240,
-		ballPosition: { top: 300, left: 385 },
-		ballVelocity: { x: 5, y: 5 },
-		socket: null,
-		gameStarted: false,
-		player1Score: 0,
-        player2Score: 0,
+			game: ref<Game>
 		};
 	},
-	mounted() {
-		this.socket = io('http://localhost:3001/pong-game', { withCredentials: true });
-		this.socket.on('updateGameState', (gameState) => {
-		this.player1Position = gameState.player1Position;
-		this.player2Position = gameState.player2Position;
-		this.ballPosition = gameState.ballPosition;
-		this.player1Score = gameState.player1Score;
-		this.player2Score = gameState.player2Score;
-	});
-	window.addEventListener('keydown', (event) => {
-		if (event.key === 'ArrowUp') {
-		  this.movePaddle(-25); // move the paddle up by .. pixels
-		} else if (event.key === 'ArrowDown') {
-		  this.movePaddle(25); // move the paddle down by .. pixels
-		}
-	});
-	this.socket.on('movePaddle', (position) => {
-		// Update the position of the paddle based on the position received from the socket
-		this.player2Position += position;
-	});
-	},
-	methods: {
-		toggleGame() {
-		if (this.gameStarted) {
-			this.gameStarted = false;
-		} else {
-			this.gameStarted = true;
-		  this.update(); // call the update method to start the game loop
-		}
-	},
-		movePaddle(position) {
-		const newPosition = this.player1Position + position;
-		if (newPosition <= 500 && newPosition >= 0) {
-			this.socket.emit('movePaddle', position);
-			this.player1Position = newPosition;
-		}
-		console.log('position player 1:', newPosition);
-	},
-		update() {
-		if (!this.gameStarted)
-			return;
-		const ballPosition = {
-			top: this.ballPosition.top + this.ballVelocity.y,
-			left: this.ballPosition.left + this.ballVelocity.x,
-		};
 
-		// Check for collision with top or bottom walls
-		if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
-			this.ballVelocity.y = -this.ballVelocity.y;
-		}
-		// Check for collision with left or right walls
-		if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
-			this.ballVelocity.x = -this.ballVelocity.x;
-		}
-		// Check for score
-		if (ballPosition.left <= 0 ) {
-			this.ballPosition = { top: 300, left: 150 };
-			this.ballVelocity = { x: 5, y: 5 };
-			this.player2Score++;
-			this.gameStarted = false;
-		} 
-		else if (ballPosition.left >= 780) {
-			this.ballPosition = { top: 300, left: 650 };
-			this.ballVelocity = { x: -5, y: -5 };
-			this.player1Score++;
-			this.gameStarted = false;
-		} 
-		else {
-			this.ballPosition = ballPosition;
-		}
-		// Check for collision with player1 paddle
-		const paddleLeft = 0;
-		const paddleRight = 15;
-		const paddleTop = this.player1Position;
-		const paddleBottom = this.player1Position + 80;
-		if (ballPosition.left <= paddleRight + 15 && 
-		ballPosition.left >= paddleLeft &&
-		ballPosition.top + 20 >= paddleTop && 
-		ballPosition.top <= paddleBottom) {
-			this.ballVelocity.x = -this.ballVelocity.x;
-		}
-		this.socket.emit('updateBallPosition', ballPosition);
-		console.log('Ball position:', ballPosition);
-		requestAnimationFrame(this.update);
+	setup() {
+		const socket = io('http://localhost:3001/pong-game', { withCredentials: true });
+		const game = ref<Game>();
+		socket.on('gameData', (gameObject: Game) => {
+			game.value = gameObject;
+		});
+		return { socket, game: computed(() => game.value) };
+	},
+
+	mounted() {
+		this.socket.on('updategameStatus', (gameStatus) => {
+			this.game.player1Position = gameStatus.player1Position;
+			this.game.player2Position = gameStatus.player2Position;
+			this.game.ballPosition = gameStatus.ballPosition;
+			this.game.player1Score = gameStatus.player1Score;
+			this.game.player2Score = gameStatus.player2Score;
+		});
+		this.socket.on('updatePaddlePosition', (position) => {
+			this.movePaddle(position);
+		});
+		// this.socket.on('updateBallPosition', (ballPosition) => {
+		// 	this.update(ballPosition);
+		// });
+		window.addEventListener('keydown', (event) => {
+			if (event.key === 'ArrowUp') {
+				//this.movePaddle(-25); // move the paddle up by .. pixels
+				this.socket.emit('movePaddle', 'up');
+			} else if (event.key === 'ArrowDown') {
+				//this.movePaddle(25); // move the paddle down by .. pixels
+				this.socket.emit('movePaddle', 'down');
+			}
+		});
+	},
+
+	beforeRouteLeave() {
+		this.socket.disconnect();
+	},
+
+	methods: {
+
+		toggleGame() {
+			if (this.game.gameStarted) {
+				this.game.gameStarted = false;
+			} else {
+				this.game.gameStarted = true;
+				this.update(); // call the update method to start the game loop
+			}
+		},
+		movePaddle(position: number) {
+			const newPosition = this.game.player1Position + position;
+			if (newPosition <= 500 && newPosition >= 0) {
+				//this.socket.emit('movePaddle', position);
+				this.game.player1Position = newPosition;
+			}
+			console.log('position player 1:', newPosition);
+		},
+		update() {
+			if (!this.game.gameStarted)
+				return;
+			const gameStatus = {
+				ballPosition: this.game.ballPosition,
+				ballVelocity: this.game.ballVelocity,
+				player1Position: this.game.player1Position,
+				player2Position: this.game.player2Position,
+				player1Score: this.game.player1Score,
+				player2Score: this.game.player2Score,
+				gameStarted: this.game.gameStarted,
+			};
+			this.socket.emit('ballMovement', gameStatus);
+			requestAnimationFrame(this.update);
 		},
 	},
 };
-
 </script>
 
 <style>
@@ -128,6 +114,7 @@
 	left: 50%;
 	border-left: 8px solid white;
 }
+
 .pong-game {
 	position: fixed;
 	top: 50%;
@@ -135,19 +122,32 @@
 	transform: translate(-50%, -50%);
 	height: 600px;
 	width: 800px;
-	/* /background: url("../assets/game_images/skyline.png") no-repeat fixed; */
+	/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
 	background-size: contain;
 	background-position: center;
-	background-color: rgb(13, 12, 11);
+	background: linear-gradient(315deg,
+			rgb(0, 101, 52) 3%,
+			rgb(206, 162, 60) 38%,
+			rgb(127, 48, 238) 68%,
+			rgba(255, 25, 25, 1) 98%);
+	animation: gradient 12s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+	/* background-color: rgb(13, 12, 11); */
 	display: flex;
 	border-top: 8px solid rgb(249, 248, 248);
 	border-bottom: 8px solid rgb(253, 251, 251);
 	border-left: 8px solid rgb(253, 251, 251);
 	border-right: 8px solid rgb(253, 251, 251);
 }
+
 @font-face {
-  font-family: "arcadeFont";
-  src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	font-family: "Joy";
+	src: url("./src/assets/game_images/JoyfulEaster.ttf");
+	font-family: "arcadeFont";
+	src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	font-family: "excellent";
+	src: url("./src/assets/game_images/mexcellent 3d.otf");
 }
 
 .scoreboard {
@@ -159,12 +159,15 @@
 	left: 20px;
 	right: 20px;
 }
-.score-player1, .score-player2 {
-	font-size: 24px;
+
+.score-player1,
+.score-player2 {
+	font-size: 40px;
 	font-weight: normal;
 	color: rgb(217, 250, 32);
-	font-family: "arcadeFont";
+	font-family: "excellent";
 }
+
 /* .score-player1 {
 	order: 1;
 }
@@ -175,14 +178,17 @@
 	max-width: 100%;
 	max-height: 100%;
 }
+
 .start-button-container {
 	position: absolute;
 	width: 100px;
 	height: 30px;
 	top: calc(600px);
-	left: calc(360px);
- 	z-index: 1; /* make sure the button is on top of the canvas */
+	left: calc(345px);
+	z-index: 1;
+	/* make sure the button is on top of the canvas */
 }
+
 .player1-paddle,
 .player2-paddle {
 	position: absolute;
@@ -190,19 +196,22 @@
 	height: 80px;
 	background-color: rgb(231, 220, 208);
 }
+
 .player1-paddle {
 	left: 20px;
 	top: 260px;
 }
+
 .player2-paddle {
 	right: 20px;
 	top: 260px;
 }
+
 .ball {
 	position: absolute;
 	width: 20px;
 	height: 20px;
-	background-color: rgb(238, 221, 202);
+	background-color: rgb(33, 34, 32);
 	/* --for round ball --*/
 	/* position: absolute;
 	width: 15px;
@@ -212,4 +221,75 @@
 	background-color: white;
 	border-radius: 50%; */
 }
-</style>
+
+/* body {
+	margin: auto;
+	font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+	overflow: auto;
+	background: linear-gradient(315deg, rgba(101,0,94,1) 3%, rgba(60,132,206,1) 38%, rgba(48,238,226,1) 68%, rgba(255,25,25,1) 98%);
+	animation: gradient 15s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+} */
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 0%;
+	}
+
+	50% {
+		background-position: 100% 100%;
+	}
+
+	100% {
+		background-position: 0% 0%;
+	}
+}
+
+.wave {
+	/* background: rgb(255 255 255 / 25%); */
+	border-radius: 1000% 1000% 0 0;
+	position: fixed;
+	width: 200%;
+	height: 16em;
+	animation: wave 15s -2s linear infinite;
+	transform: translate3d(0, 0, 0);
+	opacity: 0.8;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+}
+
+/* .wave:nth-of-type(2) {
+	bottom: -1.25em;
+	animation: wave 18s linear reverse infinite;
+	opacity: 0.8;
+}
+
+.wave:nth-of-type(3) {
+	bottom: -2.5em;
+	animation: wave 10s -1s reverse infinite;
+	opacity: 0.9;
+}
+
+@keyframes wave {
+	2% {
+		transform: translateX(1);
+	}
+
+	25% {
+		transform: translateX(-25%);
+	}
+
+	50% {
+		transform: translateX(-50%);
+	}
+
+	75% {
+		transform: translateX(-25%);
+	}
+
+	100% {
+		transform: translateX(1);
+	}
+} */</style>
