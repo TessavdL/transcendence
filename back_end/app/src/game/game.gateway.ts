@@ -1,6 +1,7 @@
-import { ConnectedSocket, OnGatewayConnection, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
+import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
+import { Game } from './type';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
@@ -11,7 +12,7 @@ import { Logger } from '@nestjs/common';
 	namespace: "game",
 })
 export class GameGateway
-	implements OnGatewayInit, OnGatewayConnection {
+	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(private readonly gameService: GameService) { }
 
 	private readonly logger: Logger = new Logger('GameGateway');
@@ -20,16 +21,29 @@ export class GameGateway
 		this.logger.log('GameGateway Initialized');
 	}
 
-	handleConnection(client: Socket, ...args: any[]) {
-		this.logger.log(`Client id = ${client.id}`);
-		this.logger.log("hi from backend");
+	handleConnection(client: Socket) {
+		console.log(`Client connect id = ${client.id}`);
+		const game: Game = this.gameService.gameData();
+		client.emit('gameData', game);
+	}
+	handleDisconnect(client: Socket) {
+		console.log(`Client disconnect id = ${client.id}`);
 	}
 
 	@WebSocketServer()
 	server: Server;
 
 	@SubscribeMessage('movePaddle')
-	handlePaddleUp(@ConnectedSocket() client: Socket) {
-		this.logger.log('Reached backend');
+	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() movement: string) {
+		console.log(movement);
+		//this.gameService.movement(movement);
+		const position: number = this.gameService.movement(movement);
+		client.emit('updatePaddlePosition', position);
 	}
+	@SubscribeMessage('ballMovement')
+	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
+		const newBallPosition = this.gameService.ballMovement(gameStatus);
+		client.emit('gameData', gameStatus);
+	}
+
 }

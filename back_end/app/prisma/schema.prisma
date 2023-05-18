@@ -30,7 +30,7 @@ enum ChannelType {
     NORMAL
     DM
 }
- 
+
 datasource db {
     provider = "postgresql"
     url      = env("DATABASE_URL")
@@ -48,7 +48,7 @@ model User {
     name           String          @unique
     wins           Int             @default(0)
     losses         Int             @default(0)
-    elo            Int             @default(1000)
+    elo            Int             @default(1500)
     intraId        Int             @unique
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
@@ -78,19 +78,19 @@ model AllOtherUsers {
 }
 
 model Achievements {
-    id                  Int          @id @default(autoincrement())
-    intraId             Int          @unique
-    wonGame             Boolean      @default(false)
-    won3Game            Boolean      @default(false)
-    won3GameRow         Boolean      @default(false)
-    loseGame            Boolean      @default(false)
-    lose3GameRow        Boolean      @default(false)
-    playedGame          Boolean      @default(false)
-    changedName         Boolean      @default(false)
-    uploadedAvatar      Boolean      @default(false)
-    added2FA            Boolean      @default(false)
-    rank1               Boolean      @default(false)
-    user                User         @relation(fields: [intraId], references: [intraId])
+    id             Int     @id @default(autoincrement())
+    intraId        Int     @unique
+    wonGame        Boolean @default(false)
+    won3Game       Boolean @default(false)
+    won3GameRow    Boolean @default(false)
+    loseGame       Boolean @default(false)
+    lose3GameRow   Boolean @default(false)
+    playedGame     Boolean @default(false)
+    changedName    Boolean @default(false)
+    uploadedAvatar Boolean @default(false)
+    added2FA       Boolean @default(false)
+    rank1          Boolean @default(false)
+    user           User    @relation(fields: [intraId], references: [intraId])
 }
 
 model Channel {
