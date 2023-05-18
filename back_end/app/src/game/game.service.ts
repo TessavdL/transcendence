@@ -4,12 +4,15 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
+import { SharedService } from './game.shared.service';
+import { GameData } from './types';
 
 @Injectable()
 export class GameService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
+		private shareService: SharedService,
 	) { }
 
 	gameData(): Game {
@@ -23,6 +26,13 @@ export class GameService {
 			player2Score: 0,
 		};
 		return (game);
+	}
+	assignPlayers(roomName: string): GameData {
+		const players = this.shareService.gameData.get(roomName);
+		console.log(this.shareService.gameData.size);
+		console.log({players});
+		console.log(roomName);
+		return (players);
 	}
 	movement(movement: string): number {
 		if (movement === 'up') {

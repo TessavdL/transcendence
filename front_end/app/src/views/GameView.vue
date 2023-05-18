@@ -20,13 +20,15 @@
 
 <script lang="ts">
 import io from 'socket.io-client';
-import type { Game } from '../types/GameType';
+import type { Game, PlayerData } from '../types/GameType';
 import { computed, ref } from 'vue';
+import axios from 'axios';
 
 export default {
 	data() {
 		return {
-			game: ref<Game>
+			game: ref<Game>,
+			player: ref('')
 		};
 	},
 
@@ -40,6 +42,22 @@ export default {
 	},
 
 	mounted() {
+		this.socket.on('connected', () => {
+			console.log(this.$route.params.gameid);
+			this.socket.emit('assignPlayers', this.$route.params.gameid);
+		}) 
+		this.socket.on('playerisSet', async (players: PlayerData) => {
+			console.log(`Here we are ${players.player1.intraId}, ${players.player2.intraId}`);
+			const response = await axios.get('http://localhost:3001/user', {withCredentials: true} );
+			const intraId = response.data.intraId;
+			if (intraId === players.player1.intraId) {
+				this.player = 'playerone';
+			}
+			else {
+				this.player = 'playertwo';
+			}
+			console.log(this.player);
+		})
 		this.socket.on('updategameStatus', (gameStatus) => {
 			this.game.player1Position = gameStatus.player1Position;
 			this.game.player2Position = gameStatus.player2Position;

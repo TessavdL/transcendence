@@ -7,3 +7,12 @@ export interface Game {
 	player1Score: number;
     player2Score: number;
 }
+
+export interface PlayerData {
+	player1: {
+		intraId: number,
+	};
+	player2: {
+		intraId: number,
+	};
+}

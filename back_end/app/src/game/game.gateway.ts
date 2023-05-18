@@ -3,17 +3,21 @@ import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
 import { Game } from './type';
 import { Logger } from '@nestjs/common';
+import { GameData } from './types';
+
 
 @WebSocketGateway({
 	cors: {
 		origin: 'http://localhost:5173',
 		credentials: true,
 	},
-	namespace: "game",
+	namespace: "pong-game",
 })
 export class GameGateway
 	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
-	constructor(private readonly gameService: GameService) { }
+	constructor(
+		private readonly gameService: GameService,
+	) { }
 
 	private readonly logger: Logger = new Logger('GameGateway');
 
@@ -25,6 +29,7 @@ export class GameGateway
 		console.log(`Client connect id = ${client.id}`);
 		const game: Game = this.gameService.gameData();
 		client.emit('gameData', game);
+		client.emit('connected');
 	}
 	handleDisconnect(client: Socket) {
 		console.log(`Client disconnect id = ${client.id}`);
@@ -44,6 +49,19 @@ export class GameGateway
 	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
 		const newBallPosition = this.gameService.ballMovement(gameStatus);
 		client.emit('gameData', gameStatus);
+	}
+	@SubscribeMessage('assignPlayers')
+	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
+		// const players: GameData = this.gameService.assignPlayers(roomname);
+		const players: GameData = {
+			player1: {
+				intraId: 74757,
+			},
+			player2: {
+				intraId: 64297,
+			},
+		};
+		client.emit('playerisSet', players);
 	}
 
 }
