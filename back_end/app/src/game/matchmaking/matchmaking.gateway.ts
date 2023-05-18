@@ -7,7 +7,13 @@ import { AuthService } from 'src/auth/auth.service';
 import { User } from '@prisma/client';
 import { SharedService } from '../game.shared.service';
 
-@WebSocketGateway()
+@WebSocketGateway({
+	cors: {
+		origin: 'http://localhost:5173',
+		credentials: true,
+	},
+	namespace: 'matchmaking'
+})
 export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
 		private readonly authService: AuthService,
@@ -18,24 +24,29 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 		this.otherclient = '';
 	}
 
-	private readonly logger: Logger = new Logger('MatchmakingGateway')
+	private readonly logger: Logger = new Logger('MatchmakingGateway');
 	private otherclient: string;
 
 	@WebSocketServer()
 	server: Server
 
 	afterInit(): void {
-		this.logger.log('MatchmakingGatway Initialized')
+		this.logger.log('MatchmakingGateway Initialized')
 	}
 
-	async handleConnection(client: Socket, args: any): Promise<void> {
+	async handleConnection(client: Socket): Promise<void> {
 		let user: User;
-
+		this.logger.log(`Client with ${client.id} is trying to connect`)
 		// verify client
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
+			if (user.activityStatus === 'INGAME') {
+				client.emit('error', 'Cannot play more than one game at the same time');
+				client.disconnect();
+				return;
+			}
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
@@ -44,16 +55,15 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 
 		// keep track of client
 		this.sharedService.clientToIntraId.set(client.id, user.intraId);
+		client.emit('connected');
+	}
 
+	@SubscribeMessage('matchmaking')
+	handleMatchmaking(client: Socket): void {
 		// check if matchmaking is possible, if not save the client.id
 		if (this.otherclient.length === 0) {
+			console.log('waiting for other player')
 			this.otherclient = client.id;
-		}
-
-		// check if player is not trying to play a game against themselves
-		// in frontend redirect home
-		else if (this.otherclient.length > 0 && this.sharedService.clientToIntraId.get(this.otherclient) === user.intraId) {
-			client.emit('error', 'It is not possible to play a match against yourself');
 		}
 
 		// create the game
@@ -64,18 +74,24 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 				intraId: this.sharedService.clientToIntraId.get(this.otherclient),
 			};
 			const player2: { intraId: number } = {
-				intraId: user.intraId,
+				intraId: this.sharedService.clientToIntraId.get(client.id),
 			};
+			if (player1.intraId === player2.intraId) {
+				this.server.to(client.id).to(this.otherclient).emit('error', 'cannot play against yourself, redirecting home');
+				this.otherclient = '';
+				return;
+			}
+			console.log(`creating room: ${roomName}`);
 			this.sharedService.gameData.set(roomName, { player1, player2 });
 			this.server.to(client.id).to(this.otherclient).emit('createGame', roomName);
 			this.otherclient = '';
 		}
-		console.log(`Client connected ${client.id}`);
+		this.logger.log(`Client connected ${client.id}`);
 	}
 
 	private generateString(length: number): string {
 		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-		let result = ' ';
+		let result = '';
 		const charactersLength = characters.length;
 		for (let i = 0; i < length; i++) {
 			result += characters.charAt(Math.floor(Math.random() * charactersLength));
@@ -90,6 +106,6 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 		if (this.otherclient === client.id) {
 			this.otherclient = '';
 		}
-		console.log(`Client disconnected ${client.id}`);
+		this.logger.log(`Client disconnected ${client.id}`);
 	}
 }
