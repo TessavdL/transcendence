@@ -12,7 +12,7 @@ import { Logger } from '@nestjs/common';
 export class GameGateway
 	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(private readonly gameService: GameService) { }
-	
+
 	private readonly logger: Logger = new Logger('GameGateway');
 
 	afterInit(): void {
@@ -40,8 +40,8 @@ export class GameGateway
 	}
 	@SubscribeMessage('ballMovement')
 	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
-	const newBallPosition = this.gameService.ballMovement(gameStatus);
-	client.emit('gameData', gameStatus);
-}
+		const newBallPosition = this.gameService.ballMovement(gameStatus);
+		client.emit('gameData', gameStatus);
+	}
 
 }
