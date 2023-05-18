@@ -143,7 +143,9 @@ import { computed, ref } from 'vue';
 	font-family: "Joy";
 	src: url("./src/assets/game_images/JoyfulEaster.ttf");
 	font-family: "arcadeFont";
-	src: url("./src/assets/game_images/ARCADECLASSIC.TTF")
+	src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	font-family: "excellent";
+	src: url("./src/assets/game_images/mexcellent 3d.otf");
 }
 
 .scoreboard {
@@ -156,10 +158,10 @@ import { computed, ref } from 'vue';
 	right: 20px;
 }
 .score-player1, .score-player2 {
-	font-size: 30px;
+	font-size: 40px;
 	font-weight: normal;
 	color: rgb(217, 250, 32);
-	font-family: "arcadeFont";
+	font-family: "excellent";
 }
 /* .score-player1 {
 	order: 1;
