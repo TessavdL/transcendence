@@ -47,9 +47,11 @@ export class GameGateway
 		client.to(object.roomName).emit('otherPlayerUpdatePaddlePosition', position);
 	}
 	@SubscribeMessage('ballMovement')
-	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
+	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() 
+	gameStatus: Game, object: { movement: string, roomName: string}) {
 		const newBallPosition = this.gameService.ballMovement(gameStatus);
 		client.emit('gameData', gameStatus);
+		//client.to(object.roomName).emit('startGame', newBallPosition);
 	}
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
@@ -65,10 +67,8 @@ export class GameGateway
 		};
 		client.emit('playerisSet', players);
 	}
-	@SubscribeMessage('startGame')
-	handleGameStart(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
-		client.emit('startGame');
-		client.to(roomname).emit('startGame');
-	}
 
 }
+
+
+

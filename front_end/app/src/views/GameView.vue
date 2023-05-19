@@ -62,7 +62,8 @@ export default {
 			console.log(this.player);
 		})
 		this.socket.on('startGame', () => {
-			this.game.gameStarted = true;
+			console.log('game started');
+			// Handle the game start event, e.g., display a message or enable game controls
 		})
 		this.socket.on('updategameStatus', (gameStatus) => {
 			this.game.player1Position = gameStatus.player1Position;
@@ -117,7 +118,7 @@ export default {
 			} else {
 				this.game.gameStarted = true;
 				this.update(); // call the update method to start the game loop
-				this.socket.emit('gameStart', this.roomName);
+				this.socket.emit('startGame', this.roomName);
 			}
 		},
 		movePaddle(position: number) {
