@@ -65,16 +65,8 @@ export default {
 			console.log('game started');
 			this.game.gameStarted = true;
 			this.update();
-			// Handle the game start event, e.g., display a message or enable game controls
 		})
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
-			// this.game.player1Position = gameStatus.player1Position;
-			// this.game.player2Position = gameStatus.player2Position;
-			// this.game.ballPosition = gameStatus.ballPosition;
-			// this.game.player1Score = gameStatus.player1Score;
-			// this.game.player2Score = gameStatus.player2Score;
-			this.game.player1Position = gameStatus.player1Position;
-			this.game.player2Position = gameStatus.player2Position;
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
 			this.game.gameStarted = gameStatus.gameStarted;
@@ -98,14 +90,12 @@ export default {
 	
 		window.addEventListener('keydown', (event) => {
 			if (event.key === 'ArrowUp') {
-				//this.movePaddle(-25); // move the paddle up by .. pixels
 				const data = {
 					movement: 'up',
 					roomName: this.roomName,
 				};
 				this.socket.emit('movePaddle', data);
 			} else if (event.key === 'ArrowDown') {
-				//this.movePaddle(25); // move the paddle down by .. pixels
 				const data = {
 					movement: 'down',
 					roomName: this.roomName,
@@ -126,7 +116,6 @@ export default {
 				this.game.gameStarted = false;
 			} else {
 				this.game.gameStarted = true;
-				//this.update(); // call the update method to start the game loop
 				this.socket.emit('startGame', this.roomName);
 			}
 		},
@@ -147,6 +136,7 @@ export default {
 			}
 			console.log('position player 2:', newPositionPlayerTwo);
 		},
+	
 		update() {
 			if (!this.game.gameStarted)
 				return;
@@ -163,8 +153,11 @@ export default {
 				gameStatus: gameStatus,
 				roomName: this.roomName,
 			}
-			requestAnimationFrame(this.update);
-			this.socket.emit('ballMovement', data);
+			requestAnimationFrame(this.update.bind(this));
+			//setTimeout(this.update, 1000 / 60)
+			if (this.player === 'playerone') {
+				this.socket.emit('ballMovement', data);
+			}
 		},
 	},
 };
