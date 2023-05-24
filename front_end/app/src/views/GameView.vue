@@ -28,7 +28,8 @@ export default {
 	data() {
 		return {
 			game: ref<Game>,
-			player: ref('')
+			player: '',
+			roomName: '',
 		};
 	},
 
@@ -44,6 +45,8 @@ export default {
 	mounted() {
 		this.socket.on('connected', () => {
 			console.log(this.$route.params.gameid);
+			if (typeof this.$route.params.gameid === 'string' )
+				this.roomName = this.$route.params.gameid;
 			this.socket.emit('assignPlayers', this.$route.params.gameid);
 		}) 
 		this.socket.on('playerisSet', async (players: PlayerData) => {
@@ -58,26 +61,56 @@ export default {
 			}
 			console.log(this.player);
 		})
-		this.socket.on('updategameStatus', (gameStatus) => {
+		this.socket.on('gameStarted', () => {
+			console.log('game started');
+			this.game.gameStarted = true;
+			this.update();
+			// Handle the game start event, e.g., display a message or enable game controls
+		})
+		this.socket.on('updategameStatus', (gameStatus: Game) => {
+			// this.game.player1Position = gameStatus.player1Position;
+			// this.game.player2Position = gameStatus.player2Position;
+			// this.game.ballPosition = gameStatus.ballPosition;
+			// this.game.player1Score = gameStatus.player1Score;
+			// this.game.player2Score = gameStatus.player2Score;
 			this.game.player1Position = gameStatus.player1Position;
 			this.game.player2Position = gameStatus.player2Position;
 			this.game.ballPosition = gameStatus.ballPosition;
+			this.game.ballVelocity = gameStatus.ballVelocity;
+			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
 		});
 		this.socket.on('updatePaddlePosition', (position) => {
-			this.movePaddle(position);
+			console.log(`this player = ${this.player}, event is updatePaddle`);
+			if (this.player === 'playerone')
+				this.movePaddle(position);
+			else if (this.player === 'playertwo')
+				this.movePaddlePlayerTwo(position);
 		});
-		// this.socket.on('updateBallPosition', (ballPosition) => {
-		// 	this.update(ballPosition);
-		// });
+		this.socket.on('otherPlayerUpdatePaddlePosition', (position) => {
+			console.log(`this player = ${this.player}, event is updatePaddleOther`);
+			if (this.player === 'playerone')
+				this.movePaddlePlayerTwo(position);
+			else if (this.player === 'playertwo')
+				this.movePaddle(position);
+		})
+	
 		window.addEventListener('keydown', (event) => {
 			if (event.key === 'ArrowUp') {
 				//this.movePaddle(-25); // move the paddle up by .. pixels
-				this.socket.emit('movePaddle', 'up');
+				const data = {
+					movement: 'up',
+					roomName: this.roomName,
+				};
+				this.socket.emit('movePaddle', data);
 			} else if (event.key === 'ArrowDown') {
 				//this.movePaddle(25); // move the paddle down by .. pixels
-				this.socket.emit('movePaddle', 'down');
+				const data = {
+					movement: 'down',
+					roomName: this.roomName,
+				};
+				this.socket.emit('movePaddle', data);
 			}
 		});
 	},
@@ -93,21 +126,31 @@ export default {
 				this.game.gameStarted = false;
 			} else {
 				this.game.gameStarted = true;
-				this.update(); // call the update method to start the game loop
+				//this.update(); // call the update method to start the game loop
+				this.socket.emit('startGame', this.roomName);
 			}
 		},
 		movePaddle(position: number) {
-			const newPosition = this.game.player1Position + position;
-			if (newPosition <= 500 && newPosition >= 0) {
+			const newPositionPlayerOne = this.game.player1Position + position;
+			if (newPositionPlayerOne <= 500 && newPositionPlayerOne >= 0) {
 				//this.socket.emit('movePaddle', position);
-				this.game.player1Position = newPosition;
+				this.game.player1Position = newPositionPlayerOne;
 			}
-			console.log('position player 1:', newPosition);
+			console.log('position player 1:', newPositionPlayerOne);
+		},
+		movePaddlePlayerTwo(position: number)
+		{
+			const newPositionPlayerTwo = this.game.player2Position + position;
+			if (newPositionPlayerTwo <= 500 && newPositionPlayerTwo >= 0) {
+				//this.socket.emit('movePaddle', position);
+				this.game.player2Position = newPositionPlayerTwo;
+			}
+			console.log('position player 2:', newPositionPlayerTwo);
 		},
 		update() {
 			if (!this.game.gameStarted)
 				return;
-			const gameStatus = {
+			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
 				ballVelocity: this.game.ballVelocity,
 				player1Position: this.game.player1Position,
@@ -116,8 +159,12 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 			};
-			this.socket.emit('ballMovement', gameStatus);
+			const data = {
+				gameStatus: gameStatus,
+				roomName: this.roomName,
+			}
 			requestAnimationFrame(this.update);
+			this.socket.emit('ballMovement', data);
 		},
 	},
 };
@@ -161,11 +208,11 @@ export default {
 
 @font-face {
 	font-family: "Joy";
-	src: url("./src/assets/game_images/JoyfulEaster.ttf");
+	src: url("../assets/game_images/JoyfulEaster.ttf");
 	font-family: "arcadeFont";
-	src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	src: url("../assets/game_images/ARCADECLASSIC.TTF");
 	font-family: "excellent";
-	src: url("./src/assets/game_images/mexcellent 3d.otf");
+	src: url("../assets/game_images/mexcellent 3d.otf");
 }
 
 .scoreboard {

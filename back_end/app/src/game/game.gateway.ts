@@ -2,7 +2,7 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
 import { Game } from './type';
-import { Logger } from '@nestjs/common';
+import { ConsoleLogger, Logger } from '@nestjs/common';
 import { GameData } from './types';
 
 
@@ -39,30 +39,30 @@ export class GameGateway
 	server: Server;
 
 	@SubscribeMessage('movePaddle')
-	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() movement: string) {
-		console.log(movement);
+	handlePaddleUp(@ConnectedSocket() client: Socket, @MessageBody() object: { movement: string, roomName: string}) {
+		console.log(object);
 		//this.gameService.movement(movement);
-		const position: number = this.gameService.movement(movement);
+		const position: number = this.gameService.movement(object.movement);
 		client.emit('updatePaddlePosition', position);
+		client.to(object.roomName).emit('otherPlayerUpdatePaddlePosition', position);
 	}
 	@SubscribeMessage('ballMovement')
-	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() gameStatus: Game) {
-		const newBallPosition = this.gameService.ballMovement(gameStatus);
-		client.emit('gameData', gameStatus);
+	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() 
+	object: { gameStatus: Game, roomName: string }) {
+		const newBallPosition = this.gameService.ballMovement(object.gameStatus);
+		client.emit('updategameStatus', newBallPosition);
+		client.to(object.roomName).emit('updategameStatus', newBallPosition);
 	}
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
-		const players1: GameData = this.gameService.assignPlayers(roomname);
-		console.log({ players1 });
-		// const players: GameData = {
-		// 	player1: {
-		// 		intraId: 63991,
-		// 	},
-		// 	player2: {
-		// 		intraId: 64297,
-		// 	},
-		// };
-		client.emit('playerisSet', players1);
+		const players: GameData = this.gameService.assignPlayers(roomname);
+		console.log({players})
+		client.join(roomname);
+		client.emit('playerisSet', players);
 	}
-
+	@SubscribeMessage('startGame')
+	handleStartGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
+		client.emit('gameStarted');
+		client.to(roomname).emit('gameStarted');
+	}
 }
