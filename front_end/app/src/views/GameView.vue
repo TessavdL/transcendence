@@ -61,14 +61,23 @@ export default {
 			}
 			console.log(this.player);
 		})
-		this.socket.on('startGame', () => {
+		this.socket.on('gameStarted', () => {
 			console.log('game started');
+			this.game.gameStarted = true;
+			this.update();
 			// Handle the game start event, e.g., display a message or enable game controls
 		})
-		this.socket.on('updategameStatus', (gameStatus) => {
+		this.socket.on('updategameStatus', (gameStatus: Game) => {
+			// this.game.player1Position = gameStatus.player1Position;
+			// this.game.player2Position = gameStatus.player2Position;
+			// this.game.ballPosition = gameStatus.ballPosition;
+			// this.game.player1Score = gameStatus.player1Score;
+			// this.game.player2Score = gameStatus.player2Score;
 			this.game.player1Position = gameStatus.player1Position;
 			this.game.player2Position = gameStatus.player2Position;
 			this.game.ballPosition = gameStatus.ballPosition;
+			this.game.ballVelocity = gameStatus.ballVelocity;
+			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
 		});
@@ -117,7 +126,7 @@ export default {
 				this.game.gameStarted = false;
 			} else {
 				this.game.gameStarted = true;
-				this.update(); // call the update method to start the game loop
+				//this.update(); // call the update method to start the game loop
 				this.socket.emit('startGame', this.roomName);
 			}
 		},
@@ -141,7 +150,7 @@ export default {
 		update() {
 			if (!this.game.gameStarted)
 				return;
-			const gameStatus = {
+			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
 				ballVelocity: this.game.ballVelocity,
 				player1Position: this.game.player1Position,
@@ -150,8 +159,12 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 			};
-			this.socket.emit('ballMovement', gameStatus);
+			const data = {
+				gameStatus: gameStatus,
+				roomName: this.roomName,
+			}
 			requestAnimationFrame(this.update);
+			this.socket.emit('ballMovement', data);
 		},
 	},
 };

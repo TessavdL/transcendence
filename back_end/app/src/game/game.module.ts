@@ -6,7 +6,8 @@ import { UserModule } from 'src/user/user.module';
 import { SharedService } from './game.shared.service';
 
 @Module({
-	imports: [UserModule, MatchmakingModule],
+	imports: [UserModule],
 	providers: [GameGateway, GameService, SharedService],
+	exports: [SharedService],
 })
 export class GameModule { }

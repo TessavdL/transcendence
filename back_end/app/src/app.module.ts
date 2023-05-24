@@ -6,6 +6,7 @@ import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { MatchmakingModule } from './game/matchmaking/matchmaking.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { AchievementsModule } from './achievements/achievements.module';
       isGlobal: true,
     }),
     GameModule,
+	MatchmakingModule,
     AchievementsModule,
   ],
 })
