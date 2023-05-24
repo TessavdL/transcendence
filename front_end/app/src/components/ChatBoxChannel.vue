@@ -10,7 +10,7 @@
                         <i class="bi bi-sliders2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 2rem; color: #ffffff;"></i>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#membersList">View All Members</a></li>
-                            <li><a class="dropdown-item" href="#">Leavel Channel</a></li>
+                            <li><a class="dropdown-item" href="#" @click="leaveChannel()">Leavel Channel</a></li>
                         </ul>
                     </div>
                 </div>
@@ -48,7 +48,22 @@
                 </div>
                 <div class="modal-body">
                     <div v-for="member in allMembers" :key="member.intraId">
-                        {{ member.name }}
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ member.name }}
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="user-dropdown">
+                                <li><a class="dropdown-item" href="#">
+                                    <RouterLink class="nav-link" 
+                                    :to="{path: '/profile/other/' + member.intraId}">
+                                    View Profile</RouterLink>
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" @click="banUser(member.intraId, activeChannel)">Ban</a></li>
+                                <li><a class="dropdown-item" href="#" @click="muteUser(member.intraId, activeChannel)">Mute</a></li>
+                                <li><a class="dropdown-item" href="#" @click="kickUser(member.intraId, activeChannel)">kick</a></li>
+                                <li><a class="dropdown-item" href="#">set as administrator</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
                 </div>
@@ -154,7 +169,6 @@ async function loadAllMembers(channelName: string): Promise<void> {
     try {
 		const response = await axiosInstance.get('chat/getMembersInChannel', { params: request });
         allMembers.value = response.data;
-        console.log(allMembers.value);
 	}
     catch (error: any) {
 		toast.add({
@@ -165,6 +179,25 @@ async function loadAllMembers(channelName: string): Promise<void> {
         });
 	}
 };
+
+// don't know if it's working, does not have enough accouts to test it fully
+async function kickUser(otherIntraId: number, channelName: string): Promise<void> {
+	socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: channelName });
+}
+
+async function banUser(otherIntraId: number, channelName: string): Promise<void> {
+	socket.emit('banUser', { otherIntraId: otherIntraId, channelName: channelName });
+}
+
+async function muteUser(otherIntraId: number, channelName: string): Promise<void> {
+	socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
+}
+
+// not working for this moment, don't know why
+function leaveChannel(): void {
+	socket.emit('leaveChannel', activeChannel);
+}
+
 </script>
 
 <style scoped>
