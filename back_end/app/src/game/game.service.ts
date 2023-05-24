@@ -1,11 +1,10 @@
-import { Game } from './type';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
 import { SharedService } from './game.shared.service';
-import { GameData } from './types';
+import { Game, Players } from './types';
 
 @Injectable()
 export class GameService {
@@ -28,13 +27,11 @@ export class GameService {
 		return (game);
 	}
 
-	assignPlayers(roomName: string): GameData {
-		const players = this.shareService.gameData.get(roomName);
-		console.log(this.shareService.gameData.size);
-		console.log({players});
-		console.log(roomName);
+	assignPlayers(roomName: string): Players {
+		const players: Players = this.shareService.playerData.get(roomName);
 		return (players);
 	}
+
 	movement(movement: string): number {
 		if (movement === 'up') {
 			return (-25);
@@ -46,6 +43,26 @@ export class GameService {
 			return (0);
 		}
 	}
+
+	canMove(position: number, player: string, game: Game): boolean {
+		if (position === 0) {
+			return (false);
+		}
+		if (player === 'playerone') {
+			const newPositionPlayerOne = game.player1Position + position;
+			if (newPositionPlayerOne <= 500 && newPositionPlayerOne >= 0) {
+				return (true);
+			}
+		}
+		else if (player === 'playertwo') {
+			const newPositionPlayerTwo = game.player2Position + position;
+			if (newPositionPlayerTwo <= 500 && newPositionPlayerTwo >= 0) {
+				return (true);
+			}
+		}
+		return (false);
+	}
+
 	ballMovement(gameStatus: Game): Game {
 		const ballPosition = {
 			top: gameStatus.ballPosition.top + gameStatus.ballVelocity.y,
@@ -80,10 +97,10 @@ export class GameService {
 			ballPosition.left - 20 <= (765 - paddleTwoLeft - 15) &&
 			ballPosition.top - 20 >= paddleTwoTop &&
 			ballPosition.top <= paddleTwoBottom) {
-				gameStatus.ballPosition = { top: 300, left: 650 };
-				gameStatus.ballVelocity = { x: -5, y: -5 };
-				gameStatus.player1Score++;
-				gameStatus.gameStarted = false;
+			gameStatus.ballPosition = { top: 300, left: 650 };
+			gameStatus.ballVelocity = { x: -5, y: -5 };
+			gameStatus.player1Score++;
+			gameStatus.gameStarted = false;
 		}
 		else {
 			gameStatus.ballPosition = ballPosition;
@@ -93,17 +110,17 @@ export class GameService {
 			ballPosition.left >= paddleOneLeft &&
 			ballPosition.top + 20 >= paddleOneTop &&
 			ballPosition.top <= paddleOneBottom) {
-				gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-				console.log('collision player one');
-			}
+			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
+			console.log('collision player one');
+		}
 		// Check for collision with player2 paddle
 		if (ballPosition.left >= paddleTwoLeft - 20 &&
 			ballPosition.left <= paddleTwoLeft &&
 			ballPosition.top + 20 >= paddleTwoTop &&
 			ballPosition.top <= paddleTwoBottom) {
-				gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-				console.log('collision player two');
-			}
+			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
+			console.log('collision player two');
+		}
 		return (gameStatus);
 	}
 

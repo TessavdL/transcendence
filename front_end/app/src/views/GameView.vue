@@ -20,9 +20,9 @@
 
 <script lang="ts">
 import io from 'socket.io-client';
-import type { Game, PlayerData } from '../types/GameType';
+import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
-import axios from 'axios';
+import storeUser from '@/store';
 
 export default {
 	data() {
@@ -44,28 +44,26 @@ export default {
 
 	mounted() {
 		this.socket.on('connected', () => {
-			console.log(this.$route.params.gameid);
-			if (typeof this.$route.params.gameid === 'string' )
+			if (typeof this.$route.params.gameid === 'string') {
 				this.roomName = this.$route.params.gameid;
+			}
 			this.socket.emit('assignPlayers', this.$route.params.gameid);
-		}) 
-		this.socket.on('playerisSet', async (players: PlayerData) => {
-			console.log(`Here we are ${players.player1.intraId}, ${players.player2.intraId}`);
-			const response = await axios.get('http://localhost:3001/user', {withCredentials: true} );
-			const intraId = response.data.intraId;
-			if (intraId === players.player1.intraId) {
+		});
+
+		this.socket.on('playerisSet', async (players: Players) => {
+			if (storeUser.state.user.intraId === players.player1.intraId) {
 				this.player = 'playerone';
 			}
 			else {
 				this.player = 'playertwo';
 			}
-			console.log(this.player);
-		})
+		});
+
 		this.socket.on('gameStarted', () => {
-			console.log('game started');
 			this.game.gameStarted = true;
 			this.update();
-		})
+		});
+
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
@@ -73,32 +71,39 @@ export default {
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
 		});
-		this.socket.on('updatePaddlePosition', (position) => {
-			console.log(`this player = ${this.player}, event is updatePaddle`);
-			if (this.player === 'playerone')
+
+		this.socket.on('updatePaddlePosition', (position: number) => {
+			if (this.player === 'playerone') {
 				this.movePaddle(position);
-			else if (this.player === 'playertwo')
+			}
+			else if (this.player === 'playertwo') {
 				this.movePaddlePlayerTwo(position);
+			}
 		});
+
 		this.socket.on('otherPlayerUpdatePaddlePosition', (position) => {
-			console.log(`this player = ${this.player}, event is updatePaddleOther`);
 			if (this.player === 'playerone')
 				this.movePaddlePlayerTwo(position);
 			else if (this.player === 'playertwo')
 				this.movePaddle(position);
-		})
-	
+		});
+
 		window.addEventListener('keydown', (event) => {
 			if (event.key === 'ArrowUp') {
 				const data = {
 					movement: 'up',
+					player: this.player,
 					roomName: this.roomName,
+					game: this.game,
 				};
 				this.socket.emit('movePaddle', data);
-			} else if (event.key === 'ArrowDown') {
+			}
+			else if (event.key === 'ArrowDown') {
 				const data = {
 					movement: 'down',
+					player: this.player,
 					roomName: this.roomName,
+					game: this.game,
 				};
 				this.socket.emit('movePaddle', data);
 			}
@@ -114,29 +119,21 @@ export default {
 		toggleGame() {
 			if (this.game.gameStarted) {
 				this.game.gameStarted = false;
-			} else {
+			}
+			else {
 				this.game.gameStarted = true;
 				this.socket.emit('startGame', this.roomName);
 			}
 		},
+
 		movePaddle(position: number) {
-			const newPositionPlayerOne = this.game.player1Position + position;
-			if (newPositionPlayerOne <= 500 && newPositionPlayerOne >= 0) {
-				//this.socket.emit('movePaddle', position);
-				this.game.player1Position = newPositionPlayerOne;
-			}
-			console.log('position player 1:', newPositionPlayerOne);
+			this.game.player1Position += position;
 		},
-		movePaddlePlayerTwo(position: number)
-		{
-			const newPositionPlayerTwo = this.game.player2Position + position;
-			if (newPositionPlayerTwo <= 500 && newPositionPlayerTwo >= 0) {
-				//this.socket.emit('movePaddle', position);
-				this.game.player2Position = newPositionPlayerTwo;
-			}
-			console.log('position player 2:', newPositionPlayerTwo);
+
+		movePaddlePlayerTwo(position: number) {
+			this.game.player2Position += position;
 		},
-	
+
 		update() {
 			if (!this.game.gameStarted)
 				return;
@@ -153,8 +150,7 @@ export default {
 				gameStatus: gameStatus,
 				roomName: this.roomName,
 			}
-			requestAnimationFrame(this.update.bind(this));
-			//setTimeout(this.update, 1000 / 60)
+			requestAnimationFrame(this.update);
 			if (this.player === 'playerone') {
 				this.socket.emit('ballMovement', data);
 			}
@@ -350,4 +346,5 @@ export default {
 	100% {
 		transform: translateX(1);
 	}
-} */</style>
+} */
+</style>

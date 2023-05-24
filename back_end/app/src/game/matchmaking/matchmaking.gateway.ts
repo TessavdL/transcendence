@@ -82,8 +82,8 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 				return;
 			}
 			console.log(`creating room: ${roomName}`);
-			this.sharedService.gameData.set(roomName, { player1, player2 });
-			const players = this.sharedService.gameData.get(roomName);
+			this.sharedService.playerData.set(roomName, { player1, player2 });
+			const players = this.sharedService.playerData.get(roomName);
 			console.log({ players });
 			console.log(`player id after setting ${player1.intraId} ${player2.intraId}`);
 			this.server.to(client.id).to(this.otherclient).emit('createGame', roomName);
