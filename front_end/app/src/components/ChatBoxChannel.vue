@@ -48,20 +48,40 @@
                 </div>
                 <div class="modal-body">
                     <div v-for="member in allMembers" :key="member.intraId">
-                        <div class="dropdown">
-                            <button class="btn btn-secondary dropdown-toggle" type="button" id="user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div v-if="userIntraId==member.intraId">
+                            <p v-if="member.role=='OWNER'">{{ member.name }}(Owner)</p>
+                            <p v-if="member.role=='ADMIN'">{{ member.name }}(Owner)</p>
+                            <p v-if="member.role=='MEMBER'">{{ member.name }}(Owner)</p>
+                        </div>
+                        <div class="dropdown" v-else>
+                            <p v-if="member.role=='OWNER'" class="dropdown-toggle" type="button" id="user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ member.name }}(Owner)
+                            </p>
+                            <p v-if="member.role=='ADMIN'" class="dropdown-toggle" type="button" id="user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ member.name }}(Admin)
+                            </p>
+                            <p v-if="member.role=='MEMBER'" class="dropdown-toggle" type="button" id="user-dropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                 {{ member.name }}
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="user-dropdown">
+                            </p>
+                            <ul class="dropdown-menu" aria-labelledby="user-dropdown" v-if="userRole=='OWNER' || userRole=='ADMIN'">
                                 <li><a class="dropdown-item" href="#">
                                     <RouterLink class="nav-link" 
                                     :to="{path: '/profile/other/' + member.intraId}">
                                     View Profile</RouterLink>
                                 </a></li>
-                                <li><a class="dropdown-item" href="#" @click="banUser(member.intraId, activeChannel)">Ban</a></li>
-                                <li><a class="dropdown-item" href="#" @click="muteUser(member.intraId, activeChannel)">Mute</a></li>
-                                <li><a class="dropdown-item" href="#" @click="kickUser(member.intraId, activeChannel)">kick</a></li>
-                                <li><a class="dropdown-item" href="#">set as administrator</a></li>
+                                <li><a class="dropdown-item" href="#">Invite to Game</a></li>
+                                <li v-if="member.role!='OWNER'"><a class="dropdown-item" href="#" @click="banUser(member.intraId, activeChannel)">Ban</a></li>
+                                <li v-if="member.role!='OWNER'"><a class="dropdown-item" href="#" @click="muteUser(member.intraId, activeChannel)">Mute</a></li>
+                                <li v-if="member.role!='OWNER'"><a class="dropdown-item" href="#" @click="kickUser(member.intraId, activeChannel)">kick</a></li>
+                                <li v-if="member.role=='MEMBER'"><a class="dropdown-item" href="#">Set as Admin</a></li>
+                            </ul>
+                            <ul class="dropdown-menu" aria-labelledby="user-dropdown" v-else>
+                                <li><a class="dropdown-item" href="#">
+                                    <RouterLink class="nav-link" 
+                                    :to="{path: '/profile/other/' + member.intraId}">
+                                    View Profile</RouterLink>
+                                </a></li>
+                                <li><a class="dropdown-item" href="#">Invite to Game</a></li>
                             </ul>
                         </div>
                     </div>
@@ -81,6 +101,7 @@ import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import type { Messages } from "../types/ChatType";
+import storeUser from "@/store";
 
 const props = defineProps({
     channelName: String,
@@ -162,6 +183,8 @@ async function sendMessage() {
 }
 
 const allMembers = ref([]);
+const userIntraId = ref<number>(storeUser.state.user.intraId);
+const userRole = ref();
 async function loadAllMembers(channelName: string): Promise<void> {
     const request = {
         channelName: channelName,
@@ -169,6 +192,11 @@ async function loadAllMembers(channelName: string): Promise<void> {
     try {
 		const response = await axiosInstance.get('chat/getMembersInChannel', { params: request });
         allMembers.value = response.data;
+        for ( let member of allMembers.value) {
+            if (member.intraId == userIntraId.value) {
+                userRole.value = member.role
+            }
+        }
 	}
     catch (error: any) {
 		toast.add({
