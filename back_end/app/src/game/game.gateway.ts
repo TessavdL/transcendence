@@ -58,6 +58,7 @@ export class GameGateway
 		const newBallPosition = this.gameService.ballMovement(object.gameStatus);
 		client.emit('updategameStatus', newBallPosition);
 		client.to(object.roomName).emit('updategameStatus', newBallPosition);
+		//this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
 	}
 
 	@SubscribeMessage('assignPlayers')
