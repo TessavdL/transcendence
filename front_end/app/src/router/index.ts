@@ -17,6 +17,7 @@ import ChatBoxChannel from "@/components/ChatBoxChannel.vue";
 
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
+import MatchmakingView from "@/views/MatchmakingView.vue";
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -27,7 +28,7 @@ const router = createRouter({
 			component: HomeView
 		},
 		{
-			path: '/game',
+			path: '/game/:gameid',
 			name: 'Game',
 			component: GameView
 		},
@@ -95,6 +96,11 @@ const router = createRouter({
 			path: '/chat2',
 			name: 'Chat2',
 			component: ChatView2
+		},
+		{
+			path: '/matchmaking',
+			name: 'Matchmaking',
+			component: MatchmakingView
 		}
 	]
 })

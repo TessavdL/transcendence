@@ -6,18 +6,20 @@ import { UserModule } from './user/user.module';
 import { ChatModule } from './chat/chat.module';
 import { GameModule } from './game/game.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { MatchmakingModule } from './game/matchmaking/matchmaking.module';
 
 @Module({
-  imports: [
-    UserModule,
-    ChatModule,
-    AuthModule,
-    PrismaModule,
-    ConfigModule.forRoot({
-      isGlobal: true,
-    }),
-    GameModule,
-    AchievementsModule,
-  ],
+	imports: [
+		UserModule,
+		ChatModule,
+		AuthModule,
+		PrismaModule,
+		ConfigModule.forRoot({
+			isGlobal: true,
+		}),
+		GameModule,
+		MatchmakingModule,
+		AchievementsModule,
+	],
 })
-export class AppModule {}
+export class AppModule { }
