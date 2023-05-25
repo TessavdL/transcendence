@@ -20,13 +20,16 @@
 
 <script lang="ts">
 import io from 'socket.io-client';
-import type { Game } from '../types/GameType';
+import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
+import storeUser from '@/store';
 
 export default {
 	data() {
 		return {
-			game: ref<Game>
+			game: ref<Game>,
+			player: '',
+			roomName: '',
 		};
 	},
 
@@ -40,26 +43,69 @@ export default {
 	},
 
 	mounted() {
-		this.socket.on('updategameStatus', (gameStatus) => {
-			this.game.player1Position = gameStatus.player1Position;
-			this.game.player2Position = gameStatus.player2Position;
+		this.socket.on('connected', () => {
+			if (typeof this.$route.params.gameid === 'string') {
+				this.roomName = this.$route.params.gameid;
+			}
+			this.socket.emit('assignPlayers', this.$route.params.gameid);
+		});
+
+		this.socket.on('playerisSet', async (players: Players) => {
+			if (storeUser.state.user.intraId === players.player1.intraId) {
+				this.player = 'playerone';
+			}
+			else {
+				this.player = 'playertwo';
+			}
+		});
+
+		this.socket.on('gameStarted', () => {
+			this.game.gameStarted = true;
+			this.update();
+		});
+
+		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
+			this.game.ballVelocity = gameStatus.ballVelocity;
+			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
 		});
-		this.socket.on('updatePaddlePosition', (position) => {
-			this.movePaddle(position);
+
+		this.socket.on('updatePaddlePosition', (position: number) => {
+			if (this.player === 'playerone') {
+				this.movePaddle(position);
+			}
+			else if (this.player === 'playertwo') {
+				this.movePaddlePlayerTwo(position);
+			}
 		});
-		// this.socket.on('updateBallPosition', (ballPosition) => {
-		// 	this.update(ballPosition);
-		// });
+
+		this.socket.on('otherPlayerUpdatePaddlePosition', (position) => {
+			if (this.player === 'playerone')
+				this.movePaddlePlayerTwo(position);
+			else if (this.player === 'playertwo')
+				this.movePaddle(position);
+		});
+
 		window.addEventListener('keydown', (event) => {
 			if (event.key === 'ArrowUp') {
-				//this.movePaddle(-25); // move the paddle up by .. pixels
-				this.socket.emit('movePaddle', 'up');
-			} else if (event.key === 'ArrowDown') {
-				//this.movePaddle(25); // move the paddle down by .. pixels
-				this.socket.emit('movePaddle', 'down');
+				const data = {
+					movement: 'up',
+					player: this.player,
+					roomName: this.roomName,
+					game: this.game,
+				};
+				this.socket.emit('movePaddle', data);
+			}
+			else if (event.key === 'ArrowDown') {
+				const data = {
+					movement: 'down',
+					player: this.player,
+					roomName: this.roomName,
+					game: this.game,
+				};
+				this.socket.emit('movePaddle', data);
 			}
 		});
 	},
@@ -73,23 +119,25 @@ export default {
 		toggleGame() {
 			if (this.game.gameStarted) {
 				this.game.gameStarted = false;
-			} else {
+			}
+			else {
 				this.game.gameStarted = true;
-				this.update(); // call the update method to start the game loop
+				this.socket.emit('startGame', this.roomName);
 			}
 		},
+
 		movePaddle(position: number) {
-			const newPosition = this.game.player1Position + position;
-			if (newPosition <= 500 && newPosition >= 0) {
-				//this.socket.emit('movePaddle', position);
-				this.game.player1Position = newPosition;
-			}
-			console.log('position player 1:', newPosition);
+			this.game.player1Position += position;
 		},
+
+		movePaddlePlayerTwo(position: number) {
+			this.game.player2Position += position;
+		},
+
 		update() {
 			if (!this.game.gameStarted)
 				return;
-			const gameStatus = {
+			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
 				ballVelocity: this.game.ballVelocity,
 				player1Position: this.game.player1Position,
@@ -98,8 +146,14 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 			};
-			this.socket.emit('ballMovement', gameStatus);
+			const data = {
+				gameStatus: gameStatus,
+				roomName: this.roomName,
+			}
 			requestAnimationFrame(this.update);
+			if (this.player === 'playerone') {
+				this.socket.emit('ballMovement', data);
+			}
 		},
 	},
 };
@@ -143,11 +197,11 @@ export default {
 
 @font-face {
 	font-family: "Joy";
-	src: url("./src/assets/game_images/JoyfulEaster.ttf");
+	src: url("../assets/game_images/JoyfulEaster.ttf");
 	font-family: "arcadeFont";
-	src: url("./src/assets/game_images/ARCADECLASSIC.TTF");
+	src: url("../assets/game_images/ARCADECLASSIC.TTF");
 	font-family: "excellent";
-	src: url("./src/assets/game_images/mexcellent 3d.otf");
+	src: url("../assets/game_images/mexcellent 3d.otf");
 }
 
 .scoreboard {
@@ -292,4 +346,5 @@ export default {
 	100% {
 		transform: translateX(1);
 	}
-} */</style>
+} */
+</style>
