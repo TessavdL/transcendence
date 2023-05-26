@@ -137,9 +137,9 @@ export class AuthService {
 				allOtherUsers: {
 					create: [],
 				},
-			},
-			include: {
-				allOtherUsers: true,
+				achievements: {
+					create: {}
+				},
 			},
 		});
 		this.updateUsersOfNewUser(user.intraId);

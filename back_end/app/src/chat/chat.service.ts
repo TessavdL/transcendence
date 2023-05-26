@@ -316,7 +316,7 @@ export class ChatService {
 
 	async getMessages(channelName: string): Promise<Message[]> {
 		try {
-			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; intraName: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
+			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; name: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
 				where: {
 					channelName: channelName,
 				},
@@ -326,7 +326,7 @@ export class ChatService {
 							user: {
 								select: {
 									intraId: true,
-									intraName: true,
+									name: true,
 									avatar: true,
 								},
 							},
@@ -337,8 +337,8 @@ export class ChatService {
 
 			const messages: Message[] = channel.userMessages.map((mes) => ({
 				channelName: channelName,
-				intraId: mes.user.intraId,
-				name: mes.user.intraName,
+				intraId: mes.intraId,
+				name: mes.user.name,
 				avatar: mes.user.avatar,
 				text: mes.text,
 			}));
@@ -380,8 +380,8 @@ export class ChatService {
 			if (messageIntraId === user.intraId || goodUser) {
 				filteredMessages.push({
 					channelName: channelName,
-					intraId: message.user.intraId,
-					name: message.user.intraName,
+					intraId: message.intraId,
+					name: message.user.name,
 					avatar: message.user.avatar,
 					text: message.text,
 				});
@@ -807,8 +807,6 @@ export class ChatService {
 				intraId: true,
 			},
 		});
-
-		console.log(relationships);
 
 		for (const clientId of allClientIds) {
 			const intraId = this.sharedMap.clientToIntraId.get(clientId);

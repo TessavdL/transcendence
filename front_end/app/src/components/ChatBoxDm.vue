@@ -3,10 +3,10 @@
         <div class="row">
             <div class="dm-header d-inline-flex">
                 <div class="dm-avatar dm-header-item">
-                    <img src="../assets/logo_klein.png" class="avatar-pic-mini" alt="avatar">
+                    <img :src="dmAvatar" class="avatar-pic-mini" alt="avatar">
                 </div>
                 <div class="dm-name dm-header-item flex-grow-1">
-                    <h3>{{ props.channelName }}</h3>
+                    <h3>{{ dmAlias }}</h3>
                 </div>
                 <div class="dm-dropdown dm-header-item">
                     <i class="bi bi-sliders2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 2rem; color: #ffffff;"></i>
@@ -22,8 +22,7 @@
             <div class="msg-container" v-for="msg in allMessages" :key="msg.text">
                 <div class="single-msg d-flex flex-column">
                     <div class="msg-userinfo d-inline-flex">
-                        <!-- need dynamic -->
-                        <img src="../assets/logo_klein.png" class="avatar-msg" alt="avatar">
+                        <img :src="'http://localhost:3001/user/get_avatar?avatar=' + msg.avatar" class="avatar-msg" alt="avatar">
                         <h5 class="msg-usernaem">{{ msg.name }}</h5>
                     </div>
                     <div class="msg-text">
@@ -50,12 +49,14 @@ import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import type { Messages } from "../types/ChatType";
+import type { DmChannel } from "../types/ChatType";
 
 const props = defineProps({
     channelName: String,
 });
 
 onMounted(async () => {
+    await getDmInfo();
     await joinChannel(props.channelName);
     socket.on('message', (data) => {
 		allMessages.value.push(data);
@@ -82,6 +83,27 @@ const activeChannelType = ref('');
 
 const allMessages = ref<Messages[]>([]);
 const messageText = ref('');
+
+const dmAlias = ref('');
+const dmAvatar = ref('');
+
+async function getDmInfo(): Promise<void> {
+	await axios
+		.get("http://localhost:3001/chat/getMyDMChannelsWithUser", {
+			withCredentials: true,
+		})
+		.then(async (response) => {
+			const channels = response.data;
+            const thisDm: DmChannel[] = channels.filter((channelId) => {
+				return (channelId.channel.channelName === props.channelName);
+			});
+            dmAlias.value = thisDm[0].otherUser.name;
+            dmAvatar.value = 'http://localhost:3001/user/get_avatar?avatar=' + thisDm[0].otherUser.avatar
+		})
+		.catch((error: any) => {
+			console.log(error?.response?.data?.reason);
+		});
+};
 
 async function joinChannel(channelName: string): Promise<void> {
     socket.emit('joinChannel', channelName);

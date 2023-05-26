@@ -17,6 +17,7 @@ import ChatBoxChannel from "@/components/ChatBoxChannel.vue";
 
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
+import MatchmakingView from "@/views/MatchmakingView.vue";
 
 import TwofaView from "@/views/TwofaView.vue";
 
@@ -29,7 +30,7 @@ const router = createRouter({
 			component: HomeView
 		},
 		{
-			path: '/game',
+			path: '/game/:gameid',
 			name: 'Game',
 			component: GameView
 		},
@@ -102,6 +103,11 @@ const router = createRouter({
 			path: '/twofa',
 			name: 'twofa',
 			component: TwofaView
+    },
+    {
+			path: '/matchmaking',
+			name: 'Matchmaking',
+			component: MatchmakingView
 		}
 	]
 })

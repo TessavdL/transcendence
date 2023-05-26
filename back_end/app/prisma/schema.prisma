@@ -48,12 +48,24 @@ model User {
     twofaStatus    Boolean         @default(false)
     twofaSecret    String          @default("")
     name           String          @unique
+    wins           Int             @default(0)
+    losses         Int             @default(0)
+    elo            Int             @default(1500)
     intraId        Int             @unique
     intraName      String          @unique
     activityStatus ActivityStatus  @default(ONLINE)
     allOtherUsers  AllOtherUsers[]
+    achievements   Achievements?
     memberships    Membership[]    @relation("UserMembership")
     userMessage    UserMessage[]   @relation("UserMessage")
+}
+
+model MatchHistory {
+    id             Int @id @default(autoincrement())
+    intraId        Int
+    otherIntraId   Int
+    scoreUser      Int
+    scoreOtherUser Int
 }
 
 model AllOtherUsers {
@@ -65,6 +77,22 @@ model AllOtherUsers {
     friendStatus  FriendStatus @default(NOT_FRIENDS)
 
     @@unique([intraId, otherIntraId])
+}
+
+model Achievements {
+    id             Int     @id @default(autoincrement())
+    intraId        Int     @unique
+    wonGame        Boolean @default(false)
+    won3Game       Boolean @default(false)
+    won3GameRow    Boolean @default(false)
+    loseGame       Boolean @default(false)
+    lose3GameRow   Boolean @default(false)
+    playedGame     Boolean @default(false)
+    changedName    Boolean @default(false)
+    uploadedAvatar Boolean @default(false)
+    added2FA       Boolean @default(false)
+    rank1          Boolean @default(false)
+    user           User    @relation(fields: [intraId], references: [intraId])
 }
 
 model Channel {

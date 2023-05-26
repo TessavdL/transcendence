@@ -2,13 +2,18 @@
     <div class="friend-buttons" :key="componentKey">
         <div class="d-grid gap-2" v-if="friendtype === 'NOT_FRIENDS' ">
             <button type="button" class="btn btn-light" style="color:#042d3f;"
-                 @click="addFriend">
+                 @click="requestFriend">
                  Add Friend</button>
         </div>
-        <div class="d-grid gap-2" v-if="friendtype === 'PENDING'">
+        <div class="d-grid gap-2" v-if="friendtype === 'REQUESTED'">
             <button type="button" class="btn btn-light disabled" style="color:#094b5f; background-color: #aab9ba;">
                  Requested</button>
-            </div>
+        </div>
+        <div class="d-grid gap-2" v-if="friendtype === 'PENDING'">
+            <button type="button" class="btn btn-light" style="color:#094b5f; background-color: #aab9ba;"
+                @click="acceptFriend">
+                 Pending</button>
+        </div>
         <div class="d-grid gap-2" v-if="friendtype === 'FRIENDS'">
             <button type="button" class="btn btn-light disabled" style="color:#ffffff; background-color: #147a99">
                 Friend</button>
@@ -40,13 +45,24 @@ const componentRerender = () => {
 let friendtype = props.friendStatus;
 
 
-const addFriend = () => {
+const requestFriend = () => {
     console.log(props.intraId);
     confirm.require({
-      message: "Are you sure you want to add this user as user?",
+      message: "Are you sure you want to send a friend request to this user?",
       header: "Confirmation",
       accept: () => {
-        sendFriendRequest();
+        sendFriendRequest("request");
+      },
+    });
+}
+
+const acceptFriend = () => {
+    console.log(props.intraId);
+    confirm.require({
+      message: "Are you sure you want to add this user as friend?",
+      header: "Confirmation",
+      accept: () => {
+        sendFriendRequest("accept");
       },
     });
 }
@@ -55,14 +71,14 @@ const friendRequestBody = {
     otherIntraId: Number(props.intraId)
 }
 
-async function sendFriendRequest() {
+async function sendFriendRequest(type: string) {
     await axios
         .post("http://localhost:3001/user/friend_request", friendRequestBody, {
             withCredentials: true,
         })
         .then(async (response) =>  {
-            console.log(response.data);
-            friendtype = "PENDING";
+            if (type === "request") {friendtype = "REQUESTED";}
+            else if (type === "accept") {friendtype = "FRIENDS";}
             componentRerender();
             toast.add({
                 severity: "success",
