@@ -65,7 +65,12 @@ export default {
 			this.game.gameStarted = true;
 			requestAnimationFrame(this.update);
 		});
-
+		this.socket.on('gameEnded', () => {
+			if (this.game.player1Score === 3 || this.game.player2Score === 3){
+				console.log('game over', this.game.gameEnded);
+				this.game.gameEnded = true;
+			}
+		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
@@ -119,6 +124,10 @@ export default {
 	methods: {
 
 		toggleGame() {
+			if (this.game.gameEnded) {
+				this.socket.emit('endGame', this.roomName);
+				console.log('game over');
+			}
 			if (this.game.gameStarted) {
 				this.game.gameStarted = false;
 			}
@@ -172,10 +181,14 @@ export default {
 			this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
 		};
 		requestAnimationFrame(updatePosition);
-	},
+		},
 		update() {
 			if (!this.game.gameStarted)
 				return;
+			else if (this.game.gameEnded) {
+				console.log('game ended');
+				return ;
+			}
 			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
 				ballVelocity: this.game.ballVelocity,
@@ -184,6 +197,7 @@ export default {
 				player1Score: this.game.player1Score,
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
+				gameEnded: this.game.gameEnded,
 			};
 			const data = {
 				gameStatus: gameStatus,

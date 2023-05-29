@@ -21,6 +21,7 @@ export class GameService {
 			ballPosition: { top: 280, left: 386 },
 			ballVelocity: { x: 5, y: 5 },
 			gameStarted: false,
+			gameEnded: false,
 			player1Score: 0,
 			player2Score: 0,
 		};
@@ -126,6 +127,13 @@ export class GameService {
 				console.log('collision player two');
 			}
 		return (gameStatus);
+	}
+
+	endGame(gameStatus: Game): boolean {
+		if (gameStatus.player1Score >= 3 || gameStatus.player2Score >= 3) {
+			return true;
+		}
+		return false;
 	}
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
