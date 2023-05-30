@@ -36,7 +36,7 @@ onMounted(async () => {
 
 async function getMyChannels(): Promise<void> {
     await axios
-        .get("http://localhost:3001/chat/getAllChannels", {
+        .get("http://localhost:3001/chat/getMyChannels", {
             withCredentials: true,
         })
         .then(async (response) =>  {

@@ -1,33 +1,32 @@
-import { Controller, Get, Request, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard42, JwtAuthGuard } from './guards';
+import { GetUser } from 'src/decorators/get-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+	constructor(private authService: AuthService) { }
 
-  @UseGuards(AuthGuard42)
-  @Get('login')
-  async login(@Request() req): Promise<any> {
-    return req.user;
-  }
+	@UseGuards(AuthGuard42)
+	@Get('login')
+	async login(@GetUser() user: User): Promise<any> {
+		return user;
+	}
 
-  @UseGuards(AuthGuard42)
-  @Get('callback')
-  async handleIntraReturn(
-    @Request() req,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<void> {
-    const user: User = req.user;
-    return this.authService.setBearerToken(user, res);
-  }
+	@UseGuards(AuthGuard42)
+	@Get('callback')
+	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
+		if (user.twofaStatus === true) {
+			return res.redirect(`http://localhost:5173/twofa?intraId=${user.intraId}`);
+		}
+		return this.authService.setBearerToken(user, res);
+	}
 
-  @UseGuards(JwtAuthGuard)
-  @Get('logout')
-  logout(@Request() req, @Res({ passthrough: true }) res: Response) {
-    const user: User = req.user;
-    return this.authService.logout(user, res);
-  }
+	@UseGuards(JwtAuthGuard)
+	@Get('logout')
+	logout(@GetUser() user: User, @Res({ passthrough: true }) res: Response) {
+		return this.authService.logout(user, res);
+	}
 }
