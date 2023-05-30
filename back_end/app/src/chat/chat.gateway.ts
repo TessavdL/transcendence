@@ -165,18 +165,26 @@ export class ChatGateway
 	@SubscribeMessage('leaveChannel')
 	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
+		// console.log(`intraId = ${intraId} and channelName = ${channelName}`);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
+		// console.log({ member });
 
 		const clientsInChannel: string[] = this.channelToClientIds.get(channelName);
+		// console.log({ clientsInChannel });
 		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
+		console.log({ updatedClientsInChannel });
 		this.channelToClientIds.set(channelName, updatedClientsInChannel);
 		this.clientIdToChannel.delete(client.id);
 
 		// leave channel
 		client.leave(channelName);
+		client.emit('left');
 
 		// inform all other users in the channel that a user left
-		this.server.to(channelName).emit('userLeft', member);
+		if (updatedClientsInChannel.length > 0) {
+			console.log('emitting to other users...')
+			this.server.to(channelName).emit('userLeft', member);
+		}
 	}
 
 	@UseGuards(ClientGuard)
@@ -200,7 +208,7 @@ export class ChatGateway
 			const canBeKicked: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeKicked === true) {
-				this.server.to(clientIds).emit('leaveChannel', { channelName: data.channelName });
+				this.server.to(clientIds).emit('leaveChannel', data.channelName);
 			}
 			else {
 				this.server.to(client.id).emit('error', { message: 'Cannot kick user' });
@@ -221,7 +229,7 @@ export class ChatGateway
 			const canBeBanned: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeBanned === true) {
-				this.server.to(clientIds).emit('leaveChannel', { channelName: data.channelName });
+				this.server.to(clientIds).emit('leaveChannel', data.channelName);
 				await this.chatService.banUser(data.otherIntraId, data.channelName);
 			}
 		} catch (error) {

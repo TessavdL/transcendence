@@ -49,12 +49,19 @@
 <script setup lang="ts">
 import axios from "axios";
 import { useRouter } from "vue-router";
-import { ref, onMounted } from "vue";
-import type { Channel, DmChannel } from "../types/ChatType";
+import { ref, inject, onMounted } from "vue";
+import type { Channel, DmChannel, Punishment } from "../types/ChatType";
+import type { Socket } from "socket.io-client";
 import { assertVariableDeclarator } from "@babel/types";
 
 const myChannels = ref<Channel[]>([]);
 const myDms = ref<DmChannel[]>([]);
+const socket = inject("socketioInstance") as Socket;
+const axiosInstance = axios.create({
+	baseURL: 'http://localhost:3001',
+	withCredentials: true,
+});
+
 
 const router = useRouter();
 function openRoute(routePath: string) {
@@ -66,12 +73,37 @@ function openDm(subpath: string) {
 		params: { channelName: subpath },
 	});
 }
-function openChannel(subpath: string) {
-	router.push({
-		name: 'ChatBoxChannel',
-		params: { channelName: subpath },
-	});
+async function openChannel(subpath: string) {
+	if (await canJoinChannel(subpath) === true) {
+		router.push({
+			name: 'ChatBoxChannel',
+			params: { channelName: subpath },
+		});
+	}
+	// TO DO INSERT POPUP THAT SOMEONE IS BANNED
 }
+
+async function isBanned(channelName: string): Promise<Punishment> {
+	const response = await axiosInstance.get('chat/amIBanned', { params: { channelName: channelName } });
+	const ban: Punishment = response.data;
+	return ban;
+}
+
+async function canJoinChannel(channelName: string): Promise<boolean> {
+	const ban: Punishment = await isBanned(channelName);
+	if (ban.status === true) {
+		if (ban.time === 0) {
+			console.log(`You are still banned for one second`);
+		}
+		else {
+			console.log(`You are still banned for ${ban.time} seconds`);
+		}
+		return false;
+	}
+	else {
+		return true;
+	}
+};
 
 onMounted(async () => {
 	await getMyChannels();
