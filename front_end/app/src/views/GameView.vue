@@ -1,22 +1,32 @@
 <template>
 	<div v-if="game" class="pong-game">
-		<div class="start-button-container">
+		<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+			<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
+		</div>
+		<div class="start-button-container" v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
 			<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
 		</div>
 		<div>
 			<div class="wave"></div>
-			<!-- <div class="wave"></div>
-		<div class="wave"></div> -->
+			<!-- <div class="wave"></div> -->
+			<!-- <div class="wave"></div> -->
 		</div>
 		<div class="scoreboard">
 			<div class="score-player1">Player One: <span id="player-1-score">{{ game.player1Score }}</span></div>
 			<div class="score-player2">Player Two: <span id="player-2-score">{{ game.player2Score }}</span></div>
 		</div>
 		<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
-		<div class="player2-paddle" :style="{ top: game.player2Position + 'px' }"></div>
+		<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
 		<div class="ball" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
+		<div v-if="isGameOver" class="game-over-canvas">
+			<h2>Game Over</h2>
+				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+				<button @click="toggleGame">Restart</button>
+		</div>
 	</div>
 </template>
+
+
 
 <script lang="ts">
 import io from 'socket.io-client';
@@ -30,9 +40,9 @@ export default {
 			game: ref<Game>,
 			player: '',
 			roomName: '',
+			gameOver: false,
 		};
 	},
-
 	setup() {
 		const socket = io('http://localhost:3001/pong-game', { withCredentials: true });
 		const game = ref<Game>();
@@ -40,6 +50,17 @@ export default {
 			game.value = gameObject;
 		});
 		return { socket, game: computed(() => game.value) };
+	},
+
+	computed: {
+		isPlayerOne() {
+			console.log('checking player');
+			return this.player === 'playerone';
+		},
+		isGameOver() {
+			// Check if the game is over
+			return this.game.player1Score === 3 || this.game.player2Score === 3;
+		}
 	},
 
 	mounted() {
@@ -117,13 +138,17 @@ export default {
 	methods: {
 
 		toggleGame() {
-			if (this.game.gameStarted) {
-				this.game.gameStarted = false;
-			}
-			else {
+			if (!this.game.gameStarted) {
 				this.game.gameStarted = true;
 				this.socket.emit('startGame', this.roomName);
 			}
+			// if (this.game.gameStarted) {
+			// 	this.game.gameStarted = false;
+			// }
+			// else {
+			// 	this.game.gameStarted = true;
+			// 	this.socket.emit('startGame', this.roomName);
+			// }
 		},
 
 		movePaddle(position: number) {
@@ -137,6 +162,11 @@ export default {
 		update() {
 			if (!this.game.gameStarted)
 				return;
+			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
+				this.game.gameStarted = false;
+				this.gameOver = true;
+				return ;
+			}
 			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
 				ballVelocity: this.game.ballVelocity,
@@ -194,6 +224,32 @@ export default {
 	border-left: 8px solid rgb(253, 251, 251);
 	border-right: 8px solid rgb(253, 251, 251);
 }
+
+.game-over-canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+}
+
+.game-over-canvas h2 {
+	font-size: 32px;
+	color: white;
+	margin-bottom: 16px;
+}
+
+.game-over-canvas p {
+	font-size: 24px;
+	color: white;
+}
+
 
 @font-face {
 	font-family: "Joy";
@@ -266,14 +322,22 @@ export default {
 	width: 20px;
 	height: 20px;
 	background-color: rgb(33, 34, 32);
-	/* --for round ball --*/
-	/* position: absolute;
+}
+
+.ball-classic {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	background-color: rgb(243, 246, 240);
+}
+.ball-round {
+	position: absolute;
 	width: 15px;
 	height: 15px;
 	top: 290px;
 	left: 390px;
 	background-color: white;
-	border-radius: 50%; */
+	border-radius: 50%;
 }
 
 /* body {
@@ -302,9 +366,9 @@ export default {
 
 .wave {
 	/* background: rgb(255 255 255 / 25%); */
-	border-radius: 1000% 1000% 0 0;
+	/* border-radius: 100% 100% 0 0; */
 	position: fixed;
-	width: 200%;
+	width: 150%;
 	height: 16em;
 	animation: wave 15s -2s linear infinite;
 	transform: translate3d(0, 0, 0);
