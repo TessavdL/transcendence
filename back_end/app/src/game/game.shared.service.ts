@@ -1,8 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { GameData } from "./types";
+import { Players } from "./types";
 
 @Injectable()
 export class SharedService {
 	clientToIntraId: Map<string, number> = new Map<string, number>();
-	gameData: Map<string, GameData> = new Map<string, GameData>();
+	playerData: Map<string, Players> = new Map<string, Players>();
 }

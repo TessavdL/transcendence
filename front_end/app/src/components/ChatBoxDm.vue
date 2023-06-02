@@ -12,7 +12,12 @@
                     <i class="bi bi-sliders2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style="font-size: 2rem; color: #ffffff;"></i>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="#">Invite for Game</a></li>
-                        <li><a class="dropdown-item" href="#">View Profile</a></li>
+                        <li><a  class="dropdown-item" href="#">
+                            <RouterLink class="nav-link" 
+                                :to="{path: '/profile/other/' + otherUserIntraId}">
+                                View Profile</RouterLink>
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -86,6 +91,7 @@ const messageText = ref('');
 
 const dmAlias = ref('');
 const dmAvatar = ref('');
+const otherUserIntraId = ref();
 
 async function getDmInfo(): Promise<void> {
 	await axios
@@ -97,6 +103,7 @@ async function getDmInfo(): Promise<void> {
             const thisDm: DmChannel[] = channels.filter((channelId) => {
 				return (channelId.channel.channelName === props.channelName);
 			});
+            otherUserIntraId.value = thisDm[0].otherUser.intraId
             dmAlias.value = thisDm[0].otherUser.name;
             dmAvatar.value = 'http://localhost:3001/user/get_avatar?avatar=' + thisDm[0].otherUser.avatar
 		})

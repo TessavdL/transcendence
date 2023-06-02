@@ -45,6 +45,8 @@ model User {
     createdAt      DateTime        @default(now())
     updatedAt      DateTime        @updatedAt
     avatar         String?
+    twofaStatus    Boolean         @default(false)
+    twofaSecret    String          @default("")
     name           String          @unique
     wins           Int             @default(0)
     losses         Int             @default(0)
