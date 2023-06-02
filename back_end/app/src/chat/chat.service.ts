@@ -341,6 +341,7 @@ export class ChatService {
 				name: mes.user.name,
 				avatar: mes.user.avatar,
 				text: mes.text,
+				isLink: false,
 			}));
 			return messages;
 		} catch (error: any) {
@@ -384,6 +385,7 @@ export class ChatService {
 					name: message.user.name,
 					avatar: message.user.avatar,
 					text: message.text,
+					isLink: false,
 				});
 			}
 		});
@@ -400,6 +402,7 @@ export class ChatService {
 			name: user.name,
 			avatar: user.avatar,
 			text: text,
+			isLink: false,
 		};
 
 		try {

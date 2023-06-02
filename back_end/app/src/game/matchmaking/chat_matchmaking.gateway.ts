@@ -4,7 +4,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from '@prisma/client';
-import { SharedService } from '../game.shared.service';
+import { GameSharedService } from '../game.shared.service';
 
 @WebSocketGateway({
     cors: {
@@ -17,7 +17,7 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 	constructor(
 		private readonly authService: AuthService,
 		private readonly jwtStrategy: JwtStrategy,
-		private sharedService: SharedService,
+		private sharedService: GameSharedService,
 	) {
 		this.otherclient = '';
 	}
@@ -84,11 +84,11 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 			const player2: { intraId: number } = {
 				intraId: this.sharedService.clientToIntraId.get(client.id),
 			};
-			this.sharedService.gameData.set(args, { player1, player2 });
+			this.sharedService.playerData.set(args, { player1, player2 });
 			this.server.to(client.id).to(this.otherclient).emit('createGame', args);
 			this.otherclient = '';
 		}
-		console.log(`Client connected ${client.id}`);
+		this.logger.log(`Client connected ${client.id}`);
 	}
 
 	handleDisconnect(client: Socket): void {

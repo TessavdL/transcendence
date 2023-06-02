@@ -13,9 +13,9 @@ import { useRouter } from "vue-router";
 export default {
 
 	setup() {
-		const socket = io('http://localhost:3001/chat_matchmaking', { withCredentials: true });
+		const socket = io('http://localhost:3001/chatMatchmaking', { withCredentials: true });
 		socket.on('connected', () => {
-			socket.emit('matchmaking');
+			socket.emit('chat_matchmaking');
 		});
 		console.log('created sockect');
 		const router = useRouter();
