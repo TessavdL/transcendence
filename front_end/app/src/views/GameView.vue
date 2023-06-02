@@ -1,5 +1,8 @@
 
 <template>
+	<div>
+	<button @click="toggleColorMode">Switch to Color Mode</button>
+		{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
 	<div v-if="game" class="pong-game-classic">
 		<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
 			<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
@@ -37,6 +40,7 @@
 				<!-- <button @click="toggleGame">Restart</button> -->
 		</div>
 	</div>
+	</div>
 </template>
 
 <script lang="ts">
@@ -52,6 +56,7 @@ export default {
 			player: '',
 			roomName: '',
 			gameOver: false,
+			isColorMode: false,
 		};
 	},
 	setup() {
@@ -161,7 +166,10 @@ export default {
 			// 	this.socket.emit('startGame', this.roomName);
 			// }
 		},
+		toggleColorMode() {
+			this.isColorMode = !this.isColorMode;
 
+		},
 		movePaddle(position: number) {
 			this.game.player1Position += position;
 		},
@@ -202,8 +210,10 @@ export default {
 
 <style>
 @import url("../assets/game_mode/button.css");
+@import url("../assets/game_mode/classic_pong.css");
+@import url("../assets/game_mode/color_pong.css");
 
-.pong-game-classic::before {
+/* .pong-game-classic::before {
 	content: "";
 	position: absolute;
 	top: 0;
@@ -226,17 +236,17 @@ export default {
 	border-bottom: 8px solid rgb(253, 251, 251);
 	border-left: 8px solid rgb(253, 251, 251);
 	border-right: 8px solid rgb(253, 251, 251);
-}
+} */
 
-.pong-game {
+/* .pong-game {
 	position: fixed;
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
 	height: 600px;
-	width: 800px;
+	width: 800px; */
 	/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
-	background-size: contain;
+	/* background-size: contain;
 	background-position: center;
 	background: linear-gradient(315deg,
 	rgb(0, 101, 52) 3%,
@@ -245,14 +255,14 @@ export default {
 	rgba(255, 25, 25, 1) 98%);
 	animation: gradient 12s ease infinite;
 	background-size: 400% 400%;
-	background-attachment: fixed;
+	background-attachment: fixed; */
 	/* background-color: rgb(13, 12, 11); */
-	display: flex;
+	/* display: flex;
 	border-top: 8px solid rgb(249, 248, 248);
 	border-bottom: 8px solid rgb(253, 251, 251);
 	border-left: 8px solid rgb(253, 251, 251);
 	border-right: 8px solid rgb(253, 251, 251);
-}
+} */
 
 @font-face {
 	
