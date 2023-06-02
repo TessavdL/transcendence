@@ -1,10 +1,23 @@
+
 <template>
-	<div v-if="game" class="pong-game">
+	<div v-if="game" class="pong-game-classic">
 		<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
-			<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
+			<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
+			<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+				<!-- <span></span> -->
+				<span></span>
+				<span></span>
+				<span></span>
+			</a>
 		</div>
 		<div class="start-button-container" v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
-			<button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button>
+			<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
+			<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+				<span></span>
+				<span></span>
+				<span></span>
+				<span></span>
+			</a>
 		</div>
 		<div>
 			<div class="wave"></div>
@@ -17,16 +30,14 @@
 		</div>
 		<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
 		<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
-		<div class="ball" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
+		<div class="ball-classic" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
 		<div v-if="isGameOver" class="game-over-canvas">
 			<h2>Game Over</h2>
 				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
-				<button @click="toggleGame">Restart</button>
+				<!-- <button @click="toggleGame">Restart</button> -->
 		</div>
 	</div>
 </template>
-
-
 
 <script lang="ts">
 import io from 'socket.io-client';
@@ -190,13 +201,31 @@ export default {
 </script>
 
 <style>
-.pong-game::before {
+@import url("../assets/game_mode/button.css");
+
+.pong-game-classic::before {
 	content: "";
 	position: absolute;
 	top: 0;
 	bottom: 0;
 	left: 50%;
 	border-left: 8px solid white;
+}
+
+.pong-game-classic {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 600px;
+	width: 800px;
+	background-size: contain;
+	background-color: rgb(13, 12, 11);
+	display: flex;
+	border-top: 8px solid rgb(249, 248, 248);
+	border-bottom: 8px solid rgb(253, 251, 251);
+	border-left: 8px solid rgb(253, 251, 251);
+	border-right: 8px solid rgb(253, 251, 251);
 }
 
 .pong-game {
@@ -210,10 +239,10 @@ export default {
 	background-size: contain;
 	background-position: center;
 	background: linear-gradient(315deg,
-			rgb(0, 101, 52) 3%,
-			rgb(206, 162, 60) 38%,
-			rgb(127, 48, 238) 68%,
-			rgba(255, 25, 25, 1) 98%);
+	rgb(0, 101, 52) 3%,
+	rgb(206, 162, 60) 38%,
+	rgb(127, 48, 238) 68%,
+	rgba(255, 25, 25, 1) 98%);
 	animation: gradient 12s ease infinite;
 	background-size: 400% 400%;
 	background-attachment: fixed;
@@ -225,6 +254,19 @@ export default {
 	border-right: 8px solid rgb(253, 251, 251);
 }
 
+@font-face {
+	
+	font-family: "Joy";
+	src: url("../assets/game_images/JoyfulEaster.ttf");
+}
+@font-face {
+	font-family: "arcadeFont";
+	src: url("../assets/game_images/ARCADECLASSIC.TTF");
+}
+@font-face {
+	font-family: "excellent";
+	src: url("../assets/game_images/mexcellent 3d.otf");
+}
 .game-over-canvas {
 	position: absolute;
 	top: 0;
@@ -240,24 +282,16 @@ export default {
 }
 
 .game-over-canvas h2 {
-	font-size: 32px;
+	font-family: "arcadeFont";
+	font-size: 64px;
 	color: white;
 	margin-bottom: 16px;
 }
 
 .game-over-canvas p {
-	font-size: 24px;
-	color: white;
-}
-
-
-@font-face {
-	font-family: "Joy";
-	src: url("../assets/game_images/JoyfulEaster.ttf");
 	font-family: "arcadeFont";
-	src: url("../assets/game_images/ARCADECLASSIC.TTF");
-	font-family: "excellent";
-	src: url("../assets/game_images/mexcellent 3d.otf");
+	font-size: 48px;
+	color: white;
 }
 
 .scoreboard {
@@ -275,7 +309,7 @@ export default {
 	font-size: 40px;
 	font-weight: normal;
 	color: rgb(217, 250, 32);
-	font-family: "excellent";
+	font-family: "arcadeFont";
 }
 
 /* .score-player1 {
@@ -287,16 +321,6 @@ export default {
 .pong-game img {
 	max-width: 100%;
 	max-height: 100%;
-}
-
-.start-button-container {
-	position: absolute;
-	width: 100px;
-	height: 30px;
-	top: calc(600px);
-	left: calc(345px);
-	z-index: 1;
-	/* make sure the button is on top of the canvas */
 }
 
 .player1-paddle,
@@ -378,37 +402,4 @@ export default {
 	z-index: -1;
 }
 
-/* .wave:nth-of-type(2) {
-	bottom: -1.25em;
-	animation: wave 18s linear reverse infinite;
-	opacity: 0.8;
-}
-
-.wave:nth-of-type(3) {
-	bottom: -2.5em;
-	animation: wave 10s -1s reverse infinite;
-	opacity: 0.9;
-}
-
-@keyframes wave {
-	2% {
-		transform: translateX(1);
-	}
-
-	25% {
-		transform: translateX(-25%);
-	}
-
-	50% {
-		transform: translateX(-50%);
-	}
-
-	75% {
-		transform: translateX(-25%);
-	}
-
-	100% {
-		transform: translateX(1);
-	}
-} */
 </style>

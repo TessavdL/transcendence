@@ -1,3 +1,12 @@
+.pong-game-classic::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	border-left: 8px solid white;
+}
+
 .pong-game-classic {
 	position: fixed;
 	top: 50%;
