@@ -52,6 +52,7 @@ import io from 'socket.io-client';
 import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
+//import NeonButton from '../components/ButtonsGamePlay.vue';
 
 export default {
 	data() {
@@ -102,9 +103,14 @@ export default {
 
 		this.socket.on('gameStarted', () => {
 			this.game.gameStarted = true;
-			this.update();
+			requestAnimationFrame(this.update);
 		});
-
+		this.socket.on('gameEnded', () => {
+			if (this.game.player1Score === 3 || this.game.player2Score === 3){
+				console.log('game over', this.game.gameEnded);
+				this.game.gameEnded = true;
+			}
+		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
@@ -181,7 +187,44 @@ export default {
 		movePaddlePlayerTwo(position: number) {
 			this.game.player2Position += position;
 		},
+		// movePaddle(position: number) {
+		// 	const targetPosition = this.game.player1Position + position;
+		// 	this.animatePaddle(targetPosition, 'player1Position');
+		// },
 
+		// movePaddlePlayerTwo(position: number) {
+		// 	const targetPosition = this.game.player2Position + position;
+		// 	this.animatePaddle(targetPosition, 'player2Position');
+		// },
+
+		animatePaddle(targetPosition: number, property: 'player1Position' | 'player2Position') {
+			const startTime = performance.now();
+			const startPosition = this.game[property];
+			const duration = 200; // Duration of the animation in milliseconds
+			
+			const updatePosition = (currentTime: number) => {
+				const elapsed = currentTime - startTime;
+			if (elapsed >= duration) {
+				this.game[property] = targetPosition;
+			return;
+			}
+			const progress = elapsed / duration;
+			const speed = 1;
+			const newPosition = startPosition + (targetPosition - startPosition) * (progress * speed);
+			this.game[property] = newPosition;
+			
+			const easingProgress = Math.sin(progress * Math.PI); // Apply easing function
+			// Calculate the new animation frame position
+			const newAnimationFrame = Math.floor(elapsed / (1000 / 60)); // 60 frames per second
+			requestAnimationFrame(updatePosition);
+			// Skip rendering for intermediate frames
+			if (newAnimationFrame === Math.floor(elapsed / (1000 / 60))) 
+				return;
+			// Update the paddle position with easing
+			this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
+		};
+		requestAnimationFrame(updatePosition);
+		},
 		update() {
 			if (!this.game.gameStarted)
 				return;
@@ -198,15 +241,16 @@ export default {
 				player1Score: this.game.player1Score,
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
+				gameEnded: this.game.gameEnded,
 			};
 			const data = {
 				gameStatus: gameStatus,
 				roomName: this.roomName,
 			}
-			requestAnimationFrame(this.update);
 			if (this.player === 'playerone') {
 				this.socket.emit('ballMovement', data);
 			}
+			requestAnimationFrame(this.update);
 		},
 	},
 };
