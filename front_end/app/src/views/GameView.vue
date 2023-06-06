@@ -1,45 +1,49 @@
 
 <template>
 	<div>
-	<button @click="toggleColorMode">Switch to Color Mode</button>
-		{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
-	<div v-if="game" class="pong-game-classic">
-		<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
-			<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
-			<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
-				<!-- <span></span> -->
-				<span></span>
-				<span></span>
-				<span></span>
-			</a>
+		<button @click="toggleColorMode">Switch to Color Mode</button>
+			{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
+			<!-- condition to check if it is color mode -->
+		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'"> 
+			<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
+				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+					<span></span>
+					<span></span>
+					<span></span>
+					<span></span>
+				</a>
+			</div>
+			<div class="start-button-container" v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
+				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
+				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+					<span></span>
+					<span></span>
+					<span></span>
+					<span></span>
+				</a>
+			</div>
+			<div>
+				<div class="wave"></div>
+				<!-- <div class="wave"></div> -->
+				<!-- <div class="wave"></div> -->
+			</div>
+			<div class="scoreboard">
+				<div class="score-player1">Player One: 
+					<span id="player-1-score">{{ game.player1Score }}</span></div>
+				<div class="score-player2">Player Two: 
+					<span id="player-2-score">{{ game.player2Score }}</span></div>
+			</div>
+			<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
+			<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
+			<div :class="isColorMode ? 'ball-round' : 'ball-classic'" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
+			<div v-if="isGameOver" class="game-over-canvas">
+				<h2>Game Over</h2>
+					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+					<!-- <button @click="toggleGame">Restart</button> -->
+			</div>
 		</div>
-		<div class="start-button-container" v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
-			<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
-			<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-			</a>
-		</div>
-		<div>
-			<div class="wave"></div>
-			<!-- <div class="wave"></div> -->
-			<!-- <div class="wave"></div> -->
-		</div>
-		<div class="scoreboard">
-			<div class="score-player1">Player One: <span id="player-1-score">{{ game.player1Score }}</span></div>
-			<div class="score-player2">Player Two: <span id="player-2-score">{{ game.player2Score }}</span></div>
-		</div>
-		<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
-		<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
-		<div class="ball-classic" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
-		<div v-if="isGameOver" class="game-over-canvas">
-			<h2>Game Over</h2>
-				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
-				<!-- <button @click="toggleGame">Restart</button> -->
-		</div>
-	</div>
+		
 	</div>
 </template>
 

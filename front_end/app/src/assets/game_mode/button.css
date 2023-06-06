@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600;700;800;900&display=swap');
+/* credits to: @mortezasharifinia https://codepen.io/mortezasharifinia */
+
+/* @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;300;400;500;600;700;800;900&display=swap'); */
 
 @font-face {
 	font-family: "arcadeFont";
@@ -87,7 +89,7 @@
 	transform: translateX(0);
 }
 
-/* .start-button-container .start-button span:nth-child(2), */
+.start-button-container .start-button span:nth-child(2),
 .start-button-container .start-button span:nth-child(4) {
 	width: 4px;
 	height: 40px;
@@ -118,14 +120,14 @@
 	right: 50%;
 }
 
-/* .start-button-container .start-button span:nth-child(2) {
+.start-button-container .start-button span:nth-child(2) {
 	left: calc(50% - 2px);
 	top: -50px;
 	transform-origin: top;
-} */
-/* .start-button-container .start-button:hover span:nth-child(2) {
+}
+.start-button-container .start-button:hover span:nth-child(2) {
 	top: 50%;
-} */
+}
 
 .start-button-container .start-button span:nth-child(4) {
 	left: calc(50% - 2px);
