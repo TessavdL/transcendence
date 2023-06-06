@@ -1,0 +1,59 @@
+
+.pong-game-color::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	border-left: 8px solid white;
+}
+.pong-game-color {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 600px;
+	width: 800px;
+	background-size: contain;
+	background-position: center;
+	background: linear-gradient(315deg,
+			rgb(0, 101, 52) 3%,
+			rgb(206, 162, 60) 38%,
+			rgb(127, 48, 238) 68%,
+			rgba(255, 25, 25, 1) 98%);
+	animation: gradient 12s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+	display: flex;
+	border-top: 8px solid rgb(249, 248, 248);
+	border-bottom: 8px solid rgb(253, 251, 251);
+	border-left: 8px solid rgb(253, 251, 251);
+	border-right: 8px solid rgb(253, 251, 251);
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 0%;
+	}
+
+	50% {
+		background-position: 100% 100%;
+	}
+
+	100% {
+		background-position: 0% 0%;
+	}
+}
+
+.wave {
+	position: fixed;
+	width: 150%;
+	height: 16em;
+	animation: wave 15s -2s linear infinite;
+	transform: translate3d(0, 0, 0);
+	opacity: 0.8;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+}
+
