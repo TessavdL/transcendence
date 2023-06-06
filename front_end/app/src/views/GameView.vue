@@ -2,21 +2,25 @@
 <template>
 	<div>
 		<button @click="toggleColorMode">Switch to Color Mode</button>
-			{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
-			<!-- condition to check if it is color mode thank you dagmar-->
-		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'"> 
-			<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+		{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
+		<!-- condition to check if it is color mode thank you dagmar-->
+		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
+			<div class="start-button-container"
+				v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
-				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
+				}}
 					<span></span>
 					<span></span>
 					<span></span>
 					<span></span>
 				</a>
 			</div>
-			<div class="start-button-container" v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
+			<div class="start-button-container"
+				v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
-				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}
+				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
+				}}
 					<span></span>
 					<span></span>
 					<span></span>
@@ -29,21 +33,24 @@
 				<!-- <div class="wave"></div> -->
 			</div>
 			<div class="scoreboard">
-				<div class="score-player1">Player One: 
-					<span id="player-1-score">{{ game.player1Score }}</span></div>
-				<div class="score-player2">Player Two: 
-					<span id="player-2-score">{{ game.player2Score }}</span></div>
+				<div class="score-player1">Player One:
+					<span id="player-1-score">{{ game.player1Score }}</span>
+				</div>
+				<div class="score-player2">Player Two:
+					<span id="player-2-score">{{ game.player2Score }}</span>
+				</div>
 			</div>
 			<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
 			<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
-			<div :class="isColorMode ? 'ball-round' : 'ball-classic'" :style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
+			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
+				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
 			<div v-if="isGameOver" class="game-over-canvas">
 				<h2>Game Over</h2>
-					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
-					<!-- <button @click="toggleGame">Restart</button> -->
+				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+				<!-- <button @click="toggleGame">Restart</button> -->
 			</div>
 		</div>
-		
+
 	</div>
 </template>
 
@@ -106,7 +113,7 @@ export default {
 			requestAnimationFrame(this.update);
 		});
 		this.socket.on('gameEnded', () => {
-			if (this.game.player1Score === 3 || this.game.player2Score === 3){
+			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 				console.log('game over', this.game.gameEnded);
 				this.game.gameEnded = true;
 			}
@@ -201,37 +208,38 @@ export default {
 			const startTime = performance.now();
 			const startPosition = this.game[property];
 			const duration = 200; // Duration of the animation in milliseconds
-			
+
 			const updatePosition = (currentTime: number) => {
 				const elapsed = currentTime - startTime;
-			if (elapsed >= duration) {
-				this.game[property] = targetPosition;
-			return;
-			}
-			const progress = elapsed / duration;
-			const speed = 1;
-			const newPosition = startPosition + (targetPosition - startPosition) * (progress * speed);
-			this.game[property] = newPosition;
-			
-			const easingProgress = Math.sin(progress * Math.PI); // Apply easing function
-			// Calculate the new animation frame position
-			const newAnimationFrame = Math.floor(elapsed / (1000 / 60)); // 60 frames per second
+				if (elapsed >= duration) {
+					this.game[property] = targetPosition;
+					return;
+				}
+				const progress = elapsed / duration;
+				const speed = 1;
+				const newPosition = startPosition + (targetPosition - startPosition) * (progress * speed);
+				this.game[property] = newPosition;
+
+				const easingProgress = Math.sin(progress * Math.PI); // Apply easing function
+				// Calculate the new animation frame position
+				const newAnimationFrame = Math.floor(elapsed / (1000 / 60)); // 60 frames per second
+				requestAnimationFrame(updatePosition);
+				// Skip rendering for intermediate frames
+				if (newAnimationFrame === Math.floor(elapsed / (1000 / 60)))
+					return;
+				// Update the paddle position with easing
+				this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
+			};
 			requestAnimationFrame(updatePosition);
-			// Skip rendering for intermediate frames
-			if (newAnimationFrame === Math.floor(elapsed / (1000 / 60))) 
-				return;
-			// Update the paddle position with easing
-			this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
-		};
-		requestAnimationFrame(updatePosition);
 		},
 		update() {
 			if (!this.game.gameStarted)
 				return;
-			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
+			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
+			if (this.game.gameEnded === true) {
 				this.game.gameStarted = false;
 				this.gameOver = true;
-				return ;
+				return;
 			}
 			const gameStatus: Game = {
 				ballPosition: this.game.ballPosition,
@@ -293,8 +301,8 @@ export default {
 	transform: translate(-50%, -50%);
 	height: 600px;
 	width: 800px; */
-	/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
-	/* background-size: contain;
+/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
+/* background-size: contain;
 	background-position: center;
 	background: linear-gradient(315deg,
 	rgb(0, 101, 52) 3%,
@@ -304,8 +312,8 @@ export default {
 	animation: gradient 12s ease infinite;
 	background-size: 400% 400%;
 	background-attachment: fixed; */
-	/* background-color: rgb(13, 12, 11); */
-	/* display: flex;
+/* background-color: rgb(13, 12, 11); */
+/* display: flex;
 	border-top: 8px solid rgb(249, 248, 248);
 	border-bottom: 8px solid rgb(253, 251, 251);
 	border-left: 8px solid rgb(253, 251, 251);
@@ -313,18 +321,21 @@ export default {
 } */
 
 @font-face {
-	
+
 	font-family: "Joy";
 	src: url("../assets/game_images/JoyfulEaster.ttf");
 }
+
 @font-face {
 	font-family: "arcadeFont";
 	src: url("../assets/game_images/ARCADECLASSIC.TTF");
 }
+
 @font-face {
 	font-family: "excellent";
 	src: url("../assets/game_images/mexcellent 3d.otf");
 }
+
 .game-over-canvas {
 	position: absolute;
 	top: 0;
@@ -412,6 +423,7 @@ export default {
 	height: 20px;
 	background-color: rgb(243, 246, 240);
 }
+
 .ball-round {
 	position: absolute;
 	width: 20px;
@@ -458,6 +470,4 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
-}
-
-</style>
+}</style>

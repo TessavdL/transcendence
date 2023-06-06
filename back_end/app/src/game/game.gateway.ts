@@ -73,16 +73,17 @@ export class GameGateway
 		client.emit('gameStarted');
 		client.to(roomname).emit('gameStarted');
 	}
-	@SubscribeMessage('endGame')
-	endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
-		gameStatus: Game,
-		roomName: string,
-	}) {
-		const gameEnded = this.gameService.endGame(object.gameStatus);
-		if (gameEnded) {
-			object.gameStatus.gameEnded = true;
-			client.emit('gameEnded', object.gameStatus);
-			client.to(object.roomName).emit('gameEnded', object.gameStatus);
-		}
-	}
+	// @SubscribeMessage('endGame')
+	// endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
+	// 	gameStatus: Game,
+	// 	roomName: string,
+	// }) {
+	// 	console.log("do we get here");
+	// 	const gameEnded = this.gameService.endGame(object.gameStatus);
+	// 	if (gameEnded) {
+	// 		object.gameStatus.gameEnded = true;
+	// 		client.emit('gameEnded', object.gameStatus);
+	// 		client.to(object.roomName).emit('gameEnded', object.gameStatus);
+	// 	}
+	// }
 }
