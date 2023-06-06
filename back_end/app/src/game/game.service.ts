@@ -18,9 +18,10 @@ export class GameService {
 		const game: Game = {
 			player1Position: 240,
 			player2Position: 240,
-			ballPosition: { top: 300, left: 385 },
+			ballPosition: { top: 280, left: 386 },
 			ballVelocity: { x: 5, y: 5 },
 			gameStarted: false,
+			gameEnded: false,
 			player1Score: 0,
 			player2Score: 0,
 		};
@@ -69,38 +70,48 @@ export class GameService {
 			left: gameStatus.ballPosition.left + gameStatus.ballVelocity.x,
 		};
 		// Check for collision with top or bottom walls
-		if (ballPosition.top <= 0 || ballPosition.top >= (600 - 20)) {
+		if (ballPosition.top <= 0 || ballPosition.top >= 565) {
 			gameStatus.ballVelocity.y = -gameStatus.ballVelocity.y;
 		}
 		// Check for collision with left or right walls
-		if (ballPosition.left <= 0 || ballPosition.left >= (800 - 20)) {
-			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-		}
+		// if (ballPosition.left <= 0 || ballPosition.left >= 780) {
+		// 	gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
+		// }
 		const paddleOneLeft = 0;
 		const paddleOneRight = 15;
 		const paddleOneTop = gameStatus.player1Position;
 		const paddleOneBottom = gameStatus.player1Position + 80;
 
-		const paddleTwoLeft = 765;
-		const paddleTwoRight = 780;
+		const paddleTwoLeft = 750;
+		const paddleTwoRight = 765;
 		const paddleTwoTop = gameStatus.player2Position;
 		const paddleTwoBottom = gameStatus.player2Position + 80;
 		// Check for score
-		if (ballPosition.left <= 0 || ballPosition.left + 20 >= paddleOneLeft && ballPosition.left + 20 <= paddleOneRight + 15 &&
-			ballPosition.top + 20 >= paddleOneTop && ballPosition.top <= paddleOneBottom) {
+		if (ballPosition.left <= 0 ||
+			ballPosition.left + 20 >= paddleOneLeft &&
+			ballPosition.left + 20 <= paddleOneRight + 15 &&
+			ballPosition.top + 20 >= paddleOneTop &&
+			ballPosition.top <= paddleOneBottom) {
 			gameStatus.ballPosition = { top: 300, left: 150 };
 			gameStatus.ballVelocity = { x: 5, y: 5 };
 			gameStatus.player2Score++;
 			gameStatus.gameStarted = false;
+			if (gameStatus.player2Score >= 3) {
+				gameStatus.gameEnded = true;
+			}
 		}
-		else if (ballPosition.left >= 780 || ballPosition.left - 20 >= (765 - paddleTwoLeft) &&
-			ballPosition.left - 20 <= (765 - paddleTwoLeft - 15) &&
-			ballPosition.top - 20 >= paddleTwoTop &&
-			ballPosition.top <= paddleTwoBottom) {
+		else if (ballPosition.left + 20 >= 780 ||
+			ballPosition.left + 20 >= paddleTwoLeft &&
+			ballPosition.left + 20 <= (paddleTwoLeft - 15) &&
+			ballPosition.top >= paddleTwoTop &&
+			ballPosition.top <= (paddleTwoBottom - 15)) {
 			gameStatus.ballPosition = { top: 300, left: 650 };
 			gameStatus.ballVelocity = { x: -5, y: -5 };
 			gameStatus.player1Score++;
 			gameStatus.gameStarted = false;
+			if (gameStatus.player1Score >= 3) {
+				gameStatus.gameEnded = true;
+			}
 		}
 		else {
 			gameStatus.ballPosition = ballPosition;
@@ -114,15 +125,22 @@ export class GameService {
 			console.log('collision player one');
 		}
 		// Check for collision with player2 paddle
-		if (ballPosition.left >= paddleTwoLeft - 20 &&
-			ballPosition.left <= paddleTwoLeft &&
-			ballPosition.top + 20 >= paddleTwoTop &&
-			ballPosition.top <= paddleTwoBottom) {
+		if (ballPosition.left + 20 == paddleTwoLeft &&          // Right edge of the ball
+			ballPosition.left <= paddleTwoRight &&               // Left edge of the paddle
+			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball
+			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
 			console.log('collision player two');
 		}
 		return (gameStatus);
 	}
+
+	// endGame(gameStatus: Game): boolean {
+	// 	if (gameStatus.player1Score >= 3 || gameStatus.player2Score >= 3) {
+	// 		return true;
+	// 	}
+	// 	return false;
+	// }
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
