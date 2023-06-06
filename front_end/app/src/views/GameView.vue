@@ -3,7 +3,7 @@
 	<div>
 		<button @click="toggleColorMode">Switch to Color Mode</button>
 			{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
-			<!-- condition to check if it is color mode -->
+			<!-- condition to check if it is color mode thank you dagmar-->
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'"> 
 			<div class="start-button-container" v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
@@ -370,8 +370,8 @@ export default {
 }
 .ball-round {
 	position: absolute;
-	width: 15px;
-	height: 15px;
+	width: 20px;
+	height: 20px;
 	top: 290px;
 	left: 390px;
 	background-color: white;
