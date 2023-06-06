@@ -75,7 +75,11 @@
 		<div class="message-container">
 			<h2>All Messages from {{ getActiveChannelName(activeChannel) }}:</h2>
 			<div v-for="mes in allMessages" :key="mes.intraId">
-				[{{ mes.name }}]: {{ mes.text }}
+				[{{ mes.name }}]: 
+				<div class="mes-text">
+					<p v-if="!mes.isLink">{{ mes.text }}</p>
+					<p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(mes.text)">{{ 'here' }}</a> to join</p>
+				</div>
 			</div>
 		</div>
 		<form @submit.prevent="sendMessage">
@@ -87,6 +91,7 @@
 				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
 				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
 				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
+                <a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
 			</li>
 		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
@@ -98,6 +103,8 @@ import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
 import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
+import { useRouter } from "vue-router";
+import _default from "vuex";
 
 export default {
 	data() {
@@ -129,7 +136,9 @@ export default {
 			baseURL: 'http://localhost:3001',
 			withCredentials: true,
 		});
-		return { axiosInstance, socket };
+		const router = useRouter();
+		return { axiosInstance, socket, router };
+		
 	},
 
 	async mounted() {
@@ -146,6 +155,36 @@ export default {
 		this.socket.on('leaveChannel', (data) => {
 			this.leaveChannel();
 		});
+		this.socket.on('createGame', (data) => {
+			console.log(data);
+			const gameid = data;
+			if (gameid === undefined || gameid === null) {
+				this.router.push({
+					name: "Home",
+				})
+			}
+			console.log('Redirecting to game', gameid);
+			this.router.push(`game/${gameid}`);
+		})
+		this.socket.on('inviteForGame', (data) => {
+			console.log("We are in inviteForGame");
+			const gameid = data.gameId;
+			console.log(gameid);
+			if (gameid === undefined || gameid === null) {
+				this.router.push({
+					name: "Home",
+				})
+			}
+			const invite: Message = {
+				channelName: '',
+				intraId: data.user.intraId,
+				name: data.user.name,
+				avatar: data.user.avatar,
+				text: `game/${gameid}`,
+				isLink: true,
+			}
+			this.allMessages.push(invite);
+		})
 	},
 
 	methods: {
@@ -369,6 +408,10 @@ export default {
 			this.socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
 
+        gameChallenge(otherIntraId: number): void {
+            this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
+        },
+
 		async loadAllMessages(): Promise<void> {
 			try {
 				const request: { channelName: string, channelType: string } = {
@@ -396,7 +439,12 @@ export default {
 			else {
 				return (channelName);
 			}
-		}
+		},
+
+			navigateToLink(link: string) {
+        	// Use your router library to navigate to the link
+        	this.router.push(link);
+    	},
 	},
 }
 </script>

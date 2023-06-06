@@ -18,6 +18,7 @@ import { ChatService } from './chat.service';
 import { Message } from './types';
 import { ClientGuard } from 'src/auth/guards/client-auth.guard';
 import { SharedService } from './chat.map.shared.service';
+import { GameSharedService } from 'src/game/game.shared.service';
 
 @WebSocketGateway({
 	cors: {
@@ -33,6 +34,7 @@ export class ChatGateway
 		private readonly userService: UserService,
 		private readonly jwtStrategy: JwtStrategy,
 		private readonly sharedService: SharedService,
+		private readonly gameSharedService: GameSharedService,
 	) {
 		this.channelToClientIds = new Map<string, string[]>();
 		this.clientIdToChannel = new Map<string, string>();
@@ -254,4 +256,36 @@ export class ChatGateway
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
 	}
+
+	private findOtherClientId(otherIntraId: number) {
+		for (const [client, id] of this.sharedService.clientToIntraId.entries()) {
+			if (id === otherIntraId) {
+				return client;
+			}
+		}
+	}
+
+    @UseGuards(ClientGuard)
+    @SubscribeMessage('gameChallenge')
+    async gameChallenge(@ConnectedSocket() client: Socket, @MessageBody() data: {otherIntraId: number}): Promise<void> {
+		const intraId = this.sharedService.clientToIntraId.get(client.id);
+		const user: User = await this.authService.findUserById(intraId);
+		const gameId = intraId + "+" + data.otherIntraId;
+		const player1: { intraId: number } = {
+			intraId: intraId,
+		};
+		const player2: { intraId: number } = {
+			intraId: data.otherIntraId,
+		};
+		this.gameSharedService.playerData.set(gameId, { player1, player2 });
+		client.emit("createGame", gameId);
+		const otherClientId = this.findOtherClientId(data.otherIntraId);
+		console.log(otherClientId);
+		const info: { gameId: string, user: User} = {
+			gameId: gameId,
+			user: user,
+		};
+		console.log({info});
+		client.to(otherClientId).emit("inviteForGame", info);
+    }
 }

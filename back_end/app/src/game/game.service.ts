@@ -3,7 +3,7 @@ import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
-import { SharedService } from './game.shared.service';
+import { GameSharedService } from './game.shared.service';
 import { Game, Players } from './types';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class GameService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
-		private shareService: SharedService,
+		private shareService: GameSharedService,
 	) { }
 
 	gameData(): Game {

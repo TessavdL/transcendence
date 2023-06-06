@@ -6,9 +6,10 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
 import { SharedService } from './chat.map.shared.service';
+import { GameModule } from 'src/game/game.module';
 
 @Module({
-  imports: [AuthModule, UserModule, JwtModule.register({})],
+  imports: [AuthModule, UserModule, JwtModule.register({}), GameModule],
   controllers: [ChatController],
   providers: [
     ChatService,
