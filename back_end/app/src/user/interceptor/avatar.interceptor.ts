@@ -14,7 +14,7 @@ export class AvatarInterceptor extends FileInterceptor('avatar', {
         },
     }),
     fileFilter: (_, file, cb) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        if (!file.originalname.match(/\.(jpg|jpeg|png)$/i)) {
             return cb(new BadRequestException('Only image files are allowed!'), false);
         }
         cb(null, true);

@@ -281,11 +281,11 @@ export class UserService {
 		}
 	}
 
-	async updateAvatar(id: number, filePath: string): Promise<void> {
+	async updateAvatar(intraId: number, filePath: string): Promise<void> {
 		try {
 			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: { 
-					id: id
+					intraId: intraId
 				},
 				data: {
 					avatar: filePath
