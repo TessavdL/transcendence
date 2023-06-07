@@ -2,11 +2,19 @@ import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const configService: ConfigService = app.get(ConfigService);
+
+  const host: string = configService.get('HOST');
+
+  const origin: string = `${host}:5173`;
+
   app.enableCors({
-    origin: 'http://localhost:5173', // replace with your frontend URL
+    origin: origin,
     credentials: true
   });
   app.use(cookieParser());
