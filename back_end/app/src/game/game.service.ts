@@ -1,5 +1,5 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
@@ -180,9 +180,14 @@ export class GameService {
 					elo: newWinnerElo,
 				},
 			});
-		} catch (error: any) {
-			throw new InternalServerErrorException("Prisma failed to update user.wins");
-		}
+        } catch(error: any) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
+        }
 	}
 
 	private async update_loser(loserIntraId: number, newLoserElo: number): Promise<void> {
@@ -198,8 +203,13 @@ export class GameService {
 					elo: newLoserElo,
 				},
 			});
-		} catch (error: any) {
-			throw new InternalServerErrorException("Prisma failed to update user.losses");
-		}
+		} catch(error: any) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
+        }
 	}
 }

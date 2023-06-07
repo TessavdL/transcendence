@@ -1,7 +1,7 @@
-import { Injectable, Logger, Res } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { AllOtherUsers, User } from '@prisma/client';
+import { AllOtherUsers, Prisma, User } from '@prisma/client';
 import { Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
@@ -24,15 +24,17 @@ export class AuthService {
 		return user;
 	}
 
-	// should be used to user module
 	async findUserById(id: number): Promise<User> | null {
-		const user: User = await this.prisma.user.findUnique({
-			where: {
-				intraId: id,
-			},
-		});
-
-		return user;
+		try {
+			const user: User = await this.prisma.user.findUnique({
+				where: {
+					intraId: id,
+				},
+			});
+			return user;
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
 	async setBearerToken(
@@ -80,7 +82,7 @@ export class AuthService {
 		const allCookies = headers?.cookie;
 
 		if (!allCookies) {
-			throw new Error('Could not find cookies');
+			throw new UnauthorizedException('Could not find cookies');
 		}
 
 		const jwtCookie = allCookies
@@ -89,13 +91,13 @@ export class AuthService {
 			.find((cookie: string) => cookie.startsWith('jwt='));
 
 		if (!jwtCookie) {
-			throw new Error('Could not find cookie with jwt token');
+			throw new UnauthorizedException('Could not find cookie with jwt token');
 		}
 
 		const [, token] = jwtCookie.split('=');
 
 		if (!token) {
-			throw new Error('Could not find jwt token');
+			throw new UnauthorizedException('Could not find jwt token');
 		}
 
 		return token;
@@ -114,7 +116,7 @@ export class AuthService {
 			const sub: number = payload.sub;
 			return { name, sub };
 		} catch (error) {
-			throw new Error('Token is invalid');
+			throw new UnauthorizedException('Token is invalid');
 		}
 	}
 
@@ -124,28 +126,31 @@ export class AuthService {
 		res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
 	}
 
-	// should be moved to user module
 	async createUser(profile: any): Promise<User> | null {
 		const default_avatar: string = this.pick_random_default_avatar();
 
-		const user: User = await this.prisma.user.create({
-			data: {
-				name: profile.username,
-				intraId: profile.intraid,
-				intraName: profile.username,
-				avatar: default_avatar,
-				allOtherUsers: {
-					create: [],
+		try {
+			const user: User = await this.prisma.user.create({
+				data: {
+					name: profile.username,
+					intraId: profile.intraid,
+					intraName: profile.username,
+					avatar: default_avatar,
+					allOtherUsers: {
+						create: [],
+					},
+					achievements: {
+						create: {}
+					},
 				},
-				achievements: {
-					create: {}
-				},
-			},
-		});
-		this.updateUsersOfNewUser(user.intraId);
-		this.updateSelfWithOtherUsers(user.intraId);
+			});
+			this.updateUsersOfNewUser(user.intraId);
+			this.updateSelfWithOtherUsers(user.intraId);
 
-		return (user);
+			return (user);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
 	pick_random_default_avatar(): string {
@@ -171,68 +176,83 @@ export class AuthService {
 		return avatar_array[random_number];
 	}
 
-	// should be moved to user module and made private
 	async updateSelfWithOtherUsers(intraId: number) {
-		const userlist: User[] = await this.prisma.user.findMany({
-			where: {
-				NOT: {
-					intraId: intraId,
-				}
-			}
-		});
-
-		const intraIds: number[] = userlist.map(userlist => userlist.intraId);
-		let relationArray: AllOtherUsers[] = [];
-
-		intraIds.forEach((value: number) => {
-			const otherUser = this.newRelationObject(value);
-			relationArray.push(otherUser);
-		});
-
-		await this.prisma.user.update({
-			where: { intraId: intraId },
-			data: {
-				allOtherUsers: {
-					create: relationArray,
-				},
-			},
-			include: {
-				allOtherUsers: true,
-			},
-		});
-	}
-
-	// should be moved to user module and made private
-	async updateUsersOfNewUser(intraId: number) {
-		const usersToUpdate = await this.prisma.user.findMany({
-			where: {
-				intraId: {
-					not: intraId,
-				},
-			},
-			include: {
-				allOtherUsers: true,
-			},
-		});
-		const newRelationObject = this.newRelationObject(intraId)
-
-		const promises = usersToUpdate.map(async (user) => {
-			await this.prisma.user.update({
+		try {
+			const userlist: User[] = await this.prisma.user.findMany({
 				where: {
-					intraId: user.intraId,
-				},
+					NOT: {
+						intraId: intraId,
+					}
+				}
+			});
+
+			const intraIds: number[] = userlist.map(userlist => userlist.intraId);
+			let relationArray: AllOtherUsers[] = [];
+
+			intraIds.forEach((value: number) => {
+				const otherUser = this.newRelationObject(value);
+				relationArray.push(otherUser);
+			});
+
+			await this.prisma.user.update({
+				where: { intraId: intraId },
 				data: {
 					allOtherUsers: {
-						create: newRelationObject
+						create: relationArray,
 					},
 				},
+				include: {
+					allOtherUsers: true,
+				},
 			});
-		});
-
-		await Promise.all(promises);
+		} catch (error) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update self with others, others not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
-	// should be moved to user module and made private
+	async updateUsersOfNewUser(intraId: number) {
+		try {
+			const usersToUpdate = await this.prisma.user.findMany({
+				where: {
+					intraId: {
+						not: intraId,
+					},
+				},
+				include: {
+					allOtherUsers: true,
+				},
+			});
+			const newRelationObject = this.newRelationObject(intraId)
+
+			const promises = usersToUpdate.map(async (user) => {
+				await this.prisma.user.update({
+					where: {
+						intraId: user.intraId,
+					},
+					data: {
+						allOtherUsers: {
+							create: newRelationObject
+						},
+					},
+				});
+			});
+
+			await Promise.all(promises);
+		} catch (error) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update other users with self, others not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	newRelationObject(intraId: number): any {
 		return {
 			otherIntraId: intraId,
