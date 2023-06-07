@@ -16,7 +16,7 @@ async function bootstrap() {
   const origin: string = `http://${host}:5173`;
 
   app.enableCors({
-    origin: host,
+    origin: origin,
     credentials: true
   });
   app.use(cookieParser());

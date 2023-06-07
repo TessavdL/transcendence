@@ -39,13 +39,13 @@ services:
       - db
     image: front_end
     build:
+      context: .
       dockerfile: ./front_end/Dockerfile
-    environment:
-      - VUE_APP_HOST=${HOST}
     ports:
       - "5173:5173"
     volumes:
       - ./front_end/app:/app
+      - ./front_end/app/.env:/app/.env
     networks:
       - transcendence
 

@@ -6,9 +6,7 @@ class SocketioService {
     constructor() {
     }
     setupSocketConnection() {
-        const host = window.VUE_APP_HOST;
-        console.log(host);
-        this.socket = io(`http://${host}:3001`, {
+        this.socket = io(`http://${HOST}:3001`, {
             transports: ["websocket"],
             withCredentials: true,
         });

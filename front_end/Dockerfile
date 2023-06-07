@@ -25,9 +25,9 @@
 
 FROM node:latest
 USER node
-ENV VUE_APP_HOST=${HOST}
+
 WORKDIR /app
-RUN echo "VUE_APP_HOST=${VUE_APP_HOST}" > /usr/src/app/env-config.js
+
 RUN chown node:node ./
 
 CMD npm install && npm run dev
