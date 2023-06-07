@@ -44,14 +44,16 @@
 			<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
 			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
 				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
-			<div v-if="isGameOver" class="game-over-canvas">
+			<div>
+				<div v-if="playerDisconnect" class="game-over-canvas">
+					<h2>Game Over</h2>
+					<!-- <p>Opponent left the game. You win!</p> -->
+				</div>
+				<div v-else-if="isGameOver" class="game-over-canvas">
 				<h2>Game Over</h2>
 				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 				<!-- <button @click="toggleGame">Restart</button> -->
-			</div>
-			<div v-show="playerDisconnect" class="game-over-canvas">
-				<h2>Game Over</h2>
-				<p>Opponent left the game. You win!</p>
+				</div>
 			</div>
 		</div>
 
@@ -63,6 +65,7 @@ import io from 'socket.io-client';
 import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
+import { data } from 'jquery';
 //import NeonButton from '../components/ButtonsGamePlay.vue';
 
 export default {
@@ -122,11 +125,13 @@ export default {
 			requestAnimationFrame(this.update);
 		});
 		this.socket.on('gameEnded', () => {
-			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
-				console.log('game over', this.game.gameEnded);
-				this.game.gameEnded = true;
-				this.gameOver = true;
-			}
+			// if (this.game.player1Score === 3 || this.game.player2Score === 3 || this.playerDisconnect) {
+				
+			// }
+			console.log('game over', this.game.gameEnded);
+			this.game.gameEnded = true;
+			this.gameOver = true;
+			this.playerDisconnect = true;
 		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
@@ -179,7 +184,10 @@ export default {
 	},
 
 	beforeRouteLeave() {
-		this.playerDisconnect = true;
+		const data = {
+			roomName:  this.roomName,
+		}
+		this.socket.emit('endGame', this.roomName);
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		this.socket.disconnect();
 	},
@@ -208,7 +216,7 @@ export default {
 			if (!this.game.gameStarted)
 				return;
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
-			if (this.game.gameEnded === true) {
+			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
 				this.gameOver = true;
 				return;
