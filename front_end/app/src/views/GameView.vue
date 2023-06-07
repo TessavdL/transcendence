@@ -49,6 +49,10 @@
 				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 				<!-- <button @click="toggleGame">Restart</button> -->
 			</div>
+			<div v-show="playerDisconnect" class="game-over-canvas">
+				<h2>Game Over</h2>
+				<p>Opponent left the game. You win!</p>
+			</div>
 		</div>
 
 	</div>
@@ -69,6 +73,7 @@ export default {
 			roomName: '',
 			gameOver: false,
 			isColorMode: false,
+			playerDisconnect: false,
 		};
 	},
 	setup() {
@@ -87,7 +92,11 @@ export default {
 		},
 		isGameOver() {
 			// Check if the game is over
-			return this.game.player1Score === 3 || this.game.player2Score === 3;
+			console.log(this.playerDisconnect, 'is Game Over');
+			return this.game.player1Score === 3 || 
+					this.game.player2Score === 3 ||
+					this.playerDisconnect ||
+					this.gameOver;
 		}
 	},
 
@@ -116,6 +125,7 @@ export default {
 			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 				console.log('game over', this.game.gameEnded);
 				this.game.gameEnded = true;
+				this.gameOver = true;
 			}
 		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
@@ -162,9 +172,15 @@ export default {
 				this.socket.emit('movePaddle', data);
 			}
 		});
+		// window.addEventListener('keydown', (event) => {
+		// 	if (event.key === ' ' && !this.gameOver && this.)
+		// 		this.toggleGame();
+		// });
 	},
 
 	beforeRouteLeave() {
+		this.playerDisconnect = true;
+		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		this.socket.disconnect();
 	},
 
@@ -175,13 +191,6 @@ export default {
 				this.game.gameStarted = true;
 				this.socket.emit('startGame', this.roomName);
 			}
-			// if (this.game.gameStarted) {
-			// 	this.game.gameStarted = false;
-			// }
-			// else {
-			// 	this.game.gameStarted = true;
-			// 	this.socket.emit('startGame', this.roomName);
-			// }
 		},
 		toggleColorMode() {
 			this.isColorMode = !this.isColorMode;
@@ -194,44 +203,7 @@ export default {
 		movePaddlePlayerTwo(position: number) {
 			this.game.player2Position += position;
 		},
-		// movePaddle(position: number) {
-		// 	const targetPosition = this.game.player1Position + position;
-		// 	this.animatePaddle(targetPosition, 'player1Position');
-		// },
-
-		// movePaddlePlayerTwo(position: number) {
-		// 	const targetPosition = this.game.player2Position + position;
-		// 	this.animatePaddle(targetPosition, 'player2Position');
-		// },
-
-		animatePaddle(targetPosition: number, property: 'player1Position' | 'player2Position') {
-			const startTime = performance.now();
-			const startPosition = this.game[property];
-			const duration = 200; // Duration of the animation in milliseconds
-
-			const updatePosition = (currentTime: number) => {
-				const elapsed = currentTime - startTime;
-				if (elapsed >= duration) {
-					this.game[property] = targetPosition;
-					return;
-				}
-				const progress = elapsed / duration;
-				const speed = 1;
-				const newPosition = startPosition + (targetPosition - startPosition) * (progress * speed);
-				this.game[property] = newPosition;
-
-				const easingProgress = Math.sin(progress * Math.PI); // Apply easing function
-				// Calculate the new animation frame position
-				const newAnimationFrame = Math.floor(elapsed / (1000 / 60)); // 60 frames per second
-				requestAnimationFrame(updatePosition);
-				// Skip rendering for intermediate frames
-				if (newAnimationFrame === Math.floor(elapsed / (1000 / 60)))
-					return;
-				// Update the paddle position with easing
-				this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
-			};
-			requestAnimationFrame(updatePosition);
-		},
+		
 		update() {
 			if (!this.game.gameStarted)
 				return;
@@ -269,56 +241,7 @@ export default {
 @import url("../assets/game_mode/classic_pong.css");
 @import url("../assets/game_mode/color_pong.css");
 
-/* .pong-game-classic::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 50%;
-	border-left: 8px solid white;
-}
 
-.pong-game-classic {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	height: 600px;
-	width: 800px;
-	background-size: contain;
-	background-color: rgb(13, 12, 11);
-	display: flex;
-	border-top: 8px solid rgb(249, 248, 248);
-	border-bottom: 8px solid rgb(253, 251, 251);
-	border-left: 8px solid rgb(253, 251, 251);
-	border-right: 8px solid rgb(253, 251, 251);
-} */
-
-/* .pong-game {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	height: 600px;
-	width: 800px; */
-/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
-/* background-size: contain;
-	background-position: center;
-	background: linear-gradient(315deg,
-	rgb(0, 101, 52) 3%,
-	rgb(206, 162, 60) 38%,
-	rgb(127, 48, 238) 68%,
-	rgba(255, 25, 25, 1) 98%);
-	animation: gradient 12s ease infinite;
-	background-size: 400% 400%;
-	background-attachment: fixed; */
-/* background-color: rgb(13, 12, 11); */
-/* display: flex;
-	border-top: 8px solid rgb(249, 248, 248);
-	border-bottom: 8px solid rgb(253, 251, 251);
-	border-left: 8px solid rgb(253, 251, 251);
-	border-right: 8px solid rgb(253, 251, 251);
-} */
 
 @font-face {
 

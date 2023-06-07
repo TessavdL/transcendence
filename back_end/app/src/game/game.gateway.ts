@@ -72,6 +72,7 @@ export class GameGateway
 	handleStartGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
 		client.emit('gameStarted');
 		client.to(roomname).emit('gameStarted');
+		console.log('game started');
 	}
 	// @SubscribeMessage('endGame')
 	// endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
