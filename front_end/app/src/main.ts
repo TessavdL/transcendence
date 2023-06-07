@@ -17,8 +17,10 @@ import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/js/bootstrap.js";
 
-const app = createApp(App)
 
+
+const app = createApp(App)
+app.config.globalProperties.window = window;
 app.use(storeUser);
 
 app.use(router);

@@ -9,12 +9,14 @@ async function bootstrap() {
 
   const configService: ConfigService = app.get(ConfigService);
 
-  const host: string = configService.get('HOST');
+  var host: string = configService.get('HOST') || 'localhost';
+
+  globalThis.host = host || 'localhost';
 
   const origin: string = `http://${host}:5173`;
 
   app.enableCors({
-    origin: origin,
+    origin: host,
     credentials: true
   });
   app.use(cookieParser());

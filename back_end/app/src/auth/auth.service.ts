@@ -41,13 +41,15 @@ export class AuthService {
 	): Promise<void> {
 		console.log(`Hello ${user.intraName}, you have logged in!`);
 
-		const token = await this.signToken(user);
+		const token: { access_token: string } = await this.signToken(user);
+
+		const host: string = this.configService.get('HOST') || 'localhost';
 
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: 'localhost',
+			domain: host,
 		});
-		res.redirect(302, 'http://localhost:5173');
+		res.redirect(302, `http://${host}:5173`);
 	}
 
 	async setBearerTokenForTwofa(
@@ -58,9 +60,11 @@ export class AuthService {
 
 		const token = await this.signToken(user);
 
+		const host: string = this.configService.get('HOST') || 'localhost';
+
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: 'localhost',
+			domain: host,
 		});
 	}
 

@@ -4,10 +4,14 @@ import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthGuard42, JwtAuthGuard } from './guards';
 import { GetUser } from 'src/decorators/get-user.decorator';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
-	constructor(private authService: AuthService) { }
+	constructor(
+		private authService: AuthService,
+		private readonly configService: ConfigService
+	) { }
 
 	@UseGuards(AuthGuard42)
 	@Get('login')
@@ -19,7 +23,7 @@ export class AuthController {
 	@Get('callback')
 	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
 		if (user.twofaStatus === true) {
-			return res.redirect(`http://localhost:5173/twofa?intraId=${user.intraId}`);
+			return res.redirect(`http://${globalThis.host}:5173/twofa?intraId=${user.intraId}`);
 		}
 		return this.authService.setBearerToken(user, res);
 	}

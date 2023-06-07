@@ -8,7 +8,7 @@ import { GameSharedService } from '../game.shared.service';
 
 @WebSocketGateway({
 	cors: {
-		origin: 'http://localhost:5173',
+		origin: `http://${globalThis.host}:5173`,
 		credentials: true,
 	},
 	namespace: 'matchmaking'

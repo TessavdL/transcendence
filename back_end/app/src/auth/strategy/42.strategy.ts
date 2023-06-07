@@ -7,11 +7,14 @@ import { AuthService } from '../auth.service';
 
 @Injectable()
 export class Strategy42 extends PassportStrategy(Strategy, '42') {
-  constructor(config: ConfigService, private authService: AuthService) {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {
     super({
-      clientID: config.get('42_OAUTH_UID'),
-      clientSecret: config.get('42_OAUTH_SECRET'),
-      callbackURL: 'http://localhost:3001/auth/callback',
+      clientID: configService.get('42_OAUTH_UID'),
+      clientSecret: configService.get('42_OAUTH_SECRET'),
+      callbackURL: `http://${globalThis.host}:3001/auth/callback`,
       profileFields: {
         intraid: 'id',
         username: 'login',

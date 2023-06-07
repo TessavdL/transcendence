@@ -7,11 +7,11 @@ import { User } from '@prisma/client';
 import { GameSharedService } from '../game.shared.service';
 
 @WebSocketGateway({
-    cors: {
-        origin: 'https://localhost:5173',
-        credentials: true,
-    },
-    namespace: 'chat_matchmaking'
+	cors: {
+		origin: `https://${globalThis.host}:5173`,
+		credentials: true,
+	},
+	namespace: 'chat_matchmaking'
 })
 export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
@@ -46,13 +46,13 @@ export class ChatMatchmakingGateway implements OnGatewayInit, OnGatewayConnectio
 			client.disconnect();
 		}
 
-        // keep track of client
-        this.sharedService.clientToIntraId.set(client.id, user.intraId);
-        client.emit('connected');
-    }
+		// keep track of client
+		this.sharedService.clientToIntraId.set(client.id, user.intraId);
+		client.emit('connected');
+	}
 
-    @SubscribeMessage('chat_matchmaking')
-    handleChatMatchmaking(client: Socket, args: string): void {
+	@SubscribeMessage('chat_matchmaking')
+	handleChatMatchmaking(client: Socket, args: string): void {
 		const members: string[] = args.split('+');
 		if (members[0] !== this.sharedService.clientToIntraId.get(client.id).toString() && members[1] !== this.sharedService.clientToIntraId.get(client.id).toString())
 			client.emit('error', 'User does not belong in this match');

@@ -19,7 +19,7 @@ import { ref, defineProps } from 'vue';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
-import { HOST } from "../constants/constants";
+import { HOST } from "@/constants/constants";
 
 const confirm = useConfirm();
 const toast = useToast();

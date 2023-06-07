@@ -1,1 +1,1 @@
-export const HOST: string = process.env.VUE_APP_HOST || 'localhost';
+export const HOST = import.meta.env.VITE_APP_HOST

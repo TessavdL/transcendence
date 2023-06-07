@@ -1,3 +1,4 @@
+import { HOST } from "@/constants/constants";
 import { io, Socket } from "socket.io-client";
 
 class SocketioService {
@@ -5,7 +6,8 @@ class SocketioService {
     constructor() {
     }
     setupSocketConnection() {
-        const host: string = process.env.HOST || '';
+        const host = window.VUE_APP_HOST;
+        console.log(host);
         this.socket = io(`http://${host}:3001`, {
             transports: ["websocket"],
             withCredentials: true,
