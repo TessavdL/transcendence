@@ -1,0 +1,1 @@
+export const HOST: string = process.env.VUE_APP_HOST || 'localhost';

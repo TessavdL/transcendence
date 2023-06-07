@@ -6,34 +6,39 @@
                 <div class="col-sm-3 col-md-2 users-sidebar">
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <h3 class="nav-link"  @click="handleFilter('none')">
+                            <h3 class="nav-link" @click="handleFilter('none')">
                                 <i class="bi bi-people-fill fs-4" style="font-size: 2rem; color: #ffffff;"></i>
-                                All Users</h3>
+                                All Users
+                            </h3>
                         </li>
                         <li class="nav-item">
                             <h3 class="nav-link" @click="handleFilter('activityStatus')">
                                 <i class="bi bi-person-up fs-4" style="font-size: 2rem; color: #ffffff;"></i>
-                                Online</h3>
+                                Online
+                            </h3>
                         </li>
                         <li class="nav-item">
                             <h3 class="nav-link" @click="handleFilter('friendStatus')">
                                 <i class="bi bi-person-heart fs-4" style="font-size: 2rem; color: #ffffff;"></i>
-                                Friends</h3>
+                                Friends
+                            </h3>
                         </li>
                         <li class="nav-item">
                             <h3 class="nav-link" @click="handleFilter('blockedState')">
                                 <i class="bi bi-person-fill-slash fs-4" style="font-size: 2rem; color: #ffffff;"></i>
-                                Blocked</h3>
+                                Blocked
+                            </h3>
                         </li>
                         <li class="nav-item">
                             <h3 class="nav-link" @click="handleFilter('friendStatus')">
                                 <i class="bi bi-person-add fs-4" style="font-size: 2rem; color: #ffffff;"></i>
-                                Pending</h3>
+                                Pending
+                            </h3>
                         </li>
                     </ul>
 
                 </div>
-                    
+
                 <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 users-main">
                     <div class="card-group">
                         <div v-for="user in filteredUsers" :key="user.intraId">
@@ -52,9 +57,10 @@ import axios from "axios";
 import { ref, onMounted } from "vue";
 
 import UserInfoCard from '@/components/UserInfoCard.vue';
+import { HOST } from "@/constants/constants";
 
 const users = ref([]);
-const filteredUsers= ref([]);
+const filteredUsers = ref([]);
 const filterCat = ref<String>('none');
 
 onMounted(async () => {
@@ -64,10 +70,10 @@ onMounted(async () => {
 
 async function getUsers() {
     await axios
-        .get("http://localhost:3001/user/users", {
+        .get(`http://${HOST}:3001/user/users`, {
             withCredentials: true,
         })
-        .then(async (response) =>  {
+        .then(async (response) => {
             users.value = response.data;
         })
         .catch(() => {
@@ -110,7 +116,6 @@ const handleFilter = async (cat: String) => {
 </script>
 
 <style scoped>
-
 h3 {
     color: #ffffff;
     font-weight: bold;
@@ -136,6 +141,4 @@ h3 {
 
 .users-main {
     padding-left: 200px;
-}
-
-</style>
+}</style>

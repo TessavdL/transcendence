@@ -11,7 +11,7 @@ async function bootstrap() {
 
   const host: string = configService.get('HOST');
 
-  const origin: string = `${host}:5173`;
+  const origin: string = `http://${host}:5173`;
 
   app.enableCors({
     origin: origin,

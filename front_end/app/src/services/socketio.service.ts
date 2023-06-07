@@ -5,7 +5,8 @@ class SocketioService {
     constructor() {
     }
     setupSocketConnection() {
-        this.socket = io("http://localhost:3001", {
+        const host: string = process.env.HOST || '';
+        this.socket = io(`http://${host}:3001`, {
             transports: ["websocket"],
             withCredentials: true,
         });

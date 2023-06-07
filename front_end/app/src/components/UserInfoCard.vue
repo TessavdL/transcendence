@@ -1,8 +1,9 @@
 <template>
     <div class="card info-card" style="width: 12rem; background-color: #094b5f;">
         <div>
-            <RouterLink :to="{ name: 'ProfileOther', params: {intraId: props.user.intraId} }">
-                <img :src="'http://localhost:3001/user/get_avatar?avatar=' + props.user.avatar" class="card-img-top avatar-pic" alt="avatar">
+            <RouterLink :to="{ name: 'ProfileOther', params: { intraId: props.user.intraId } }">
+                <img :src="`http://${HOST}:3001/user/get_avatar?avatar=` + props.user.avatar"
+                    class="card-img-top avatar-pic" alt="avatar">
             </RouterLink>
         </div>
 
@@ -35,6 +36,7 @@
 import { ref, defineProps } from 'vue';
 import ButtonsFriend from '@/components/ButtonsFriend.vue';
 import ButtonsBlock from '@/components/ButtonsBlock.vue';
+import { HOST } from '@/constants/constants';
 
 const props = defineProps({
     user: Object
@@ -56,5 +58,4 @@ const props = defineProps({
     border-radius: 50%;
 
 }
-
 </style>

@@ -41,7 +41,7 @@ services:
     build:
       dockerfile: ./front_end/Dockerfile
     environment:
-      - HOST=${HOST}
+      - VUE_APP_HOST=${HOST}
     ports:
       - "5173:5173"
     volumes:
