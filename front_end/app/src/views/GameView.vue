@@ -32,11 +32,11 @@
 				<!-- <div class="wave"></div> -->
 				<!-- <div class="wave"></div> -->
 			</div>
-			<div class="scoreboard">
-				<div class="score-player1">Player One:
+			<div :class= "isColorMode ? 'scoreboard-color' : 'scoreboard'">
+				<div :class="isColorMode ? 'score-player1-color': 'score-player1'">Player One:
 					<span id="player-1-score">{{ game.player1Score }}</span>
 				</div>
-				<div class="score-player2">Player Two:
+				<div :class="isColorMode ? 'score-player2-color': 'score-player2'">Player Two:
 					<span id="player-2-score">{{ game.player2Score }}</span>
 				</div>
 			</div>
@@ -47,7 +47,7 @@
 			<div>
 				<div v-if="playerDisconnect" class="game-over-canvas">
 					<h2>Game Over</h2>
-					<!-- <p>Opponent left the game. You win!</p> -->
+					<p>Opponent left the game. You win!</p>
 				</div>
 				<div v-else-if="isGameOver" class="game-over-canvas">
 				<h2>Game Over</h2>
@@ -184,10 +184,9 @@ export default {
 	},
 
 	beforeRouteLeave() {
-		const data = {
-			roomName:  this.roomName,
-		}
-		this.socket.emit('endGame', this.roomName);
+		this.socket.emit('endGame', this.roomName, () => {
+			this.socket.disconnect();
+		});
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		this.socket.disconnect();
 	},
