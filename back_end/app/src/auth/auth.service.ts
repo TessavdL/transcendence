@@ -49,7 +49,7 @@ export class AuthService {
 			httpOnly: true,
 			domain: host,
 		});
-		res.redirect(302, `http://${host}:5173`);
+		res.redirect(`http://${host}:5173`);
 	}
 
 	async setBearerTokenForTwofa(

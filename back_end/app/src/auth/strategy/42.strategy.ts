@@ -14,7 +14,7 @@ export class Strategy42 extends PassportStrategy(Strategy, '42') {
     super({
       clientID: configService.get('42_OAUTH_UID'),
       clientSecret: configService.get('42_OAUTH_SECRET'),
-      callbackURL: `http://${globalThis.host}:3001/auth/callback`,
+      callbackURL: `http://${configService.get('HOST')}:3001/auth/callback`,
       profileFields: {
         intraid: 'id',
         username: 'login',

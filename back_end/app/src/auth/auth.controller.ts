@@ -23,7 +23,7 @@ export class AuthController {
 	@Get('callback')
 	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
 		if (user.twofaStatus === true) {
-			return res.redirect(`http://${globalThis.host}:5173/twofa?intraId=${user.intraId}`);
+			return res.redirect(`http://${this.configService.get('HOST')}:5173/twofa?intraId=${user.intraId}`);
 		}
 		return this.authService.setBearerToken(user, res);
 	}
