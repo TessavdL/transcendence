@@ -31,6 +31,24 @@
 	border-right: 8px solid rgb(253, 251, 251);
 }
 
+.scoreboard-color {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	right: 20px;
+}
+
+.score-player1-color,
+.score-player2-color {
+	font-size: 40px;
+	font-weight: normal;
+	color: rgb(217, 250, 32);
+	font-family: "excellent";
+}
+
 @keyframes gradient {
 	0% {
 		background-position: 0% 0%;
@@ -55,5 +73,32 @@
 	bottom: 0;
 	left: 0;
 	z-index: -1;
+}
+
+.game-over-color-canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+}
+
+.game-over-color-canvas h2 {
+	font-family: "arcadeFont";
+	font-size: 64px;
+	color: white;
+	margin-bottom: 16px;
+}
+
+.game-over-color-canvas p {
+	font-family: "arcadeFont";
+	font-size: 48px;
+	color: white;
 }
 
