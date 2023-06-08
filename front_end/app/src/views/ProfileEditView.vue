@@ -5,23 +5,17 @@
                 <label for="inputUsername" class="col-sm-2 col-form-label form-label">User Name</label>
                 <div class="col-sm-10">
                     <input type="text" class="form-control" id="inputUsername" 
-                    :placeholder="username + ' (maxima 10 charaters, only letters and numbers allowed)'" maxlength="10" pattern="[a-zA-Z0-9-]+"
+                    maxlength="10" pattern="[a-zA-Z0-9\-]+"
                     v-model="username">
-                </div>
-            </div>
-
-            <div class="row mb-3 form-item">
-                <label for="inputEmail" class="col-sm-2 col-form-label form-label">Email Address</label>
-                <div class="col-sm-10">
-                    <input type="email" class="form-control" id="inputEmail" :placeholder="emaiAddress" v-model="emaiAddress">
+                    <p>maxima 10 charaters, only letters and numbers allowed</p>
                 </div>
             </div>
 
             <div class="row mb-3 form-item">
                 <label for="inputAvatar" class="col-sm-2 col-form-label form-label">Upload Avatar</label>
                 <div class="col-sm-10">
-                    <input type="file" class="form-control" id="inputAvatar" accept="image/*"
-                    @change="handleFileUpload($event)"> 
+                    <input type="file" class="form-control" id="inputAvatar" ref="fileInput" name="avatar" accept="image/*"
+                    @change="fileSelected($event)"> 
                 </div>
             </div>
 
@@ -52,25 +46,146 @@
 </template>
 
 <script setup lang="ts">
+import axios from "axios";
 import { ref } from "vue";
 import storeUser from "@/store";
+import { useToast } from "primevue/usetoast";
+import { ErrorType, errorMessage } from "@/types/ErrorType";
+
+const toast = useToast();
 
 const username = ref<string>(storeUser.state.user.username);
-const emaiAddress = ref<string>("example@codam.nl");
 const avatar = ref<string>(storeUser.state.user.avatar);
 const twoFactor = ref<boolean>(storeUser.state.user.twoFactorEnabled);
+const usernameValid = ref<boolean>(true);
 
-function handleFileUpload(event:any) {
-    console.log(event.target.files);
+function warnUserNameInvalid(message: string) {
+  toast.add({
+    severity: "error",
+    summary: "Error",
+    detail: message,
+    life: 3000,
+  });
+  usernameValid.value = false;
+  setTimeout(() => (usernameValid.value = true), 3000);
+}
+
+const selectedFile = ref(null);
+function fileSelected(event:any) {
+    selectedFile.value = event.target.files[0];
     avatar.value = event.target.files[0].name;
+    if (!selectedFile.value) {
+        toast.add({
+            severity: "info",
+            summary: "info",
+            detail: "Please choose an image",
+            life: 3000,
+        });
+    }
+    else if (selectedFile.value.size > 8000000) {
+        toast.add({
+            severity: "info",
+            summary: "info",
+            detail: "File size is too big (maxima 1MB.)",
+            life: 3000,
+        });
+    }
 }
 
-function submitProfileForm() {
-    console.log("submit button clicked");
-    console.log(username.value);
-    console.log(avatar.value);
-    console.log(twoFactor.value);
+async function submitProfileForm() {
+    if (username.value.length === 0) {
+        warnUserNameInvalid("User name can not be empty")
+    } else if (username.value !== storeUser.state.user.username) {
+        await update_username(username.value)
+    }
+    if (selectedFile.value) {
+        console.log("here");
+        await update_avatar();
+    }
+
+    // console.log(username.value);
+    // console.log(avatar.value);
+    // console.log(twoFactor.value);
 }
+
+
+async function update_username(username: string) {
+    const requestBody = {username: username}
+    await axios
+        .put("http://localhost:3001/user/update_username", requestBody, {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            storeUser.state.user.username = username;
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "Username has been changed",
+                life: 3000,
+            });
+        })
+        .catch((error: any) => {
+            if (error.response) {
+                if (error.response.status == 403) {
+                    toast.add({
+                        severity: "info",
+                        summary: "info",
+                        detail: "User name already exist, please choose another one",
+                        life: 3000,
+                    });
+                }
+                else {
+                    toast.add({
+                        severity: "error",
+                        summary: "Error",
+                        detail: errorMessage(ErrorType.CHANGE_NAME_FAILED),
+                        life: 3000,
+                    });
+                }
+            }
+        });
+}
+
+async function update_avatar() {
+    const formData = new FormData();
+    formData.append("avatar", selectedFile.value);
+    await axios
+        .post("http://localhost:3001/user/avatar", formData, {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            console.log(response);
+            storeUser.state.user.avatar = selectedFile.value.name;
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "New avatar has been uploaded",
+                life: 3000,
+            });
+        })
+        .catch((error: any) => {
+            if (error.response) {
+                // server side validation?
+                if (error.response.status == 403) {
+                    toast.add({
+                        severity: "info",
+                        summary: "info",
+                        detail: "File not meet the requirement",
+                        life: 3000,
+                    });
+                }
+                else {
+                    toast.add({
+                        severity: "error",
+                        summary: "Error",
+                        detail: errorMessage(ErrorType.CHANGE_AVATAR_FAILED),
+                        life: 3000,
+                    });
+                }
+            }
+        });
+}
+
 </script>
 
 <style scoped>
@@ -93,6 +208,11 @@ function submitProfileForm() {
   width: 200px;
   font-weight: bold;
   margin: 0px 30px;
+}
+
+p {
+    color: #FFFF;
+    text-align: start;
 }
 
 </style>

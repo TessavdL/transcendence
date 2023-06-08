@@ -9,6 +9,8 @@ export enum ErrorType {
     LOAD_CHANNEL_MEMBERS_FAILED,
     LOAD_MSG_FAILED,
     SEND_MSG_FAILED,
+    CHANGE_NAME_FAILED,
+    CHANGE_AVATAR_FAILED,
 }
   
 export function errorMessage(errorType: ErrorType | undefined): string {
@@ -27,7 +29,11 @@ export function errorMessage(errorType: ErrorType | undefined): string {
             return "Failed to load messages";
         case ErrorType.SEND_MSG_FAILED:
             return "Failed to send messages";
+        case ErrorType.CHANGE_NAME_FAILED:
+            return "Failed to change user name";
+        case ErrorType.CHANGE_AVATAR_FAILED:
+            return "Failed to change avatar";
         default:
-            return "Friend request failed";
+            return "somethin went wrong";
     }
 }
