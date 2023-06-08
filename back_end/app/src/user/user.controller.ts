@@ -78,12 +78,13 @@ export class UserController {
 	async uploadAvatar(
 		@GetUser() user: User,
 		@UploadedFile() file: Express.Multer.File
-	): Promise<void> {
+	): Promise<string> {
 		if (!file || !file.filename) {
 			throw new BadRequestException('No file uploaded');
 		}
 		const filePath = `${UPLOADS_DIRECTORY}/${file.filename}`;
 
 		await this.userService.updateAvatar(user.intraId, filePath);
+		return (filePath);
 	}
 }
