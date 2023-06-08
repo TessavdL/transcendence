@@ -135,12 +135,9 @@ export class GameService {
 		return (gameStatus);
 	}
 
-	// endGame(gameStatus: Game): boolean {
-	// 	if (gameStatus.player1Score >= 3 || gameStatus.player2Score >= 3) {
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
+	endGame(gameStatus: Game): void {
+		
+	}
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);

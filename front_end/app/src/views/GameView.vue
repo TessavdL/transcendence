@@ -184,7 +184,7 @@ export default {
 	},
 
 	beforeRouteLeave() {
-		this.socket.emit('endGame', this.roomName, () => {
+		this.socket.emit('endGame', this.roomName, players.player1.intraId, players.player2.intraId, () => {
 			this.socket.disconnect();
 		});
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
