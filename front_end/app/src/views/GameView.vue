@@ -113,11 +113,15 @@ export default {
 		},
 		isGameOver() {
 			// Check if the game is over
-			console.log(this.playerDisconnect, 'is Game Over');
-			return this.game.player1Score === 3 || 
-					this.game.player2Score === 3 ||
-					this.playerDisconnect ||
-					this.gameOver;
+			// console.log(this.playerDisconnect, 'is Game Over');
+			// return this.playerDisconnect || this.gameOver || this.game.player1Score === 3 || this.game.player2Score === 3;
+			if (this.playerDisconnect || this.game.player1Score === 3 || this.game.player2Score === 3) {
+				this.gameOver = true;
+				window.removeEventListener('keydown', this.handleEvent);
+				return true;
+			}
+			return false;
+
 		}
 	},
 
@@ -151,7 +155,7 @@ export default {
 			this.gameOver = true;
 			this.playerDisconnect = true;
 		});
-		this.socket.on('disconnect', () => {
+		this.socket.on('disconnectPlayer', () => {
 			console.log('in disconnect');
 			this.socket.disconnect();
 		});
@@ -181,7 +185,22 @@ export default {
 				this.movePaddle(position);
 		});
 
-		window.addEventListener('keydown', (event) => {
+		window.addEventListener('keydown', this.handleEvent);
+	},
+
+	beforeRouteLeave() {
+		window.removeEventListener('keydown', this.handleEvent);
+		console.log(this.playerDisconnect, 'beforeRouterLeave');
+		if (this.gameOver === false) {
+			this.socket.emit('endGame', this.roomName);
+		}
+		else 
+			this.socket.disconnect();
+	},
+
+	methods: {
+
+		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
 					movement: 'up',
@@ -200,20 +219,12 @@ export default {
 				};
 				this.socket.emit('movePaddle', data);
 			}
-		});
-		// window.addEventListener('keydown', (event) => {
-		// 	if (event.key === ' ' && !this.gameOver && this.)
-		// 		this.toggleGame();
-		// });
-	},
-
-	beforeRouteLeave() {
-		this.socket.emit('endGame', this.roomName);
-		console.log(this.playerDisconnect, 'beforeRouterLeave');
-		this.socket.disconnect();
-	},
-
-	methods: {
+			else if (event.key === ' ' && this.player === 'playerone' && !this.gameOver && !this.game.gameStarted && this.game.turnPlayerOne && !this.game.turnPlayerTwo) 
+				this.toggleGame();
+			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo) 
+				this.toggleGame();
+			console.log(this.gameOver);
+		},
 
 		toggleGame() {
 			if (!this.game.gameStarted) {
@@ -254,7 +265,6 @@ export default {
 				turnPlayerOne: this.game.turnPlayerOne,
 				turnPlayerTwo: this.game.turnPlayerTwo,
 			};
-			console.log(this.game.turnPlayerOne, this.game.turnPlayerTwo);
 			const data = {
 				gameStatus: gameStatus,
 				roomName: this.roomName,
