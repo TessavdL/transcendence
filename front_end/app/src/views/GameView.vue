@@ -17,11 +17,11 @@
 				</div>
 			</label>
 		{{ isColorMode ? '' : '' }}
-		<div class="mode"><h2>Change Game Mode</h2></div>
+		<div :class=" isColorMode? 'mode-color':'mode'"><h2>Change Game Mode</h2></div>
 		<!-- condition to check if it is color mode thank you dagmar-->
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
 			<div class="start-button-container"
-				v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+				v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -32,7 +32,7 @@
 				</a>
 			</div>
 			<div class="start-button-container"
-				v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
+				v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -101,6 +101,8 @@ export default {
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
+
+		console.log(game.value?.turnPlayerOne, game.value?.turnPlayerTwo);
 		return { socket, game: computed(() => game.value) };
 	},
 
@@ -159,6 +161,8 @@ export default {
 			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
+			this.game.turnPlayerOne = gameStatus.turnPlayerOne;
+			this.game.turnPlayerTwo = gameStatus.turnPlayerTwo;
 		});
 
 		this.socket.on('updatePaddlePosition', (position: number) => {
@@ -247,7 +251,10 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 				gameEnded: this.game.gameEnded,
+				turnPlayerOne: this.game.turnPlayerOne,
+				turnPlayerTwo: this.game.turnPlayerTwo,
 			};
+			console.log(this.game.turnPlayerOne, this.game.turnPlayerTwo);
 			const data = {
 				gameStatus: gameStatus,
 				roomName: this.roomName,
@@ -287,7 +294,15 @@ export default {
 .mode h2 {
 	font-family: "arcadeFont";
 	color: rgb(240, 248, 89);
+	top: 200px;
 }
+
+.mode-color h2 {
+	font-family: "excellent";
+	color: rgb(240, 248, 89);
+	top: 200px;
+}
+
 .game-over-canvas {
 	position: absolute;
 	top: 0;
@@ -422,4 +437,5 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
-}</style>
+}
+</style>
