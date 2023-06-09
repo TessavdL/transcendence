@@ -5,12 +5,14 @@ import { UserService } from 'src/user/user.service';
 import { K } from './constants';
 import { GameSharedService } from './game.shared.service';
 import { Game, Players } from './types';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class GameService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
+		private readonly authService: AuthService,
 		private shareService: GameSharedService,
 	) { }
 
@@ -135,8 +137,50 @@ export class GameService {
 		return (gameStatus);
 	}
 
-	endGame(gameStatus: Game): void {
-		
+	async endGame(gameStatus: Game, roomName: string): Promise<void> {
+		try {
+			let winner: boolean;
+			
+			if (this.shareService.playerData[roomName].player1Score === 3) {
+				winner = true;
+			} else {
+				winner = false;
+			}
+			
+			const player1: User = await this.authService.findUserById(this.shareService.playerData[roomName].player1);
+			const player2: User = await this.authService.findUserById(this.shareService.playerData[roomName].player2);
+
+			if (winner) {
+				await this.prisma.matchHistory.create({
+					data: {
+						winnerIntraId: player1.intraId,
+						loserIntraId: player2.intraId,
+						winnerScore: gameStatus.player1Score,
+						loserScore: gameStatus.player2Score,
+						winnerName: player1.name,
+						loserName: player2.name,
+						winnerAvatar: player1.avatar,
+						loserAvatar: player2.avatar,
+					}
+				});
+			} else {
+				await this.prisma.matchHistory.create({
+					data: {
+						winnerIntraId: player2.intraId,
+						loserIntraId: player1.intraId,
+						winnerScore: gameStatus.player2Score,
+						loserScore: gameStatus.player1Score,
+						winnerName: player2.name,
+						loserName: player1.name,
+						winnerAvatar: player2.avatar,
+						loserAvatar: player1.avatar,
+					}
+				});
+			}
+			this.update_win_loss_elo(player1, player2);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
