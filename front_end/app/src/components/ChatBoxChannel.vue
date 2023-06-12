@@ -15,6 +15,8 @@
                                     Members</a></li>
                             <li><a class="dropdown-item" href="#" @click="leaveChannel(activeChannel)">Leave Channel</a>
                             </li>
+                            <li><a class="dropdown-item" href="#" @click="abandonChannel(activeChannel)">Abandon Channel</a>
+                            </li>
                             <li v-if="!isPrivate() && isMemberOwner()"><a class="dropdown-item"
                                     @click="setChannelSettingsToTrue()">Channel
                                     Settings</a></li>
@@ -23,7 +25,7 @@
                 </div>
             </div>
 
-            <div v-if="channelSettings === true">
+            <div v-if="channelSettings">
                 <div v-if="isProtected()">
                     <input type="password" placeholder="Old Password" v-model="oldPassword" />
                     <input type="password" placeholder="New Password" v-model="newPassword" />
@@ -42,7 +44,7 @@
                 </div>
             </div>
 
-            <div v-if="channelSettings === false" class="ch-body" id="messageBody">
+            <div v-if="!channelSettings" class="ch-body" id="messageBody">
                 <div class="msg-container" v-for="msg in allMessages" :key="msg.text">
                     <div class="single-msg d-flex flex-column">
                         <div class="msg-userinfo d-inline-flex">
@@ -57,7 +59,7 @@
                 </div>
             </div>
 
-            <div v-if="channelSettings === false" class="ch-input">
+            <div v-if="!channelSettings" class="ch-input">
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="type in messages here" v-model="messageText"
                         @keyup.enter="sendMessage()">
@@ -181,7 +183,6 @@ onBeforeMount(async () => {
     console.log('in onBeforeMount channelName = ', props.channelName);
     if (joinChannelCalled.value === false) {
         await joinChannel(props.channelName);
-        console.log('done calling joinChannel');
         joinChannelCalled.value = true;
         console.log('in onBeforeMount back from joinChannel');
     }
@@ -189,9 +190,7 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
     socket.on('joined', async (me: Member) => {
-        console.log('in joined');
         await loadAllMembers(props.channelName);
-        console.log('done calling load all members');
         member.value = me;
         console.log('in joined', { me });
     });
@@ -455,6 +454,24 @@ async function demoteAdmintoMember(otherIntraId: number, channelName: string): P
 
 function inviteToGame(otherIntraId: number, channelName: string): void {
     // Jelle code here
+}
+
+async function abandonChannel(channelName: string) {
+    const data = {
+        channelName: channelName,
+    };
+    try {
+        await axiosInstance.delete('chat/removeUserFromChannel', { data });
+        leaveChannel(props.channelName);
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
+
 }
 
 function leaveChannel(channelName: string): void {
