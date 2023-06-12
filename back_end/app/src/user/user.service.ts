@@ -1,5 +1,5 @@
-import { Injectable, StreamableFile } from '@nestjs/common';
-import { Achievements, ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
+import { Injectable, InternalServerErrorException, StreamableFile } from '@nestjs/common';
+import { Achievements, ActivityStatus, AllOtherUsers, FriendStatus, MatchHistory, User } from '@prisma/client';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
@@ -262,6 +262,26 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
+	async getMatchHistory(user: User): Promise<MatchHistory[]> {
+		try {
+			const matchHistory: MatchHistory[] = await this.prisma.matchHistory.findMany({
+				where: {
+					OR: [
+						{
+							winnerIntraId: user.intraId,
+						},
+						{
+							loserIntraId: user.intraId,
+						},
+					],
+				},
+			});
+			return (matchHistory);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async updateUsername(user: User, newUsername: string) {
 		try {
 			const updatedUser: (User & { achievements: Achievements }) = await this.prisma.user.update({
@@ -275,9 +295,33 @@ export class UserService {
 					achievements: true,
 				},
 			});
+			await this.updateUsernameInMatchHistory(user, newUsername);
 			this.achievementsService.checkChangedName(updatedUser);
 		} catch (error: any) {
 			throw new Error(error);
+		}
+	}
+
+	async updateUsernameInMatchHistory(user: User, newUsername: string): Promise<void> {
+		try {
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					winnerIntraId: user.intraId,
+				},
+				data: {
+					winnerName: newUsername,
+				}
+			});
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					loserIntraId: user.intraId,
+				},
+				data: {
+					loserName: newUsername,
+				}
+			});
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
