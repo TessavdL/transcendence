@@ -11,15 +11,17 @@
                         <i class="bi bi-sliders2 dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"
                             style="font-size: 2rem; color: #ffffff;"></i>
                         <ul class="dropdown-menu">
+
+                            <li v-if="!isPrivate() && isMemberOwner()"><a class="dropdown-item"
+                                    @click="setChannelSettingsToTrue()">Channel
+                                    Settings</a></li>
                             <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#membersList">View All
                                     Members</a></li>
                             <li><a class="dropdown-item" href="#" @click="leaveChannel(activeChannel)">Leave Channel</a>
                             </li>
                             <li><a class="dropdown-item" href="#" @click="abandonChannel(activeChannel)">Abandon Channel</a>
                             </li>
-                            <li v-if="!isPrivate() && isMemberOwner()"><a class="dropdown-item"
-                                    @click="setChannelSettingsToTrue()">Channel
-                                    Settings</a></li>
+
                         </ul>
                     </div>
                 </div>
@@ -190,9 +192,20 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
     socket.on('joined', async (me: Member) => {
-        await loadAllMembers(props.channelName);
-        member.value = me;
-        console.log('in joined', { me });
+        if (me === null) {
+            // should instead be one where you have to press ok and then get pushed to chat home page
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: errorMessage(ErrorType.CHAT_FORBIDDEN),
+                life: 3000,
+            });
+        }
+        else {
+            await loadAllMembers(props.channelName);
+            member.value = me;
+            console.log('in joined', { me });
+        }
     });
 
     socket.on('leaveChannel', (data) => {
@@ -209,16 +222,14 @@ onMounted(async () => {
         allMessages.value.push(data);
         $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
     });
-
-    socket.on('noMember', () => {
-
-    });
 });
 
 onBeforeRouteLeave(() => {
     console.log('leaving page');
     socket.removeAllListeners();
-    leaveChannel(activeChannel.value);
+    if (member.value) {
+        leaveChannel(activeChannel.value);
+    }
 });
 
 const isReady = computed(() => {

@@ -11,7 +11,8 @@ export enum ErrorType {
     SEND_MSG_FAILED,
     CHANGE_PASSWORD_FAILED,
     REMOVE_PASSWORD_FAILED,
-    SET_PASSWORD_FAILED
+    SET_PASSWORD_FAILED,
+    CHAT_FORBIDDEN,
 }
 
 export function errorMessage(errorType: ErrorType | undefined): string {
@@ -36,6 +37,8 @@ export function errorMessage(errorType: ErrorType | undefined): string {
             return "Failed to remove password";
         case ErrorType.SET_PASSWORD_FAILED:
             return "Failed to set password";
+        case ErrorType.CHAT_FORBIDDEN:
+            return "You are not a member of this channel"
         default:
             return "Friend request failed";
     }

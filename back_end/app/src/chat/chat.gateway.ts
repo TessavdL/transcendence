@@ -120,10 +120,11 @@ export class ChatGateway
 	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
-		if (!member) {
-			client.emit('unauthorized', { message: 'You are not a member of this channel' });
-		}
 
+		if (!member) {
+			client.emit("joined", null);
+			return;
+		}
 		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
 		const otherJoinedMembersInChannel: (Membership & { user: User; })[] = await this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
 
