@@ -83,12 +83,14 @@ export class ChatGateway
 
 			// delete client from map
 			this.deleteFromChannels(client.id);
+			console.log('in disconnect after delete from channels', this.channelToClientIds);
 			this.sharedService.clientToIntraId.delete(client.id);
 
 			// if this was the last client of the user, set activity to offline
 			if (this.isActive(intraId) === false) {
 				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 			}
+			client.disconnect();
 			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway handleDisconnect');
@@ -97,9 +99,9 @@ export class ChatGateway
 
 	private deleteFromChannels(clientId: string): void {
 		this.channelToClientIds.forEach(clientIds => {
-			const index: number = clientIds.findIndex((client) => { client === clientId; });
-			if (index) {
-				delete clientIds[index];
+			const index: number = clientIds.findIndex(client => client === clientId);
+			if (index !== -1) {
+				clientIds.splice(index, 1);
 			}
 		});
 	}
@@ -116,33 +118,30 @@ export class ChatGateway
 	@UseGuards(ClientGuard)
 	@SubscribeMessage('joinChannel')
 	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
-		// if there is already an active channel, leave it
-		const activeChannel: string = this.clientIdToChannel.get(client.id);
-		if (activeChannel) {
-			let updatedClientIds: string[] = this.channelToClientIds.get(activeChannel);
-			updatedClientIds.filter((clientId) => { clientId !== client.id });
-			this.channelToClientIds.set(activeChannel, updatedClientIds);
-			client.leave(activeChannel);
-		}
-
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
+		if (!member) {
+			client.emit('unauthorized', { message: 'You are not a member of this channel' });
+		}
 
 		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
-
-		const otherJoinedMembersInChannel = this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
+		const otherJoinedMembersInChannel: (Membership & { user: User; })[] = await this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
 
 		// add client to channel map
+		console.log('all members in joinChannel before', this.channelToClientIds.get(channelName));
 		this.channelToClientIds.set(channelName, [...otherClientsInChannel, client.id]);
+		console.log('all members in joinChannel after', this.channelToClientIds.get(channelName));
 
 		// join channel
 		client.join(channelName);
+		client.emit('joined', member);
 
-		// inform all other users in the channel that a user joined
-		this.server.to(channelName).emit('userJoined', member);
-
-		// inform current user which other members are in the channel
-		client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
+		if (otherClientsInChannel.length > 0) {
+			// inform all other users in the channel that a user joined
+			this.server.to(channelName).emit('userJoined', member);
+			// inform current user which other members are in the channel
+			client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
+		}
 	}
 
 	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]): Promise<(Membership & { user: User })[]> {
@@ -165,14 +164,12 @@ export class ChatGateway
 	@SubscribeMessage('leaveChannel')
 	async handleLeaveChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
-		// console.log(`intraId = ${intraId} and channelName = ${channelName}`);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
-		// console.log({ member });
 
-		const clientsInChannel: string[] = this.channelToClientIds.get(channelName);
-		// console.log({ clientsInChannel });
+		const clientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
+		console.log('in leaveChannel before leave', clientsInChannel);
 		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
-		console.log({ updatedClientsInChannel });
+		console.log('in leaveChannel after leave', updatedClientsInChannel);
 		this.channelToClientIds.set(channelName, updatedClientsInChannel);
 		this.clientIdToChannel.delete(client.id);
 
@@ -207,14 +204,17 @@ export class ChatGateway
 			const clientIdsInChannel: string[] = this.channelToClientIds.get(data.channelName);
 			const canBeKicked: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
+			if (clientIds.length === 0) {
+				return;
+			}
 			if (canBeKicked === true) {
 				this.server.to(clientIds).emit('leaveChannel', data.channelName);
 			}
 			else {
-				this.server.to(client.id).emit('error', { message: 'Cannot kick user' });
+				client.emit('error', { message: 'Cannot kick user' });
 			}
 		} catch (error) {
-			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway kickUser');
+			client.emit('error', error?.message || 'An error occured in chat.gateway kickUser');
 		}
 	}
 
@@ -229,11 +229,16 @@ export class ChatGateway
 			const canBeBanned: boolean = await this.chatService.canBePunished(intraId, data.otherIntraId, data.channelName);
 			const clientIds: string[] = this.getClientIds(clientIdsInChannel, data.otherIntraId);
 			if (canBeBanned === true) {
-				this.server.to(clientIds).emit('leaveChannel', data.channelName);
 				await this.chatService.banUser(data.otherIntraId, data.channelName);
+				if (clientIds.length > 0) {
+					this.server.to(clientIds).emit('leaveChannel', data.channelName);
+				}
+			}
+			else {
+				client.emit('error', { message: 'Cannot ban user' });
 			}
 		} catch (error) {
-			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway banUser');
+			client.emit('error', error?.message || 'An error occured in chat.gateway banUser');
 		}
 	}
 
@@ -258,8 +263,11 @@ export class ChatGateway
 			if (canBeMuted === true) {
 				await this.chatService.muteUser(data.otherIntraId, data.channelName);
 			}
+			else {
+				client.emit('error', { message: 'Cannot ban user' });
+			}
 		} catch (error) {
-			this.server.to(client.id).emit('error', error?.message || 'An error occured in chat.gateway muteUser');
+			client.emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
 	}
 }

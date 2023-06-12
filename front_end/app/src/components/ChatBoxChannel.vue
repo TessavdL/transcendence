@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="isReady">
         <div class="col-sm-7 col-sm-offset-3 col-md-9 col-md-offset-2 chatbox-ch">
             <div class="row">
                 <div class="ch-header d-inline-flex">
@@ -15,12 +15,34 @@
                                     Members</a></li>
                             <li><a class="dropdown-item" href="#" @click="leaveChannel(activeChannel)">Leave Channel</a>
                             </li>
+                            <li v-if="!isPrivate() && isMemberOwner()"><a class="dropdown-item"
+                                    @click="setChannelSettingsToTrue()">Channel
+                                    Settings</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="ch-body" id="messageBody">
+            <div v-if="channelSettings === true">
+                <div v-if="isProtected()">
+                    <input type="password" placeholder="Old Password" v-model="oldPassword" />
+                    <input type="password" placeholder="New Password" v-model="newPassword" />
+                    <button @click="changePassword()">Change Password</button>
+                    <button @click="setChannelSettingsToFalse()">Cancel</button>
+                </div>
+                <div v-if="isProtected()">
+                    <input type="password" placeholder="Password" v-model="password" />
+                    <button @click="removePassword()">Remove Password</button>
+                    <button @click="setChannelSettingsToFalse()">Cancel</button>
+                </div>
+                <div v-if="!isProtected()">
+                    <input type="password" placeholder="Password" v-model="password" />
+                    <button @click="setPassword()">Set Password</button>
+                    <button @click="setChannelSettingsToFalse()">Cancel</button>
+                </div>
+            </div>
+
+            <div v-if="channelSettings === false" class="ch-body" id="messageBody">
                 <div class="msg-container" v-for="msg in allMessages" :key="msg.text">
                     <div class="single-msg d-flex flex-column">
                         <div class="msg-userinfo d-inline-flex">
@@ -35,7 +57,7 @@
                 </div>
             </div>
 
-            <div class="ch-input">
+            <div v-if="channelSettings === false" class="ch-input">
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="type in messages here" v-model="messageText"
                         @keyup.enter="sendMessage()">
@@ -85,16 +107,22 @@
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
                                             @click="muteUser(member.intraId, activeChannel)">Mute</a></li>
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-                                            @click="kickUser(member.intraId, activeChannel)">kick</a></li>
-                                    <li v-if="member.role == 'MEMBER'"><a class="dropdown-item" href="#">Set as Admin</a>
-                                    </li>
+                                            @click="kickUser(member.intraId, activeChannel)">Kick</a></li>
+                                    <li v-if="member.role == 'MEMBER'"><a class="dropdown-item" href="#"
+                                            @click="promoteMemberToAdmin(member.intraId, activeChannel)">Promote member
+                                            to
+                                            admin</a></li>
+                                    <li v-if="member.role == 'ADMIN'"><a class="dropdown-item" href="#"
+                                            @click="demoteAdmintoMember(member.intraId, activeChannel)">Demote admin to
+                                            member</a></li>
                                 </ul>
                                 <ul class="dropdown-menu" aria-labelledby="user-dropdown" v-else>
                                     <li><a class="dropdown-item" href="#">
                                             <RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
                                                 View Profile</RouterLink>
                                         </a></li>
-                                    <li><a class="dropdown-item" href="#">Invite to Game</a></li>
+                                    <li><a class="dropdown-item" @click="inviteToGame(member.intraId, activeChannel)">Invite
+                                            to Game</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -108,22 +136,65 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, defineProps, inject, onMounted, onUnmounted } from "vue";
+import { ref, defineProps, inject, onMounted, onUnmounted, onBeforeMount, onUpdated, computed } from "vue";
 import type { Socket } from "socket.io-client";
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
-import type { Message, Punishment } from "../types/ChatType";
+import type { Member, Message, Punishment } from "../types/ChatType";
 import storeUser from "@/store";
 import router from "@/router";
+import { onBeforeRouteLeave } from "vue-router";
 
 const props = defineProps({
-    channelName: String,
+    channelName: {
+        type: String,
+        required: true,
+    },
+    channelMode: {
+        type: String,
+        required: true,
+    },
+});
+
+const toast = useToast();
+const socket = inject("socketioInstance") as Socket;
+const axiosInstance = axios.create({
+    baseURL: 'http://localhost:3001',
+    withCredentials: true,
+});
+
+const activeChannel = ref('');
+const allMessages = ref<Message[]>([]);
+const channelSettings = ref<boolean>(false);
+const member = ref<Member>();
+const messageText = ref('');
+const oldPassword = ref('');
+const newPassword = ref('');
+const password = ref('');
+const allMembers = ref<Member[]>([]);
+const userIntraId = ref<number>(storeUser.state.user.intraId);
+const userRole = ref();
+const joinChannelCalled = ref(false);
+
+onBeforeMount(async () => {
+    console.log('in onBeforeMount channelName = ', props.channelName);
+    if (joinChannelCalled.value === false) {
+        await joinChannel(props.channelName);
+        console.log('done calling joinChannel');
+        joinChannelCalled.value = true;
+        console.log('in onBeforeMount back from joinChannel');
+    }
 });
 
 onMounted(async () => {
-    await joinChannel(props.channelName);
-    await loadAllMembers(props.channelName);
+    socket.on('joined', async (me: Member) => {
+        console.log('in joined');
+        await loadAllMembers(props.channelName);
+        console.log('done calling load all members');
+        member.value = me;
+        console.log('in joined', { me });
+    });
 
     socket.on('leaveChannel', (data) => {
         leaveChannel(data);
@@ -137,41 +208,119 @@ onMounted(async () => {
 
     socket.on('message', (data) => {
         allMessages.value.push(data);
+        $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
     });
-    $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
+
+    socket.on('noMember', () => {
+
+    });
 });
 
-onUnmounted(() => {
-    socket.off("joinChannel");
-    socket.off("sendMessageToChannel");
-    socket.off("message");
+onBeforeRouteLeave(() => {
+    console.log('leaving page');
+    socket.removeAllListeners();
+    leaveChannel(activeChannel.value);
 });
 
-const toast = useToast();
-
-const socket = inject("socketioInstance") as Socket;
-const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3001',
-    withCredentials: true,
+const isReady = computed(() => {
+    return !!member.value;
 });
 
-const activeChannel = ref('');
-const activeChannelType = ref('');
+function isMemberOwner() {
+    return member.value?.role === 'OWNER';
+}
 
-const allMessages = ref<Message[]>([]);
-const messageText = ref('');
+function setChannelSettingsToTrue() {
+    channelSettings.value = true;
+}
+
+function setChannelSettingsToFalse() {
+    channelSettings.value = false;
+}
+
+function isProtected() {
+    return props.channelMode === 'PROTECTED';
+}
+
+function isPrivate() {
+    return props.channelMode === 'PRIVATE';
+}
+
+async function isMuted(channelName: string): Promise<Punishment> {
+    const response = await axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
+    const mute: Punishment = response.data;
+    return mute;
+}
+
+async function changePassword() {
+    const data = {
+        channelName: props.channelName,
+        oldPassword: oldPassword.value,
+        newPassword: newPassword.value,
+    }
+    try {
+        await axiosInstance.patch('chat/changePassword', data);
+        setChannelSettingsToFalse();
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.CHANGE_PASSWORD_FAILED),
+            life: 3000,
+        });
+    }
+    oldPassword.value = '';
+    newPassword.value = '';
+}
+
+async function setPassword() {
+    const data = {
+        channelName: props.channelName,
+        password: password.value,
+    };
+    try {
+        await axiosInstance.patch('chat/setPassword', data);
+        setChannelSettingsToFalse();
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.SET_PASSWORD_FAILED),
+            life: 3000,
+        });
+    }
+    password.value = '';
+}
+
+async function removePassword() {
+    const data = {
+        channelName: props.channelName,
+        password: password.value,
+    };
+    console.log(data);
+    try {
+        await axiosInstance.patch('chat/deletePassword', data);
+        setChannelSettingsToFalse();
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.REMOVE_PASSWORD_FAILED),
+            life: 3000,
+        });
+    }
+    password.value = '';
+}
 
 async function joinChannel(channelName: string): Promise<void> {
     socket.emit('joinChannel', channelName);
     activeChannel.value = channelName;
-    activeChannelType.value = 'NORMAL';
     await loadAllMessages();
-};
+}
 
 async function loadAllMessages(): Promise<void> {
     const request = {
         channelName: activeChannel.value,
-        channelType: activeChannelType.value,
     }
     try {
         const response = await axiosInstance.get('chat/getAllMessagesInChannel', { params: request });
@@ -185,12 +334,6 @@ async function loadAllMessages(): Promise<void> {
             life: 3000,
         });
     }
-};
-
-async function isMuted(channelName: string): Promise<Punishment> {
-    const response = await axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
-    const mute: Punishment = response.data;
-    return mute;
 }
 
 function sendErrorMessage(mute: Punishment) {
@@ -239,9 +382,6 @@ async function sendMessage() {
     }
 }
 
-const allMembers = ref([]);
-const userIntraId = ref<number>(storeUser.state.user.intraId);
-const userRole = ref();
 async function loadAllMembers(channelName: string): Promise<void> {
     const request = {
         channelName: channelName,
@@ -265,7 +405,6 @@ async function loadAllMembers(channelName: string): Promise<void> {
     }
 };
 
-// don't know if it's working, does not have enough accouts to test it fully
 async function kickUser(otherIntraId: number, channelName: string): Promise<void> {
     socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: channelName });
 }
@@ -278,7 +417,46 @@ async function muteUser(otherIntraId: number, channelName: string): Promise<void
     socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 }
 
-// not working for this moment, don't know why
+async function promoteMemberToAdmin(otherIntraId: number, channelName: string): Promise<void> {
+    try {
+        const data = {
+            channelName: channelName,
+            otherIntraId: otherIntraId,
+        }
+        await axiosInstance.patch('chat/promoteMemberToAdmin', data);
+        await loadAllMembers(channelName);
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
+}
+
+async function demoteAdmintoMember(otherIntraId: number, channelName: string): Promise<void> {
+    try {
+        const data = {
+            channelName: channelName,
+            otherIntraId: otherIntraId,
+        }
+        await axiosInstance.patch('chat/demoteAdminToMember', data);
+        await loadAllMembers(channelName);
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
+}
+
+function inviteToGame(otherIntraId: number, channelName: string): void {
+    // Jelle code here
+}
+
 function leaveChannel(channelName: string): void {
     socket.emit('leaveChannel', channelName);
 }

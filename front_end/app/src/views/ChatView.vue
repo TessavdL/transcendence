@@ -17,7 +17,7 @@
 									@click="openRoute('/chat/ChatCreateChannel')"></i>
 							</h2>
 							<div class="chanel-list" v-for="channel in myChannels" :key="channel.id">
-								<span @click="openChannel(channel.channelName)">
+								<span @click="openChannel(channel.channelName, channel.channelMode)">
 									<i class="bi bi-broadcast-pin" v-if="channel.channelMode === 'PUBLIC'"></i>
 									<i class="bi bi-shield-fill" v-if="channel.channelMode === 'PRIVATE'"></i>
 									<i class="bi bi-lock-fill" v-if="channel.channelMode === 'PROTECTED'"></i>
@@ -73,11 +73,16 @@ function openDm(subpath: string) {
 		params: { channelName: subpath },
 	});
 }
-async function openChannel(subpath: string) {
+async function openChannel(subpath: string, channelMode: string) {
+	console.log(subpath, channelMode);
+	const data = {
+		channelName: subpath,
+		channelMode: channelMode,
+	};
 	if (await canJoinChannel(subpath) === true) {
 		router.push({
 			name: 'ChatBoxChannel',
-			params: { channelName: subpath },
+			params: data,
 		});
 	}
 	// TO DO INSERT POPUP THAT SOMEONE IS BANNED

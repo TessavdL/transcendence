@@ -87,7 +87,7 @@ const router = createRouter({
 					props: true,
 				},
 				{
-					path: '/chat/ChatBoxChannel/:channelName',
+					path: '/chat/ChatBoxChannel/:channelName/:channelMode',
 					name: 'ChatBoxChannel',
 					component: ChatBoxChannel,
 					props: true,
@@ -103,8 +103,8 @@ const router = createRouter({
 			path: '/twofa',
 			name: 'twofa',
 			component: TwofaView
-    },
-    {
+		},
+		{
 			path: '/matchmaking',
 			name: 'Matchmaking',
 			component: MatchmakingView

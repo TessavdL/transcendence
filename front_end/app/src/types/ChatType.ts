@@ -11,11 +11,10 @@ export interface Channel {
 	channelMode: string;
 }
 
-export interface DmChannel {
-	channelName: string;
-	otheruserName: string;
-	otheruserAvatar: string;
-	otheruserIntraId: number;
+export interface DMChannel {
+	channel: Channel;
+	otherUser: User;
+	user: User;
 }
 
 export interface Message {
