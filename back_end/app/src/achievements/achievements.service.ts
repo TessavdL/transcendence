@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { Achievements, User } from '@prisma/client';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Prisma, Achievements, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -21,7 +21,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -38,7 +43,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -55,7 +65,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -72,7 +87,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -89,7 +109,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -106,7 +131,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
     async checkChangedName(user: (User &  {achievements: Achievements;})): Promise<void> {
@@ -122,7 +152,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
     async checkUploadedAvatar(user: (User &  {achievements: Achievements;})): Promise<void> {
@@ -138,7 +173,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -155,7 +195,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 
@@ -172,7 +217,12 @@ export class AchievementsService {
                 }
             });
         } catch(error: any) {
-            throw new Error(error);
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2001') {
+                    throw new NotFoundException('Unable to update achievement, user not found');
+                }
+            }
+            throw new InternalServerErrorException(error.message);
         }
     }
 }
