@@ -1,4 +1,3 @@
-
 <template>
 	<div>
 		<!-- <button @click="toggleColorMode"></button> -->
@@ -246,7 +245,9 @@ export default {
 		
 		update() {
 			if (!this.game.gameStarted)
+			{
 				return;
+			}
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
