@@ -300,16 +300,16 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
-	async getMatchHistory(user: User): Promise<MatchHistory[]> {
+	async getMatchHistory(intraId: number): Promise<MatchHistory[]> {
 		try {
 			const matchHistory: MatchHistory[] = await this.prisma.matchHistory.findMany({
 				where: {
 					OR: [
 						{
-							winnerIntraId: user.intraId,
+							winnerIntraId: intraId,
 						},
 						{
-							loserIntraId: user.intraId,
+							loserIntraId: intraId,
 						},
 					],
 				},

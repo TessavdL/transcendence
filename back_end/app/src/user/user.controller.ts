@@ -63,7 +63,14 @@ export class UserController {
 
 	@Get('get_match_history')
 	async getMatchHistory(@GetUser() user: User): Promise<MatchHistory[]> {
-		return (await this.userService.getMatchHistory(user));
+		return (await this.userService.getMatchHistory(user.intraId));
+	}
+
+	@Get('get_match_history_by_intraid') 
+	async getMatchHistoryByIntraId(@Query() query): Promise<MatchHistory[]> {
+		const otherIntraId: number = parseInt(query.intraId);
+		console.log(otherIntraId);
+		return (await this.userService.getMatchHistory(otherIntraId));
 	}
 
 	@Get(':id')
