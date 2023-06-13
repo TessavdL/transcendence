@@ -29,8 +29,36 @@
 	border-bottom: 8px solid rgb(253, 251, 251);
 	border-left: 8px solid rgb(253, 251, 251);
 	border-right: 8px solid rgb(253, 251, 251);
+	border-radius: 30px;
 }
 
+.player1-paddle-color,
+.player2-paddle-color {
+	position: absolute;
+	width: 15px;
+	height: 80px;
+	background-color: rgb(231, 220, 208);
+	border-radius: 20px;
+}
+
+.player1-paddle-color {
+	left: 20px;
+	top: 260px;
+}
+
+.player2-paddle-color {
+	right: 20px;
+	top: 260px;
+}
+.ball-round {
+	position: absolute;
+	width: 20px;
+	height: 20px;
+	top: 290px;
+	left: 390px;
+	background-color: white;
+	border-radius: 50%;
+}
 .scoreboard-color {
 	display: flex;
 	justify-content: space-between;
@@ -45,7 +73,7 @@
 .score-player2-color {
 	font-size: 40px;
 	font-weight: normal;
-	color: rgb(217, 250, 32);
+	color: rgb(9, 9, 9);
 	font-family: "excellent";
 }
 
@@ -90,14 +118,14 @@
 }
 
 .game-over-color-canvas h2 {
-	font-family: "arcadeFont";
+	font-family: "excellent";
 	font-size: 64px;
-	color: white;
+	color: rgb(2, 2, 2);
 	margin-bottom: 16px;
 }
 
 .game-over-color-canvas p {
-	font-family: "arcadeFont";
+	font-family: "excellent";
 	font-size: 48px;
 	color: white;
 }

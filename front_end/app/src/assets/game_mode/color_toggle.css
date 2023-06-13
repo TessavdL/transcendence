@@ -1,0 +1,110 @@
+/* credits https://codepen.io/dervondenbergen*/
+
+label {
+	width: 70px;
+	height: 40px;
+	background-color: #403e3e;
+	border-radius: 10px;
+	position: relative;
+	cursor: pointer;
+	/* z-index: 2; */
+	top: 100px;
+}
+
+input:checked ~ label {
+	background-color: #50d5a1;
+}
+
+label div.s {
+	width: 26px;
+	height: 26px;
+	background-color: #fafafa;
+	border-radius: 10%;
+	position: absolute;
+	top: 7px;
+	left: 7px;
+	cursor: pointer;
+	transition: margin-left 0.5s;
+}
+
+input:checked ~ label div.s {
+	margin-left: 30px;
+}
+
+label div div.d {
+	width: 4px;
+	height: 4px;
+	background-color: #c5b4b4;
+	position: absolute;
+	border-radius: 50%;
+	transition: background-color 0.5s;
+}
+
+label div div.d:nth-child(1) {
+	left: 3px;
+	top: 3px;
+}
+
+label div div.d:nth-child(2) {
+	left: 11px;
+	top: 3px;
+}
+
+label div div.d:nth-child(3) {
+	left: 19px;
+	top: 3px;
+}
+
+label div div.d:nth-child(4) {
+	left: 3px;
+	top: 11px;
+}
+
+label div div.d:nth-child(5) {
+	left: 11px;
+	top: 11px;
+}
+
+label div div.d:nth-child(6) {
+	left: 19px;
+	top: 11px;
+}
+
+label div div.d:nth-child(7) {
+	left: 3px;
+	top: 19px;
+}
+
+label div div.d:nth-child(8) {
+	left: 11px;
+	top: 19px;
+}
+
+label div div.d:nth-child(9) {
+	left: 19px;
+	top: 19px;
+}
+/* Add media query for smaller screens */
+@media (max-width: 600px) {
+	label {
+		width: 50px;
+		height: 30px;
+	}
+
+	label div.s {
+		width: 20px;
+		height: 20px;
+		top: 5px;
+		left: 5px;
+	}
+
+	label div div.d {
+		width: 5px;
+		height: 5px;
+	}
+}
+
+input {
+display: none;
+appearance: none;
+}

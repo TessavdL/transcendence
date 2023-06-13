@@ -1,5 +1,5 @@
-import { Injectable, InternalServerErrorException, StreamableFile } from '@nestjs/common';
-import { Achievements, ActivityStatus, AllOtherUsers, FriendStatus, MatchHistory, User } from '@prisma/client';
+import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, StreamableFile } from '@nestjs/common';
+import { Prisma, Achievements, ActivityStatus, AllOtherUsers, FriendStatus, User, MatchHistory } from '@prisma/client';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
@@ -20,18 +20,21 @@ export class UserService {
 	}
 
 	async getUserListExceptSelf(user: User): Promise<(User & { allOtherUsers: AllOtherUsers[]; })[]> {
-		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.prisma.user.findMany({
-			where: {
-				NOT: {
-					intraId: user.intraId,
+		try {
+			const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.prisma.user.findMany({
+				where: {
+					NOT: {
+						intraId: user.intraId,
+					},
 				},
-			},
-			include: {
-				allOtherUsers: true,
-			},
-		});
-
-		return (userlist);
+				include: {
+					allOtherUsers: true,
+				},
+			});
+			return (userlist);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
 	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User & { allOtherUsers: AllOtherUsers[]; }): Promise<UserElement> {
@@ -80,7 +83,12 @@ export class UserService {
 			});
 		}
 		catch (error) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User to block not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -99,7 +107,12 @@ export class UserService {
 			});
 		}
 		catch (error) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User to unblock not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -133,7 +146,12 @@ export class UserService {
 			});
 		}
 		catch (error) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User to befriend not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -163,7 +181,12 @@ export class UserService {
 			});
 		}
 		catch (error) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User to friend request not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -176,7 +199,12 @@ export class UserService {
 			});
 			return user.activityStatus;
 		} catch (error: any) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -197,7 +225,12 @@ export class UserService {
 			});
 			return (user.activityStatus);
 		} catch (error: any) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -245,7 +278,12 @@ export class UserService {
 			});
 			return (user);
 		} catch (error: any) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('User not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -297,8 +335,16 @@ export class UserService {
 			});
 			await this.updateUsernameInMatchHistory(user, newUsername);
 			this.achievementsService.checkChangedName(updatedUser);
-		} catch (error: any) {
-			throw new Error(error);
+		} catch (error) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Can\'t update username, user doesn\'t exist');
+				}
+				if (error.code === 'P2002') {
+					throw new ForbiddenException(`Username change failed, the following username is already taken: ${newUsername}`);
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 
@@ -340,7 +386,12 @@ export class UserService {
 			});
 			this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
-			throw new Error(error);
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to upload avatar');
+				}
+			}
+			throw new InternalServerErrorException(error.message);
 		}
 	}
 }
