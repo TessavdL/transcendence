@@ -23,6 +23,7 @@ export interface Message {
 	name: string;
 	avatar: string;
 	text: string;
+	isLink: boolean;
 }
 
 export interface User {

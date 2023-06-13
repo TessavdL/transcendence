@@ -1,11 +1,10 @@
 import { OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit, SubscribeMessage, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { MatchmakingService } from './matchmaking.service';
 import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { JwtStrategy } from 'src/auth/strategy';
 import { AuthService } from 'src/auth/auth.service';
 import { User } from '@prisma/client';
-import { SharedService } from '../game.shared.service';
+import { GameSharedService } from '../game.shared.service';
 
 @WebSocketGateway({
 	cors: {
@@ -18,7 +17,7 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 	constructor(
 		private readonly authService: AuthService,
 		private readonly jwtStrategy: JwtStrategy,
-		private sharedService: SharedService,
+		private sharedService: GameSharedService,
 		// private readonly matchmakingService: MatchmakingService,
 	) {
 		this.otherclient = '';

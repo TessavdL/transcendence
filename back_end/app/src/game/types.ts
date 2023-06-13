@@ -4,6 +4,7 @@ export interface Game {
 	ballPosition: { top: number, left: number };
 	ballVelocity: { x: number, y: number };
 	gameStarted: boolean;
+	gameEnded: boolean;
 	player1Score: number;
 	player2Score: number;
 }

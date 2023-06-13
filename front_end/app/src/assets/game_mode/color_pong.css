@@ -1,0 +1,104 @@
+
+.pong-game-color::before {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 50%;
+	border-left: 8px solid white;
+}
+.pong-game-color {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	height: 600px;
+	width: 800px;
+	background-size: contain;
+	background-position: center;
+	background: linear-gradient(315deg,
+			rgb(0, 101, 52) 3%,
+			rgb(206, 162, 60) 38%,
+			rgb(127, 48, 238) 68%,
+			rgba(255, 25, 25, 1) 98%);
+	animation: gradient 12s ease infinite;
+	background-size: 400% 400%;
+	background-attachment: fixed;
+	display: flex;
+	border-top: 8px solid rgb(249, 248, 248);
+	border-bottom: 8px solid rgb(253, 251, 251);
+	border-left: 8px solid rgb(253, 251, 251);
+	border-right: 8px solid rgb(253, 251, 251);
+}
+
+.scoreboard-color {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	position: absolute;
+	top: 20px;
+	left: 20px;
+	right: 20px;
+}
+
+.score-player1-color,
+.score-player2-color {
+	font-size: 40px;
+	font-weight: normal;
+	color: rgb(217, 250, 32);
+	font-family: "excellent";
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 0%;
+	}
+
+	50% {
+		background-position: 100% 100%;
+	}
+
+	100% {
+		background-position: 0% 0%;
+	}
+}
+
+.wave {
+	position: fixed;
+	width: 150%;
+	height: 16em;
+	animation: wave 15s -2s linear infinite;
+	transform: translate3d(0, 0, 0);
+	opacity: 0.8;
+	bottom: 0;
+	left: 0;
+	z-index: -1;
+}
+
+.game-over-color-canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+}
+
+.game-over-color-canvas h2 {
+	font-family: "arcadeFont";
+	font-size: 64px;
+	color: white;
+	margin-bottom: 16px;
+}
+
+.game-over-color-canvas p {
+	font-family: "arcadeFont";
+	font-size: 48px;
+	color: white;
+}
+

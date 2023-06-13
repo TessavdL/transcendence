@@ -56,8 +56,9 @@ export class GameGateway
 		roomName: string,
 	}) {
 		const newBallPosition = this.gameService.ballMovement(object.gameStatus);
-		client.emit('updategameStatus', newBallPosition);
-		client.to(object.roomName).emit('updategameStatus', newBallPosition);
+		// client.emit('updategameStatus', newBallPosition);
+		// client.to(object.roomName).emit('updategameStatus', newBallPosition);
+		this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
 	}
 
 	@SubscribeMessage('assignPlayers')
@@ -71,5 +72,11 @@ export class GameGateway
 	handleStartGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
 		client.emit('gameStarted');
 		client.to(roomname).emit('gameStarted');
+		console.log('game started');
+	}
+
+	@SubscribeMessage('endGame')
+	endGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
+		client.to(roomname).emit('gameEnded');
 	}
 }

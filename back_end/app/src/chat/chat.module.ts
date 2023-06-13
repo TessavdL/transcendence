@@ -12,6 +12,7 @@ import { RoleModule } from './role/role.module';
 import { MemberModule } from './member/member.module';
 import { MessageModule } from './message/message.module';
 import { PunishmentModule } from './punishment/punishment.module';
+import { GameModule } from 'src/game/game.module';
 
 @Module({
 	imports: [
@@ -24,6 +25,7 @@ import { PunishmentModule } from './punishment/punishment.module';
 		MemberModule,
 		MessageModule,
 		PunishmentModule,
+		GameModule
 	],
 	controllers: [ChatController],
 	providers: [
