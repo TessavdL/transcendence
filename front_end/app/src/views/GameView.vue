@@ -1,12 +1,27 @@
 
 <template>
 	<div>
-		<button @click="toggleColorMode">Switch to Color Mode</button>
-		{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
+		<!-- <button @click="toggleColorMode"></button> -->
+		<input type="checkbox" id="checkbox" @click="toggleColorMode">
+			<label for="checkbox">
+					<div class="s">
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+				</div>
+			</label>
+		{{ isColorMode ? '' : '' }}
+		<div :class=" isColorMode? 'mode-color':'mode'"><h2>Change Game Mode</h2></div>
 		<!-- condition to check if it is color mode thank you dagmar-->
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
 			<div class="start-button-container"
-				v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+				v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -17,7 +32,7 @@
 				</a>
 			</div>
 			<div class="start-button-container"
-				v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
+				v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -40,16 +55,17 @@
 					<span id="player-2-score">{{ game.player2Score }}</span>
 				</div>
 			</div>
-			<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
-			<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'" :style="{ top: game.player1Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
 			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
 				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
 			<div>
-				<div v-if="playerDisconnect" class="game-over-canvas">
+				<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
 					<h2>Game Over</h2>
-					<p>Opponent left the game. You win!</p>
+					<p>Opponent left the game.</p>
+					<p>You win!</p>
 				</div>
-				<div v-else-if="isGameOver" class="game-over-canvas">
+				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
 				<h2>Game Over</h2>
 				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 				<!-- <button @click="toggleGame">Restart</button> -->
@@ -85,6 +101,8 @@ export default {
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
+
+		console.log(game.value?.turnPlayerOne, game.value?.turnPlayerTwo);
 		return { socket, game: computed(() => game.value) };
 	},
 
@@ -95,11 +113,15 @@ export default {
 		},
 		isGameOver() {
 			// Check if the game is over
-			console.log(this.playerDisconnect, 'is Game Over');
-			return this.game.player1Score === 3 || 
-					this.game.player2Score === 3 ||
-					this.playerDisconnect ||
-					this.gameOver;
+			// console.log(this.playerDisconnect, 'is Game Over');
+			// return this.playerDisconnect || this.gameOver || this.game.player1Score === 3 || this.game.player2Score === 3;
+			if (this.playerDisconnect || this.game.player1Score === 3 || this.game.player2Score === 3) {
+				this.gameOver = true;
+				window.removeEventListener('keydown', this.handleEvent);
+				return true;
+			}
+			return false;
+
 		}
 	},
 
@@ -133,12 +155,18 @@ export default {
 			this.gameOver = true;
 			this.playerDisconnect = true;
 		});
+		this.socket.on('disconnectPlayer', () => {
+			console.log('in disconnect');
+			this.socket.disconnect();
+		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
 			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
+			this.game.turnPlayerOne = gameStatus.turnPlayerOne;
+			this.game.turnPlayerTwo = gameStatus.turnPlayerTwo;
 		});
 
 		this.socket.on('updatePaddlePosition', (position: number) => {
@@ -157,7 +185,22 @@ export default {
 				this.movePaddle(position);
 		});
 
-		window.addEventListener('keydown', (event) => {
+		window.addEventListener('keydown', this.handleEvent);
+	},
+
+	beforeRouteLeave() {
+		window.removeEventListener('keydown', this.handleEvent);
+		console.log(this.playerDisconnect, 'beforeRouterLeave');
+		if (this.gameOver === false) {
+			this.socket.emit('endGame', this.roomName);
+		}
+		else 
+			this.socket.disconnect();
+	},
+
+	methods: {
+
+		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
 					movement: 'up',
@@ -176,22 +219,12 @@ export default {
 				};
 				this.socket.emit('movePaddle', data);
 			}
-		});
-		// window.addEventListener('keydown', (event) => {
-		// 	if (event.key === ' ' && !this.gameOver && this.)
-		// 		this.toggleGame();
-		// });
-	},
-
-	beforeRouteLeave() {
-		this.socket.emit('endGame', this.roomName, () => {
-			this.socket.disconnect();
-		});
-		console.log(this.playerDisconnect, 'beforeRouterLeave');
-		this.socket.disconnect();
-	},
-
-	methods: {
+			else if (event.key === ' ' && this.player === 'playerone' && !this.gameOver && !this.game.gameStarted && this.game.turnPlayerOne && !this.game.turnPlayerTwo) 
+				this.toggleGame();
+			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo) 
+				this.toggleGame();
+			console.log(this.gameOver);
+		},
 
 		toggleGame() {
 			if (!this.game.gameStarted) {
@@ -229,6 +262,8 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 				gameEnded: this.game.gameEnded,
+				turnPlayerOne: this.game.turnPlayerOne,
+				turnPlayerTwo: this.game.turnPlayerTwo,
 			};
 			const data = {
 				gameStatus: gameStatus,
@@ -247,7 +282,7 @@ export default {
 @import url("../assets/game_mode/button.css");
 @import url("../assets/game_mode/classic_pong.css");
 @import url("../assets/game_mode/color_pong.css");
-
+@import url("../assets/game_mode/color_toggle.css");
 
 
 @font-face {
@@ -264,6 +299,18 @@ export default {
 @font-face {
 	font-family: "excellent";
 	src: url("../assets/game_images/mexcellent 3d.otf");
+}
+
+.mode h2 {
+	font-family: "arcadeFont";
+	color: rgb(240, 248, 89);
+	top: 200px;
+}
+
+.mode-color h2 {
+	font-family: "excellent";
+	color: rgb(240, 248, 89);
+	top: 200px;
 }
 
 .game-over-canvas {
@@ -322,13 +369,13 @@ export default {
 	max-height: 100%;
 }
 
-.player1-paddle,
+/* .player1-paddle,
 .player2-paddle {
 	position: absolute;
 	width: 15px;
 	height: 80px;
 	background-color: rgb(231, 220, 208);
-}
+} */
 
 .player1-paddle {
 	left: 20px;
@@ -347,7 +394,7 @@ export default {
 	background-color: rgb(33, 34, 32);
 }
 
-.ball-classic {
+/* .ball-classic {
 	position: absolute;
 	width: 20px;
 	height: 20px;
@@ -362,7 +409,7 @@ export default {
 	left: 390px;
 	background-color: white;
 	border-radius: 50%;
-}
+} */
 
 /* body {
 	margin: auto;
@@ -400,4 +447,5 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
-}</style>
+}
+</style>

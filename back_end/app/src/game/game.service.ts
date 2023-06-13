@@ -24,6 +24,8 @@ export class GameService {
 			gameEnded: false,
 			player1Score: 0,
 			player2Score: 0,
+			turnPlayerOne: true,
+			turnPlayerTwo: false,
 		};
 		return (game);
 	}
@@ -95,12 +97,14 @@ export class GameService {
 			gameStatus.ballPosition = { top: 300, left: 150 };
 			gameStatus.ballVelocity = { x: 5, y: 5 };
 			gameStatus.player2Score++;
+			gameStatus.turnPlayerOne = true;
+			gameStatus.turnPlayerTwo = false;
 			gameStatus.gameStarted = false;
 			if (gameStatus.player2Score >= 3) {
 				gameStatus.gameEnded = true;
 			}
 		}
-		else if (ballPosition.left + 20 >= 780 ||
+		else if (ballPosition.left + 20 >= 770 || //old value 780
 			ballPosition.left + 20 >= paddleTwoLeft &&
 			ballPosition.left + 20 <= (paddleTwoLeft - 15) &&
 			ballPosition.top >= paddleTwoTop &&
@@ -108,6 +112,8 @@ export class GameService {
 			gameStatus.ballPosition = { top: 300, left: 650 };
 			gameStatus.ballVelocity = { x: -5, y: -5 };
 			gameStatus.player1Score++;
+			gameStatus.turnPlayerOne = false;
+			gameStatus.turnPlayerTwo = true;
 			gameStatus.gameStarted = false;
 			if (gameStatus.player1Score >= 3) {
 				gameStatus.gameEnded = true;

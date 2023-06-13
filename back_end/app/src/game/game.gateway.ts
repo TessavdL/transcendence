@@ -78,5 +78,7 @@ export class GameGateway
 	@SubscribeMessage('endGame')
 	endGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
 		client.to(roomname).emit('gameEnded');
+		// client.to(roomname).emit('endGame');
+		client.emit('disconnectPlayer');
 	}
 }
