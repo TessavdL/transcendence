@@ -290,6 +290,7 @@ async function setPassword() {
     };
     try {
         await axiosInstance.patch('chat/setPassword', data);
+        socket.emit('channelUpdated');
         setChannelSettingsToFalse();
     } catch (error: any) {
         toast.add({
@@ -310,6 +311,7 @@ async function removePassword() {
     console.log(data);
     try {
         await axiosInstance.patch('chat/deletePassword', data);
+        socket.emit('channelUpdated');
         setChannelSettingsToFalse();
     } catch (error: any) {
         toast.add({

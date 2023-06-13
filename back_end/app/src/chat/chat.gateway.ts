@@ -271,4 +271,11 @@ export class ChatGateway
 			client.emit('error', error?.message || 'An error occured in chat.gateway muteUser');
 		}
 	}
+
+	@UseGuards(ClientGuard)
+	@SubscribeMessage('channelUpdated')
+	channelUpdated(@ConnectedSocket() client: Socket) {
+		console.log('in channelUpdated');
+		client.emit('updateChannels');
+	}
 }
