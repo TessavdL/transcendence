@@ -54,8 +54,10 @@
                                 alt="avatar">
                             <h5 class="msg-usernaem">{{ msg.name }}</h5>
                         </div>
-                        <div class="msg-text">
-                            <p>{{ msg.text }}</p>
+                        <div class="mes-text">
+                            <p v-if="!msg.isLink">{{ msg.text }}</p>
+                            <p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(msg.text)">{{
+                                'here' }}</a> to join</p>
                         </div>
                     </div>
                 </div>
@@ -105,7 +107,6 @@
                                             <RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
                                                 View Profile</RouterLink>
                                         </a></li>
-                                    <li><a class="dropdown-item" href="#">Invite to Game</a></li>
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
                                             @click="banUser(member.intraId, activeChannel)">Ban</a></li>
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
@@ -119,14 +120,16 @@
                                     <li v-if="member.role == 'ADMIN'"><a class="dropdown-item" href="#"
                                             @click="demoteAdmintoMember(member.intraId, activeChannel)">Demote admin to
                                             member</a></li>
+                                    <li><a class="dropdown-item" href="#" @click="inviteToGame(member.intraId)">Invite
+                                            to Game</a></li>
                                 </ul>
                                 <ul class="dropdown-menu" aria-labelledby="user-dropdown" v-else>
+                                    <li><a class="dropdown-item" href="#" @click="inviteToGame(member.intraId)">Invite
+                                            to Game</a></li>
                                     <li><a class="dropdown-item" href="#">
                                             <RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
                                                 View Profile</RouterLink>
                                         </a></li>
-                                    <li><a class="dropdown-item" @click="inviteToGame(member.intraId, activeChannel)">Invite
-                                            to Game</a></li>
                                 </ul>
                             </div>
                         </div>
@@ -222,6 +225,49 @@ onMounted(async () => {
         allMessages.value.push(data);
         $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
     });
+
+    socket.on('createGame', (data) => {
+        console.log(data);
+        const gameid = data;
+        if (gameid === undefined || gameid === null) {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: errorMessage(ErrorType.GENERAL),
+                life: 3000,
+            });
+            return;
+        }
+        console.log('Redirecting to game', gameid);
+        router.push({
+            name: 'Game',
+            params: { gameid: gameid },
+        });
+    });
+
+    socket.on('inviteForGame', (data) => {
+        console.log("We are in inviteForGame");
+        const gameid = data.gameId;
+        console.log(gameid);
+        if (gameid === undefined || gameid === null) {
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: errorMessage(ErrorType.GENERAL),
+                life: 3000,
+            });
+            return;
+        }
+        const invite: Message = {
+            channelName: '',
+            intraId: data.user.intraId,
+            name: data.user.name,
+            avatar: data.user.avatar,
+            text: gameid,
+            isLink: true,
+        }
+        allMessages.value.push(invite);
+    });
 });
 
 onBeforeRouteLeave(() => {
@@ -230,6 +276,7 @@ onBeforeRouteLeave(() => {
     if (member.value) {
         leaveChannel(activeChannel.value);
     }
+    $('.modal-backdrop').remove();
 });
 
 const isReady = computed(() => {
@@ -465,8 +512,9 @@ async function demoteAdmintoMember(otherIntraId: number, channelName: string): P
     }
 }
 
-function inviteToGame(otherIntraId: number, channelName: string): void {
-    // Jelle code here
+function inviteToGame(otherIntraId: number): void {
+    console.log('in invite to game', otherIntraId);
+    socket.emit('gameChallenge', { otherIntraId: otherIntraId });
 }
 
 async function abandonChannel(channelName: string) {
@@ -490,6 +538,14 @@ async function abandonChannel(channelName: string) {
 function leaveChannel(channelName: string): void {
     socket.emit('leaveChannel', channelName);
 }
+
+function navigateToLink(gameid: string) {
+    router.push({
+        name: 'Game',
+        params: { gameid: gameid },
+    });
+}
+
 
 </script>
 

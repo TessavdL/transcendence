@@ -55,6 +55,7 @@ export class MessageService {
 					name: message.user.name,
 					avatar: message.user.avatar,
 					text: message.text,
+					isLink: false,
 				});
 			}
 		});
@@ -75,6 +76,7 @@ export class MessageService {
 			name: user.name,
 			avatar: user.avatar,
 			text: text,
+			isLink: false,
 		};
 
 		try {

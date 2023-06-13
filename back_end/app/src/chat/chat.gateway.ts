@@ -288,9 +288,10 @@ export class ChatGateway
 		}
 	}
 
-    @UseGuards(ClientGuard)
-    @SubscribeMessage('gameChallenge')
-    async gameChallenge(@ConnectedSocket() client: Socket, @MessageBody() data: {otherIntraId: number}): Promise<void> {
+	@UseGuards(ClientGuard)
+	@SubscribeMessage('gameChallenge')
+	async gameChallenge(@ConnectedSocket() client: Socket, @MessageBody() data: { otherIntraId: number }): Promise<void> {
+		console.log('here');
 		const intraId = this.sharedService.clientToIntraId.get(client.id);
 		const user: User = await this.authService.findUserById(intraId);
 		const gameId = intraId + "+" + data.otherIntraId;
@@ -304,11 +305,11 @@ export class ChatGateway
 		client.emit("createGame", gameId);
 		const otherClientId = this.findOtherClientId(data.otherIntraId);
 		console.log(otherClientId);
-		const info: { gameId: string, user: User} = {
+		const info: { gameId: string, user: User } = {
 			gameId: gameId,
 			user: user,
 		};
-		console.log({info});
+		console.log({ info });
 		client.to(otherClientId).emit("inviteForGame", info);
-    }
+	}
 }
