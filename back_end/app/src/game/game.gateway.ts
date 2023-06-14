@@ -50,15 +50,35 @@ export class GameGateway
 		}
 	}
 
-	@SubscribeMessage('ballMovement')
-	handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
-		gameStatus: Game,
-		roomName: string,
+	// @SubscribeMessage('ballMovement')
+	// handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
+	// 	gameStatus: Game,
+	// 	roomName: string,
+	// }) {
+	// 	const newBallPosition = this.gameService.ballMovement(object.gameStatus);
+	// 	// client.emit('updategameStatus', newBallPosition);
+	// 	// client.to(object.roomName).emit('updategameStatus', newBallPosition);
+	// 	this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
+	// }
+
+@SubscribeMessage('ballMovement')
+handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
+	gameStatus: Game,
+	roomName: string,
 	}) {
-		const newBallPosition = this.gameService.ballMovement(object.gameStatus);
-		// client.emit('updategameStatus', newBallPosition);
-		// client.to(object.roomName).emit('updategameStatus', newBallPosition);
-		this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
+		const newPositionPlayerOne = object.gameStatus.player1Position; //current position
+		const newPositionPlayerTwo = object.gameStatus.player2Position;
+		const updatedGameStatus = { ...object.gameStatus }; // Create a copy of the game status
+		if (object.gameStatus.turnPlayerOne) {
+			updatedGameStatus.player1Position = newPositionPlayerOne;
+		} 
+		else if (object.gameStatus.turnPlayerTwo) {
+			updatedGameStatus.player2Position = newPositionPlayerTwo;
+		}
+		const newBallPosition = this.gameService.ballMovement(updatedGameStatus, object.roomName);
+		// this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
+		client.emit('updategameStatus', newBallPosition);
+		client.to(object.roomName).emit('updategameStatus', newBallPosition);
 	}
 
 	@SubscribeMessage('assignPlayers')
@@ -76,9 +96,20 @@ export class GameGateway
 	}
 
 	@SubscribeMessage('endGame')
-	endGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
-		client.to(roomname).emit('gameEnded');
-		// client.to(roomname).emit('endGame');
+	endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
+		gameStatus: Game,
+		roomName: string,
+		player: string,
+		}) {
+		client.to(object.roomName).emit('gameEnded');
+		if (object.player === 'playerone') {
+			object.gameStatus.player2Score = 3;
+			object.gameStatus.player1Score = 0;
+		} else {
+			object.gameStatus.player1Score = 3;
+			object.gameStatus.player2Score = 0;
+		}
+		this.gameService.endGame(object.gameStatus, object.roomName);
 		client.emit('disconnectPlayer');
 	}
 }

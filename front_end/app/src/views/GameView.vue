@@ -1,4 +1,3 @@
-
 <template>
 	<div>
 		<!-- <button @click="toggleColorMode"></button> -->
@@ -193,7 +192,12 @@ export default {
 		window.removeEventListener('keydown', this.handleEvent);
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		if (this.gameOver === false) {
-			this.socket.emit('endGame', this.roomName);
+			const data = {
+				gameStatus: this.game,
+				roomName: this.roomName,
+				players: this.player
+			}
+			this.socket.emit('endGame', data);
 		}
 		else 
 			this.socket.disconnect();
@@ -246,7 +250,9 @@ export default {
 		
 		update() {
 			if (!this.game.gameStarted)
+			{
 				return;
+			}
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
