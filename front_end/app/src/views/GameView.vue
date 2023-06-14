@@ -194,6 +194,7 @@ export default {
 			const data = {
 				gameStatus: this.game,
 				roomName: this.roomName,
+				players: this.player
 			}
 			this.socket.emit('endGame', data);
 		}

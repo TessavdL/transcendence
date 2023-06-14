@@ -99,9 +99,16 @@ handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
 	endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
 		gameStatus: Game,
 		roomName: string,
+		player: string,
 		}) {
-		console.log({object});
 		client.to(object.roomName).emit('gameEnded');
+		if (object.player === 'playerone') {
+			object.gameStatus.player2Score = 3;
+			object.gameStatus.player1Score = 0;
+		} else {
+			object.gameStatus.player1Score = 3;
+			object.gameStatus.player2Score = 0;
+		}
 		this.gameService.endGame(object.gameStatus, object.roomName);
 		client.emit('disconnectPlayer');
 	}
