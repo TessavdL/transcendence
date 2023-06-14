@@ -1,3 +1,4 @@
+import { HOST } from "@/constants/constants";
 import { io, Socket } from "socket.io-client";
 
 class SocketioService {
@@ -5,7 +6,7 @@ class SocketioService {
     constructor() {
     }
     setupSocketConnection() {
-        this.socket = io("http://localhost:3001", {
+        this.socket = io(`http://${HOST}:3001`, {
             transports: ["websocket"],
             withCredentials: true,
         });

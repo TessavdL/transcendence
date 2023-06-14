@@ -25,9 +25,10 @@
 </template>
 
 <script setup lang="ts">
+import { HOST } from '@/constants/constants';
 import { ref, defineProps } from 'vue';
 
-const avatarPrefix = ref("http://localhost:3001/user/get_avatar?avatar=");
+const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 
 const ladder = ref([
     { userName: 'John', userAvatar: 'src/assets/default_avatars/Cody_Sleepy.jpeg', win: 5, loss: 10, rank: 1 },

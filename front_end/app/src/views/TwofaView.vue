@@ -10,6 +10,7 @@
 </template>
 
 <script lang="ts">
+import { HOST } from '@/constants/constants';
 import axios from 'axios';
 
 export default {
@@ -36,7 +37,7 @@ export default {
                 intraId: this.intraId,
             };
             try {
-                await axios.patch('http://localhost:3001/twofa/authenticate', data);
+                await axios.patch(`http://${HOST}:3001/twofa/authenticate`, data);
                 this.$router.push({ name: "Home" });
             } catch (error: any) {
                 console.log(error);

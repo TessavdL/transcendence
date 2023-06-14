@@ -74,7 +74,7 @@ export class GameService {
 			left: gameStatus.ballPosition.left + gameStatus.ballVelocity.x,
 		};
 		// Check for collision with top or bottom walls
-		if (ballPosition.top <= 0 || ballPosition.top >= 565) {
+		if (ballPosition.top <= 0 || ballPosition.top >= 565) {       // T suggestion: move after check for score
 			gameStatus.ballVelocity.y = -gameStatus.ballVelocity.y;
 		}
 		// Check for collision with left or right walls
@@ -106,6 +106,7 @@ export class GameService {
 				gameStatus.gameEnded = true;
 				this.endGame(gameStatus, roomName);
 			}
+			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
 		else if (ballPosition.left + 20 >= 770 || //old value 780
 			ballPosition.left + 20 >= paddleTwoLeft &&
@@ -122,30 +123,33 @@ export class GameService {
 				gameStatus.gameEnded = true;
 				this.endGame(gameStatus, roomName);
 			}
+			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
 		else {
 			gameStatus.ballPosition = ballPosition;
 		}
+		console.log('start')
 		// Check for collision with player1 paddle
 		// if (ballPosition.left <= paddleOneRight + 15 &&
 		// 	ballPosition.left >= paddleOneLeft &&
 		// 	ballPosition.top + 20 >= paddleOneTop &&
 		// 	ballPosition.top + 20 <= paddleOneBottom) 
-		if (ballPosition.left <= paddleOneRight + 15 &&
+		if (gameStatus.ballVelocity.x < 0 &&                        // T added check for ball direction (if ball direction is positive it will never be a collision)
+			ballPosition.left <= paddleOneRight + 15 &&
 			ballPosition.left >= paddleOneLeft &&
 			ballPosition.top + 20 >= paddleOneTop &&
-			ballPosition.top <= paddleOneBottom)	{
+			ballPosition.top <= paddleOneBottom) {
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player one');
-			}
+		}
 		// Check for collision with player2 paddle
-		if (ballPosition.left + 20 >= paddleTwoLeft &&          // Right edge of the ball
+		else if (gameStatus.ballVelocity.x > 0 &&                // T added check for ball direction (if ball direction is negative it will never be a collision)
+			ballPosition.left + 20 >= paddleTwoLeft &&          // Right edge of the ball
 			ballPosition.left <= paddleTwoRight + 15 &&               // Left edge of the paddle
-			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball
+			(ballPosition.top + 20 && ballPosition.left + 20) >= paddleTwoTop &&             // Bottom edge of the ball, T (added ballPoistion.top + 20 && ball position.left + 20)
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player two');
-			}
+		}
+		console.log('end')
 		return (gameStatus);
 	}
 
@@ -235,7 +239,7 @@ export class GameService {
 					elo: newWinnerElo,
 				},
 			});
-		} catch(error: any) {
+		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
 					throw new NotFoundException('Unable to update achievement, user not found');
@@ -258,7 +262,7 @@ export class GameService {
 					elo: newLoserElo,
 				},
 			});
-		} catch(error: any) {
+		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
 					throw new NotFoundException('Unable to update achievement, user not found');

@@ -1,10 +1,12 @@
+import { HOST } from "@/constants/constants";
+
 export enum BadgesType {
     CAHMP,
     SUPER_WINNER,
     SUPER_LOSSER,
 }
 
-const urlBadges = "http://localhost:5173/src/assets/badges/";
+const urlBadges = `http://${HOST}:5173/src/assets/badges/`;
 
 export function badgesPicture(badgeType: BadgesType | undefined): string {
     switch (badgeType) {

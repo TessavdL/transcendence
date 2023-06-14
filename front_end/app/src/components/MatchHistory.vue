@@ -9,6 +9,7 @@
 <script setup lang="ts">
 import { ref, defineProps } from 'vue';
 import MiniProfile from './MiniProfile.vue';
+import { HOST } from '@/constants/constants';
 
 const props = defineProps({
     currentName: String,
@@ -16,7 +17,7 @@ const props = defineProps({
     matchRecord: Object,
 });
 
-const avatarPrefix = ref("http://localhost:3001/user/get_avatar?avatar=");
+const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 
 </script>
 

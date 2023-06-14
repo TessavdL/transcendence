@@ -43,13 +43,14 @@ export class AuthService {
 	): Promise<void> {
 		console.log(`Hello ${user.intraName}, you have logged in!`);
 
-		const token = await this.signToken(user);
+		const token: { access_token: string } = await this.signToken(user);
 
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: 'localhost',
+			domain: `${process.env.HOST}`,
 		});
-		res.redirect(302, 'http://localhost:5173');
+
+		res.redirect(`http://${process.env.HOST}:5173`);
 	}
 
 	async setBearerTokenForTwofa(
@@ -62,7 +63,7 @@ export class AuthService {
 
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: 'localhost',
+			domain: `${process.env.HOST}`,
 		});
 	}
 
@@ -123,7 +124,10 @@ export class AuthService {
 	logout(user: User, @Res({ passthrough: true }) res: Response) {
 		console.log(`Hello ${user.intraName}, you are logged out!`);
 
-		res.cookie('jwt', '', { httpOnly: true, domain: 'localhost' });
+		res.cookie('jwt', '', {
+			httpOnly: true,
+			domain: `http://${process.env.HOST}:5173`
+		});
 	}
 
 	async createUser(profile: any): Promise<User> | null {

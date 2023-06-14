@@ -1,14 +1,13 @@
 <template>
-    <div class="logout">
-        <div v-if="isVisible">
-            <p class="confirm-msg">Are you sure?</p>
-            <button type="button" class="btn btn-outline-light logout-button" @click="logOut">
-              <i class="bi bi-box-arrow-in-right" style="font-size: 1.2em;"></i> 
-              Log Out
-            </button>
-        </div>
+  <div class="logout">
+    <div v-if="isVisible">
+      <p class="confirm-msg">Are you sure?</p>
+      <button type="button" class="btn btn-outline-light logout-button" @click="logOut">
+        <i class="bi bi-box-arrow-in-right" style="font-size: 1.2em;"></i>
+        Log Out
+      </button>
     </div>
-
+  </div>
 </template>
 
 <script  setup lang="ts">
@@ -19,6 +18,7 @@ import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import { Socket } from "socket.io-client";
+import { HOST } from "@/constants/constants";
 
 const socket: Socket = inject("socketioInstance") as Socket;
 const toast = useToast();
@@ -36,7 +36,7 @@ function redirectToHome() {
 
 async function logOut() {
   await axios
-    .get("http://localhost:3001/auth/logout", {
+    .get(`http://${HOST}:3001/auth/logout`, {
       withCredentials: true,
     })
     .then(() => {

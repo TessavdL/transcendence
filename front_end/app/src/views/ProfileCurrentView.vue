@@ -5,7 +5,7 @@
                 <ProfileSideBar :userProfile="userProfile" />
 
                 <div class="profile-buttons">
-                    <button type="button" class="btn btn-outline-primary watch-button" 
+                    <button type="button" class="btn btn-outline-primary watch-button"
                         style="color:#ffffff; background-color: #094b5f; border: 2px solid #ffffff;"
                         @click="$router.push('/profileedit')">
                         Edit Profile
@@ -14,7 +14,8 @@
             </div>
 
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username" :currentAvatar="userProfile.avatar" />
+                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username"
+                    :currentAvatar="userProfile.avatar" />
             </div>
 
         </div>
@@ -26,6 +27,7 @@ import axios from "axios";
 import { ref, onMounted } from "vue";
 import ProfileSideBar from "@/components/ProfileSideBar.vue";
 import ProfileMainTab from "@/components/ProfileMainTab.vue";
+import { HOST } from "@/constants/constants";
 
 const userProfile = ref({
     intraId: 0,
@@ -43,12 +45,12 @@ onMounted(async () => {
 
 async function getCurrentUserProfile() {
     await axios
-        .get("http://localhost:3001/user", {
+        .get(`http://${HOST}:3001/user`, {
             withCredentials: true,
         })
-        .then(async (response) =>  {
+        .then(async (response) => {
             userProfile.value.intraId = response.data.intraId;
-            userProfile.value.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar;
+            userProfile.value.avatar = `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar;
             userProfile.value.username = response.data.name;
             userProfile.value.activityStatus = response.data.activityStatus;
             // userProfile.value.win = response.data.win;
@@ -63,7 +65,6 @@ async function getCurrentUserProfile() {
 </script>
 
 <style scoped>
-
 .profile-sidebar {
     position: fixed;
     width: 200px;
@@ -74,7 +75,8 @@ async function getCurrentUserProfile() {
     display: block;
     padding: 20px;
     overflow-x: hidden;
-    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    overflow-y: auto;
+    /* Scrollable contents if viewport is shorter than content. */
     color: #ffffff;
     background-color: #0a242f;
 }
@@ -84,5 +86,4 @@ async function getCurrentUserProfile() {
     padding-right: 0px;
     color: #FFFF;
 }
-
 </style>

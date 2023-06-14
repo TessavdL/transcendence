@@ -1,13 +1,12 @@
 <template>
     <div class="block-buttons" :key="componentKey">
         <div class="d-grid gap-2" v-if="blocked === false">
-            <button type="button" class="btn btn-outline-light"
-                @click="blockUser">
+            <button type="button" class="btn btn-outline-light" @click="blockUser">
                 Block</button>
         </div>
         <div class="d-grid gap-2" v-else>
             <button type="button" class="btn btn-outline-light" style="color:#094b5f; background-color: #aab9ba;"
-            @click="unblockUser">
+                @click="unblockUser">
                 Unblock</button>
         </div>
     </div>
@@ -20,6 +19,7 @@ import { ref, defineProps } from 'vue';
 import { useConfirm } from "primevue/useconfirm";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
+import { HOST } from "@/constants/constants";
 
 const confirm = useConfirm();
 const toast = useToast();
@@ -38,21 +38,21 @@ let blocked = props.blockedState;
 
 const blockUser = () => {
     confirm.require({
-      message: "Are you sure you want block this user?",
-      header: "Confirmation",
-      accept: () => {
-        sendBlockRequest("/block_user");
-      },
+        message: "Are you sure you want block this user?",
+        header: "Confirmation",
+        accept: () => {
+            sendBlockRequest("/block_user");
+        },
     });
 }
 
 const unblockUser = () => {
     confirm.require({
-      message: "Are you sure you want unblock this user?",
-      header: "Confirmation",
-      accept: () => {
-        sendBlockRequest("/unblock_user");
-      },
+        message: "Are you sure you want unblock this user?",
+        header: "Confirmation",
+        accept: () => {
+            sendBlockRequest("/unblock_user");
+        },
     });
 }
 
@@ -62,10 +62,10 @@ const blockRequestBody = {
 
 async function sendBlockRequest(endpoint: String) {
     await axios
-        .post("http://localhost:3001/user" + endpoint, blockRequestBody, {
+        .post(`http://${HOST}:3001/user` + endpoint, blockRequestBody, {
             withCredentials: true,
         })
-        .then(async (response) =>  {
+        .then(async (response) => {
             blocked = !blocked;
             componentRerender();
             toast.add({
@@ -81,8 +81,8 @@ async function sendBlockRequest(endpoint: String) {
                 summary: "Error",
                 detail: errorMessage(ErrorType.GENERAL),
                 life: 3000,
-            });        
-    });
+            });
+        });
 };
 
 </script>
@@ -92,5 +92,4 @@ async function sendBlockRequest(endpoint: String) {
     border-radius: 10px;
     margin-top: 5px;
 }
-
 </style>

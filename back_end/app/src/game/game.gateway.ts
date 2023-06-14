@@ -6,7 +6,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
 	cors: {
-		origin: 'http://localhost:5173',
+		origin: `http://${process.env.HOST}:5173`,
 		credentials: true,
 	},
 	namespace: "pong-game",
