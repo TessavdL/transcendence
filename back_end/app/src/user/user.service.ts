@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, InternalServerErrorException, NotFoundException, StreamableFile } from '@nestjs/common';
-import { Prisma, Achievements, ActivityStatus, AllOtherUsers, FriendStatus, User } from '@prisma/client';
+import { Prisma, Achievements, ActivityStatus, AllOtherUsers, FriendStatus, User, MatchHistory } from '@prisma/client';
 import { createReadStream } from 'fs';
 import { join } from 'path';
 import { AuthService } from 'src/auth/auth.service';
@@ -300,6 +300,39 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
+	async getMatchHistory(intraId: number): Promise<MatchHistory[]> {
+		try {
+			const matchHistory: MatchHistory[] = await this.prisma.matchHistory.findMany({
+				where: {
+					OR: [
+						{
+							winnerIntraId: intraId,
+						},
+						{
+							loserIntraId: intraId,
+						},
+					],
+				},
+			});
+			return (matchHistory);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async getLeaderboard(): Promise<User[]> {
+		try {
+			const userArray: User[] = await this.prisma.user.findMany({
+				orderBy: {
+					elo: 'desc',
+				},
+			});
+			return (userArray);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async updateUsername(user: User, newUsername: string) {
 		try {
 			const updatedUser: (User & { achievements: Achievements }) = await this.prisma.user.update({
@@ -313,6 +346,7 @@ export class UserService {
 					achievements: true,
 				},
 			});
+			await this.updateUsernameInMatchHistory(user, newUsername);
 			this.achievementsService.checkChangedName(updatedUser);
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -323,6 +357,29 @@ export class UserService {
 					throw new ForbiddenException(`Username change failed, the following username is already taken: ${newUsername}`);
 				}
 			}
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async updateUsernameInMatchHistory(user: User, newUsername: string): Promise<void> {
+		try {
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					winnerIntraId: user.intraId,
+				},
+				data: {
+					winnerName: newUsername,
+				}
+			});
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					loserIntraId: user.intraId,
+				},
+				data: {
+					loserName: newUsername,
+				}
+			});
+		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}

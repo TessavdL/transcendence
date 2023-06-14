@@ -198,8 +198,7 @@ export default {
 			this.socket.disconnect();
 	},
 
-	methods: {
-
+	methods: { 		
 		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
