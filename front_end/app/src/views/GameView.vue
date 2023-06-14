@@ -191,7 +191,11 @@ export default {
 		window.removeEventListener('keydown', this.handleEvent);
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		if (this.gameOver === false) {
-			this.socket.emit('endGame', this.roomName);
+			const data = {
+				gameStatus: this.game,
+				roomName: this.roomName,
+			}
+			this.socket.emit('endGame', data);
 		}
 		else 
 			this.socket.disconnect();

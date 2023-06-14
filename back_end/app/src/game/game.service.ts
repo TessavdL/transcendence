@@ -68,7 +68,7 @@ export class GameService {
 		return (false);
 	}
 
-	ballMovement(gameStatus: Game): Game {
+	ballMovement(gameStatus: Game, roomName: string): Game {
 		const ballPosition = {
 			top: gameStatus.ballPosition.top + gameStatus.ballVelocity.y,
 			left: gameStatus.ballPosition.left + gameStatus.ballVelocity.x,
@@ -104,6 +104,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player2Score >= 3) {
 				gameStatus.gameEnded = true;
+				this.endGame(gameStatus, roomName);
 			}
 		}
 		else if (ballPosition.left + 20 >= 770 || //old value 780
@@ -119,6 +120,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player1Score >= 3) {
 				gameStatus.gameEnded = true;
+				this.endGame(gameStatus, roomName);
 			}
 		}
 		else {

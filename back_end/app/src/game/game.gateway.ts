@@ -75,7 +75,7 @@ handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
 		else if (object.gameStatus.turnPlayerTwo) {
 			updatedGameStatus.player2Position = newPositionPlayerTwo;
 		}
-		const newBallPosition = this.gameService.ballMovement(updatedGameStatus);
+		const newBallPosition = this.gameService.ballMovement(updatedGameStatus, object.roomName);
 		// this.server.to(object.roomName).emit('updategameStatus', newBallPosition);
 		client.emit('updategameStatus', newBallPosition);
 		client.to(object.roomName).emit('updategameStatus', newBallPosition);
@@ -96,9 +96,13 @@ handleBallMovement(@ConnectedSocket() client: Socket, @MessageBody() object: {
 	}
 
 	@SubscribeMessage('endGame')
-	endGame(@ConnectedSocket() client: Socket, @MessageBody() roomname: string) {
-		client.to(roomname).emit('gameEnded');
-		// client.to(roomname).emit('endGame');
+	endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
+		gameStatus: Game,
+		roomName: string,
+		}) {
+		console.log({object});
+		client.to(object.roomName).emit('gameEnded');
+		this.gameService.endGame(object.gameStatus, object.roomName);
 		client.emit('disconnectPlayer');
 	}
 }
