@@ -50,18 +50,22 @@
 import axios from "axios";
 import { useRouter } from "vue-router";
 import { ref, inject, onMounted } from "vue";
-import type { Channel, DmChannel, Punishment } from "../types/ChatType";
+import type { Channel, DMChannel, Punishment } from "../types/ChatType";
 import type { Socket } from "socket.io-client";
-import { assertVariableDeclarator } from "@babel/types";
 
 const myChannels = ref<Channel[]>([]);
-const myDms = ref<DmChannel[]>([]);
+const myDms = ref<DMChannel[]>([]);
 const socket = inject("socketioInstance") as Socket;
 const axiosInstance = axios.create({
 	baseURL: 'http://localhost:3001',
 	withCredentials: true,
 });
 
+onMounted(() => {
+	socket.on('channelUpdated', () => {
+		console.log("CHANNEL UPDATED");
+	});
+})
 
 const router = useRouter();
 function openRoute(routePath: string) {

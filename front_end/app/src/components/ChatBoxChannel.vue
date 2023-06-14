@@ -120,11 +120,13 @@
                                     <li v-if="member.role == 'ADMIN'"><a class="dropdown-item" href="#"
                                             @click="demoteAdmintoMember(member.intraId, activeChannel)">Demote admin to
                                             member</a></li>
-                                    <li><a class="dropdown-item" href="#" @click="inviteToGame(member.intraId)">Invite
+                                    <li v-if="isActive(member.intraId)"><a class="dropdown-item" href="#"
+                                            @click="inviteToGame(member.intraId)">Invite
                                             to Game</a></li>
                                 </ul>
                                 <ul class="dropdown-menu" aria-labelledby="user-dropdown" v-else>
-                                    <li><a class="dropdown-item" href="#" @click="inviteToGame(member.intraId)">Invite
+                                    <li v-if="isActive(member.intraId)"><a class="dropdown-item" href="#"
+                                            @click="inviteToGame(member.intraId)">Invite
                                             to Game</a></li>
                                     <li><a class="dropdown-item" href="#">
                                             <RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
@@ -180,16 +182,15 @@ const oldPassword = ref('');
 const newPassword = ref('');
 const password = ref('');
 const allMembers = ref<Member[]>([]);
+const activeMembers = ref<Member[]>([]);
 const userIntraId = ref<number>(storeUser.state.user.intraId);
 const userRole = ref();
 const joinChannelCalled = ref(false);
 
 onBeforeMount(async () => {
-    console.log('in onBeforeMount channelName = ', props.channelName);
     if (joinChannelCalled.value === false) {
         await joinChannel(props.channelName);
         joinChannelCalled.value = true;
-        console.log('in onBeforeMount back from joinChannel');
     }
 });
 
@@ -220,6 +221,34 @@ onMounted(async () => {
             name: 'Chat',
         });
     });
+
+    socket.on('userJoined', (member: Member) => {
+        const memberToAdd: Member = {
+            intraId: member.user.intraId,
+            name: member.user.name,
+            avatar: member.user.avatar,
+            role: member.role,
+        };
+        console.log('userJoined', activeMembers.value.length);
+        activeMembers.value.push(member);
+        console.log('userJoined', activeMembers.value.length);
+    });
+
+    socket.on('userLeft', (member: Member) => {
+        console.log('userLeft before', activeMembers.value.length);
+        const index = activeMembers.value.findIndex((activeMember) => activeMember.intraId === member.intraId);
+        if (index !== -1) {
+            activeMembers.value.splice(index, 1);
+        }
+        console.log('userLeft after', activeMembers.value.length);
+    });
+
+    socket.on('otherJoinedMembers', (members) => {
+        activeMembers.value = [...members];
+        activeMembers.value.forEach((member: Member) => {
+            console.log(member.intraId);
+        })
+    })
 
     socket.on('message', (data) => {
         allMessages.value.push(data);
@@ -268,6 +297,8 @@ onMounted(async () => {
         }
         allMessages.value.push(invite);
     });
+
+
 });
 
 onBeforeRouteLeave(() => {
@@ -282,6 +313,13 @@ onBeforeRouteLeave(() => {
 const isReady = computed(() => {
     return !!member.value;
 });
+
+function isActive(intraId: number) {
+    activeMembers.value.forEach((member: Member) => {
+        console.log(member.intraId);
+    })
+    return activeMembers.value.some((member) => member.intraId === intraId);
+}
 
 function isMemberOwner() {
     return member.value?.role === 'OWNER';
@@ -517,6 +555,10 @@ function inviteToGame(otherIntraId: number): void {
     socket.emit('gameChallenge', { otherIntraId: otherIntraId });
 }
 
+const emit = defineEmits<{
+    (event: "isActionSuccess"): boolean;
+}>();
+
 async function abandonChannel(channelName: string) {
     const data = {
         channelName: channelName,
@@ -524,6 +566,7 @@ async function abandonChannel(channelName: string) {
     try {
         await axiosInstance.delete('chat/removeUserFromChannel', { data });
         leaveChannel(props.channelName);
+        emit("isActionSuccess", true);
     } catch (error: any) {
         toast.add({
             severity: "error",
@@ -531,8 +574,8 @@ async function abandonChannel(channelName: string) {
             detail: errorMessage(ErrorType.GENERAL),
             life: 3000,
         });
+        emit("isActionSuccess", false);
     }
-
 }
 
 function leaveChannel(channelName: string): void {

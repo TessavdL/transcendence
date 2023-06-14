@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
 import { Channel, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
-import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
+import { AddAnotherUserToChannelDto, AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { Punishment, DMChannel, Member, Message } from './types';
 import { GetUser } from 'src/decorators/get-user.decorator';
@@ -44,6 +44,12 @@ export class ChatController {
 	@Post('addUserToChannel')
 	async addUserToChannel(@GetUser() user: User, @Body() addUserToChannelDto: AddUserToChannelDto): Promise<void> {
 		return await this.channelService.addUserToChannel(user.intraId, addUserToChannelDto.channelName);
+	}
+
+	@Post('addAnotherUserToChannel')
+	async addAnotherUserToChannel(@Body() addAnotherUserToChannelDto: AddAnotherUserToChannelDto): Promise<void> {
+		console.log('here');
+		return await this.channelService.addUserToChannel(addAnotherUserToChannelDto.otherIntraId, addAnotherUserToChannelDto.channelName);
 	}
 
 	@Delete('removeUserFromChannel')

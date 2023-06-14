@@ -50,3 +50,10 @@ export interface Punishment {
 	status: boolean;
 	time: number | null;
 }
+
+export interface UserFromList {
+	intraId: number;
+	name: string;
+	avatar: string;
+	selected: boolean;
+}

@@ -141,7 +141,7 @@ export class ChatGateway
 
 		if (otherClientsInChannel.length > 0) {
 			// inform all other users in the channel that a user joined
-			this.server.to(channelName).emit('userJoined', member);
+			client.to(channelName).emit('userJoined', member);
 			// inform current user which other members are in the channel
 			client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
 		}
