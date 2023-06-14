@@ -23,8 +23,6 @@ services:
     image: back_end
     build:
       dockerfile: ./back_end/Dockerfile
-    environment:
-      - HOST=${HOST}
     ports:
       - "3001:3001"
       - "5555:5555"

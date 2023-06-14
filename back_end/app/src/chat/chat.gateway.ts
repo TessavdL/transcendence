@@ -19,11 +19,10 @@ import { Message } from './types';
 import { ClientGuard } from 'src/auth/guards/client-auth.guard';
 import { SharedService } from './chat.map.shared.service';
 import { GameSharedService } from 'src/game/game.shared.service';
-import { ConfigService } from '@nestjs/config';
 
 @WebSocketGateway({
 	cors: {
-		origin: `http://${globalThis.host}:5173`,
+		origin: `http://${process.env.HOST}:5173`,
 		credentials: true,
 	},
 })
@@ -32,7 +31,6 @@ export class ChatGateway
 	constructor(
 		private readonly authService: AuthService,
 		private readonly chatService: ChatService,
-		private readonly configService: ConfigService,
 		private readonly jwtStrategy: JwtStrategy,
 		private readonly gameSharedService: GameSharedService,
 		private readonly sharedService: SharedService,

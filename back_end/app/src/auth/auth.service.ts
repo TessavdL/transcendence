@@ -43,13 +43,12 @@ export class AuthService {
 
 		const token: { access_token: string } = await this.signToken(user);
 
-		const host: string = this.configService.get('HOST') || 'localhost';
-
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: host,
+			domain: `${process.env.HOST}`,
 		});
-		res.redirect(`http://${host}:5173`);
+
+		res.redirect(`http://${process.env.HOST}:5173`);
 	}
 
 	async setBearerTokenForTwofa(
@@ -60,11 +59,9 @@ export class AuthService {
 
 		const token = await this.signToken(user);
 
-		const host: string = this.configService.get('HOST') || 'localhost';
-
 		res.cookie('jwt', token.access_token, {
 			httpOnly: true,
-			domain: host,
+			domain: `${process.env.HOST}`,
 		});
 	}
 
@@ -125,7 +122,10 @@ export class AuthService {
 	logout(user: User, @Res({ passthrough: true }) res: Response) {
 		console.log(`Hello ${user.intraName}, you are logged out!`);
 
-		res.cookie('jwt', '', { httpOnly: true, domain: globalThis.host });
+		res.cookie('jwt', '', {
+			httpOnly: true,
+			domain: `http://${process.env.HOST}:5173`
+		});
 	}
 
 	// should be moved to user module

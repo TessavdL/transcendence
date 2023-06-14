@@ -122,7 +122,6 @@ export class GameService {
 			ballPosition.top + 20 >= paddleOneTop &&
 			ballPosition.top <= paddleOneBottom) {
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player one');
 		}
 		// Check for collision with player2 paddle
 		if (ballPosition.left + 20 == paddleTwoLeft &&          // Right edge of the ball
@@ -130,7 +129,6 @@ export class GameService {
 			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player two');
 		}
 		return (gameStatus);
 	}

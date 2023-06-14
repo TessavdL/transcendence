@@ -6,7 +6,7 @@ import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
 	cors: {
-		origin: `http://${globalThis.this}:5173`,
+		origin: `http://${process.env.HOST}:5173`,
 		credentials: true,
 	},
 	namespace: "pong-game",
@@ -73,17 +73,4 @@ export class GameGateway
 		client.emit('gameStarted');
 		client.to(roomname).emit('gameStarted');
 	}
-	// @SubscribeMessage('endGame')
-	// endGame(@ConnectedSocket() client: Socket, @MessageBody() object: {
-	// 	gameStatus: Game,
-	// 	roomName: string,
-	// }) {
-	// 	console.log("do we get here");
-	// 	const gameEnded = this.gameService.endGame(object.gameStatus);
-	// 	if (gameEnded) {
-	// 		object.gameStatus.gameEnded = true;
-	// 		client.emit('gameEnded', object.gameStatus);
-	// 		client.to(object.roomName).emit('gameEnded', object.gameStatus);
-	// 	}
-	// }
 }

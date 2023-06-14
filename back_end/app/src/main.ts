@@ -7,16 +7,10 @@ import { ConfigService } from '@nestjs/config';
 async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
-	const configService: ConfigService = app.get(ConfigService);
-
-	var host: string = configService.get('HOST') || 'localhost';
-
-	globalThis.host = host || 'localhost';
-
-	const origin: string = `http://${host}:5173`;
+	console.log(`http://${process.env.HOST}:5173`);
 
 	app.enableCors({
-		origin: origin,
+		origin: `http://${process.env.HOST}:5173`,
 		credentials: true
 	});
 	app.use(cookieParser());
