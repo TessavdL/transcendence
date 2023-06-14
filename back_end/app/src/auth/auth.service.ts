@@ -126,7 +126,7 @@ export class AuthService {
 
 		res.cookie('jwt', '', {
 			httpOnly: true,
-			domain: `http://${process.env.HOST}:5173`
+			domain: `http://${process.env.HOST}`
 		});
 	}
 
