@@ -16,12 +16,14 @@ export class AuthController {
 	@UseGuards(AuthGuard42)
 	@Get('login')
 	async login(@GetUser() user: User): Promise<any> {
+		console.log(`http://${this.configService.get('HOST')}:3001/auth/callback`);
 		return user;
 	}
 
 	@UseGuards(AuthGuard42)
 	@Get('callback')
 	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
+		console.log(`http://${this.configService.get('HOST')}:3001/auth/callback`)
 		if (user.twofaStatus === true) {
 			return res.redirect(`http://${this.configService.get('HOST')}:5173/twofa?intraId=${user.intraId}`);
 		}

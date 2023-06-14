@@ -5,25 +5,25 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+	const app = await NestFactory.create(AppModule);
 
-  const configService: ConfigService = app.get(ConfigService);
+	const configService: ConfigService = app.get(ConfigService);
 
-  var host: string = configService.get('HOST') || 'localhost';
+	var host: string = configService.get('HOST') || 'localhost';
 
-  globalThis.host = host || 'localhost';
+	globalThis.host = host || 'localhost';
 
-  const origin: string = `http://${host}:5173`;
+	const origin: string = `http://${host}:5173`;
 
-  app.enableCors({
-    origin: origin,
-    credentials: true
-  });
-  app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
-  await app.listen(3001);
+	app.enableCors({
+		origin: origin,
+		credentials: true
+	});
+	app.use(cookieParser());
+	app.useGlobalPipes(new ValidationPipe({
+		whitelist: true,
+		forbidNonWhitelisted: true,
+	}));
+	await app.listen(3001);
 }
 bootstrap();
