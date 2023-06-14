@@ -146,13 +146,13 @@ export class GameService {
 	async endGame(gameStatus: Game, roomName: string): Promise<void> {
 		try {
 			let winner: boolean;
-			
+
 			if (this.shareService.playerData[roomName].player1Score === 3) {
 				winner = true;
 			} else {
 				winner = false;
 			}
-			
+
 			const player1: User = await this.authService.findUserById(this.shareService.playerData[roomName].player1);
 			const player2: User = await this.authService.findUserById(this.shareService.playerData[roomName].player2);
 
@@ -160,30 +160,31 @@ export class GameService {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player1.intraId,
-						loserIntraId: player2.intraId,
 						winnerScore: gameStatus.player1Score,
-						loserScore: gameStatus.player2Score,
 						winnerName: player1.name,
-						loserName: player2.name,
 						winnerAvatar: player1.avatar,
+						loserIntraId: player2.intraId,
+						loserScore: gameStatus.player2Score,
+						loserName: player2.name,
 						loserAvatar: player2.avatar,
 					}
 				});
+				this.update_win_loss_elo(player1, player2);
 			} else {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player2.intraId,
-						loserIntraId: player1.intraId,
 						winnerScore: gameStatus.player2Score,
-						loserScore: gameStatus.player1Score,
 						winnerName: player2.name,
-						loserName: player1.name,
 						winnerAvatar: player2.avatar,
+						loserIntraId: player1.intraId,
+						loserScore: gameStatus.player1Score,
+						loserName: player1.name,
 						loserAvatar: player1.avatar,
 					}
 				});
+				this.update_win_loss_elo(player2, player1);
 			}
-			this.update_win_loss_elo(player1, player2);
 		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
@@ -227,14 +228,14 @@ export class GameService {
 					elo: newWinnerElo,
 				},
 			});
-        } catch(error: any) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2001') {
-                    throw new NotFoundException('Unable to update achievement, user not found');
-                }
-            }
-            throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
-        }
+		} catch(error: any) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
+		}
 	}
 
 	private async update_loser(loserIntraId: number, newLoserElo: number): Promise<void> {
@@ -251,12 +252,12 @@ export class GameService {
 				},
 			});
 		} catch(error: any) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2001') {
-                    throw new NotFoundException('Unable to update achievement, user not found');
-                }
-            }
-            throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
-        }
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
+		}
 	}
 }
