@@ -320,6 +320,19 @@ export class UserService {
 		}
 	}
 
+	async getLeaderboard(): Promise<User[]> {
+		try {
+			const userArray: User[] = await this.prisma.user.findMany({
+				orderBy: {
+					elo: 'desc',
+				},
+			});
+			return (userArray);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async updateUsername(user: User, newUsername: string) {
 		try {
 			const updatedUser: (User & { achievements: Achievements }) = await this.prisma.user.update({

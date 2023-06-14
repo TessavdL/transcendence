@@ -69,8 +69,12 @@ export class UserController {
 	@Get('get_match_history_by_intraid') 
 	async getMatchHistoryByIntraId(@Query() query): Promise<MatchHistory[]> {
 		const otherIntraId: number = parseInt(query.intraId);
-		console.log(otherIntraId);
 		return (await this.userService.getMatchHistory(otherIntraId));
+	}
+
+	@Get('get_leaderboard')
+	async getLeaderboard(): Promise<User[]> {
+		return (await this.userService.getLeaderboard());
 	}
 
 	@Get(':id')
