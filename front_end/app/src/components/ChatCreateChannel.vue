@@ -62,90 +62,7 @@
 	</div>
 </template>
 
-<script>
-import axios from "axios";
-import { ref, defineEmits } from "vue";
-import { useToast } from "primevue/usetoast";
-import { ErrorType, errorMessage } from "@/types/ErrorType";
-import { ChannelMode } from "@/types/ChatType";
-import ChatUserList from "@/components/ChatUserList.vue";
-
-export default {
-  components: {
-    ChatUserList,
-  },
-  setup() {
-    const toast = useToast();
-    const channelName = ref("");
-    const channelType = ref(ChannelMode.PUBLIC);
-    const channelPassword = ref("");
-	const showUserList = ref(false);
-
-    const emit = defineEmits<{
-      (event: "isActionSuccess"): boolean;
-    }>();
-
-    const input = ref("");
-
-    function createChannel() {
-      createRequestBody();
-      console.log(requestBody);
-      sendCreateChannelRequest();
-    }
-
-    let requestBody = {};
-    function createRequestBody() {
-      if (channelPassword.value === "") {
-        requestBody = {
-          channelMode: channelType.value,
-          channelName: channelName.value,
-        };
-      } else {
-        requestBody = {
-          channelMode: channelType.value,
-          channelName: channelName.value,
-          password: channelPassword.value,
-        };
-      }
-    }
-
-    async function sendCreateChannelRequest() {
-      await axios
-        .post("http://localhost:3001/chat/createChannel", requestBody, {
-          withCredentials: true,
-        })
-        .then(async (response) => {
-          toast.add({
-            severity: "success",
-            summary: "Success",
-            detail: "Created",
-            life: 3000,
-          });
-          emit("isActionSuccess", true);
-        })
-        .catch(() => {
-          toast.add({
-            severity: "error",
-            summary: "Error",
-            detail: errorMessage(ErrorType.CREATE_CHANNEL_FAILED),
-            life: 3000,
-          });
-          emit("isActionSuccess", false);
-        });
-    }
-
-    return {
-      channelName,
-      channelType,
-      channelPassword,
-      createChannel,
-      input,
-    };
-  },
-};
-</script>
-
-<!-- <script setup lang="ts">
+<script setup lang="ts">
 import axios from "axios";
 import { ref, defineEmits } from "vue";
 import { useToast } from "primevue/usetoast";
@@ -212,7 +129,7 @@ async function sendCreateChannelRequest() {
             emit("isActionSuccess", false);
         });
 };
-</script> -->
+</script>
 
 <!-- <style scoped>
 .create-channel-container{
@@ -281,7 +198,7 @@ async function sendCreateChannelRequest() {
   padding: 5px 10px;
   width: 100px;
 }
-/* .channel-password {
+.channel-password {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -317,6 +234,6 @@ async function sendCreateChannelRequest() {
   color: #ffffff;
   background-color: #09252f;
   border: 1px solid #ffffff;
-} */
+}
 
 </style>
