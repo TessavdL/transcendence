@@ -7,13 +7,14 @@
 </template>
 
 <script lang="ts">
+import { HOST } from "@/constants/constants";
 import { io } from "socket.io-client";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
 
 export default {
 
 	setup() {
-		const socket = io('http://localhost:3001/matchmaking', { withCredentials: true });
+		const socket = io(`http://${HOST}:3001/matchmaking`, { withCredentials: true });
 		socket.on('connected', () => {
 			socket.emit('matchmaking');
 		});

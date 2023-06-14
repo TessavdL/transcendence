@@ -1,34 +1,39 @@
 <template>
     <div class="create-channel-container">
-		<form @submit.prevent="createChannel">
+        <form @submit.prevent="createChannel">
             <div class="mb-3 channel-name">
                 <label for="channelName" class="form-label">Channel Name</label>
                 <input type="text" class="form-control" id="channelName" v-model="channelName">
             </div>
 
             <div class="form-check form-check-inline channel-type">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-public" value="PUBLIC" v-model="channelType">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-public" value="PUBLIC"
+                    v-model="channelType">
                 <label class="form-check-label" for="type-public">public</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-protected" value="PROTECTED" v-model="channelType">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-protected" value="PROTECTED"
+                    v-model="channelType">
                 <label class="form-check-label" for="type-protected">protected</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-private" value="PRIVATE" v-model="channelType">
+                <input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-private" value="PRIVATE"
+                    v-model="channelType">
                 <label class="form-check-label" for="type-private">private</label>
             </div>
-            
+
             <div class="mb-3 channel-password" v-if="channelType === 'PROTECTED'">
                 <label for="channelPassword" class="form-label">Channel Password</label>
-                <input type="password" class="form-control" id="channelPassword" v-model="channelPassword" minlength="4" required placeholder="minimal 4 charaters">
+                <input type="password" class="form-control" id="channelPassword" v-model="channelPassword" minlength="4"
+                    required placeholder="minimal 4 charaters">
             </div>
 
             <div class="submit-channel">
-                <button type="submit" class="btn btn-outline-light" style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;">Create Channel</button>
+                <button type="submit" class="btn btn-outline-light"
+                    style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;">Create Channel</button>
             </div>
-		</form>
-	</div>
+        </form>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -37,6 +42,7 @@ import { ref, defineEmits } from "vue";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import { ChannelMode } from "@/types/ChatType"
+import { HOST } from "../constants/constants";
 
 const toast = useToast();
 
@@ -67,16 +73,16 @@ function createRequestBody() {
             channelMode: channelType.value,
             channelName: channelName.value,
             password: channelPassword.value,
-        }  
+        }
     }
 }
 
 async function sendCreateChannelRequest() {
     await axios
-        .post("http://localhost:3001/chat/createChannel", requestBody, {
+        .post(`http://${HOST}:3001/chat/createChannel`, requestBody, {
             withCredentials: true,
         })
-        .then(async (response) =>  {
+        .then(async (response) => {
             toast.add({
                 severity: "success",
                 summary: "Success",
@@ -99,7 +105,7 @@ async function sendCreateChannelRequest() {
 </script>
 
 <style scoped>
-.create-channel-container{
+.create-channel-container {
     margin-left: 20px;
 }
 
@@ -112,11 +118,12 @@ async function sendCreateChannelRequest() {
     font-weight: bold;
     font-size: 30px;
 }
-.form-check-label{
+
+.form-check-label {
     font-size: 20px;
 }
-.btn{
+
+.btn {
     margin-top: 30px;
     margin-bottom: 30px;
-}
-</style>
+}</style>

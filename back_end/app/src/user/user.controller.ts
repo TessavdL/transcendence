@@ -1,11 +1,10 @@
 import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put } from '@nestjs/common';
-import { Achievements, MatchHistory, User } from '@prisma/client';
+import { MatchHistory, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';
 import { FriendRequestList, UserElement } from './types';
 import { UserService } from './user.service';
-import { UploadAvatarDto } from './dto/upload-avatar-dto';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
 import { GetUser } from 'src/decorators/get-user.decorator';
@@ -66,7 +65,7 @@ export class UserController {
 		return (await this.userService.getMatchHistory(user.intraId));
 	}
 
-	@Get('get_match_history_by_intraid') 
+	@Get('get_match_history_by_intraid')
 	async getMatchHistoryByIntraId(@Query() query): Promise<MatchHistory[]> {
 		const otherIntraId: number = parseInt(query.intraId);
 		return (await this.userService.getMatchHistory(otherIntraId));

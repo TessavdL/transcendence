@@ -81,6 +81,7 @@ import io from 'socket.io-client';
 import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
+import { HOST } from '@/constants/constants';
 import { data } from 'jquery';
 //import NeonButton from '../components/ButtonsGamePlay.vue';
 
@@ -96,7 +97,7 @@ export default {
 		};
 	},
 	setup() {
-		const socket = io('http://localhost:3001/pong-game', { withCredentials: true });
+		const socket = io(`http://${HOST}:3001/pong-game`, { withCredentials: true });
 		const game = ref<Game>();
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
