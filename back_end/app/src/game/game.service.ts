@@ -13,7 +13,7 @@ export class GameService {
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
 		private readonly authService: AuthService,
-		private shareService: GameSharedService,
+		private readonly shareService: GameSharedService,
 	) { }
 
 	gameData(): Game {
@@ -151,16 +151,17 @@ export class GameService {
 
 	async endGame(gameStatus: Game, roomName: string): Promise<void> {
 		try {
+			const players: Players = this.shareService.playerData.get(roomName);
 			let winner: boolean;
 
-			if (this.shareService.playerData[roomName].player1Score === 3) {
+			if (gameStatus.player1Score === 3) {
 				winner = true;
 			} else {
 				winner = false;
 			}
 
-			const player1: User = await this.authService.findUserById(this.shareService.playerData[roomName].player1);
-			const player2: User = await this.authService.findUserById(this.shareService.playerData[roomName].player2);
+			const player1: User = await this.authService.findUserById(players.player1.intraId);
+			const player2: User = await this.authService.findUserById(players.player2.intraId);
 
 			if (winner) {
 				await this.prisma.matchHistory.create({
