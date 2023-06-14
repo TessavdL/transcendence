@@ -1,16 +1,18 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
 import { GameSharedService } from './game.shared.service';
 import { Game, Players } from './types';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class GameService {
 	constructor(
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
+		private readonly authService: AuthService,
 		private shareService: GameSharedService,
 	) { }
 
@@ -24,6 +26,8 @@ export class GameService {
 			gameEnded: false,
 			player1Score: 0,
 			player2Score: 0,
+			turnPlayerOne: true,
+			turnPlayerTwo: false,
 		};
 		return (game);
 	}
@@ -95,12 +99,14 @@ export class GameService {
 			gameStatus.ballPosition = { top: 300, left: 150 };
 			gameStatus.ballVelocity = { x: 5, y: 5 };
 			gameStatus.player2Score++;
+			gameStatus.turnPlayerOne = true;
+			gameStatus.turnPlayerTwo = false;
 			gameStatus.gameStarted = false;
 			if (gameStatus.player2Score >= 3) {
 				gameStatus.gameEnded = true;
 			}
 		}
-		else if (ballPosition.left + 20 >= 780 ||
+		else if (ballPosition.left + 20 >= 770 || //old value 780
 			ballPosition.left + 20 >= paddleTwoLeft &&
 			ballPosition.left + 20 <= (paddleTwoLeft - 15) &&
 			ballPosition.top >= paddleTwoTop &&
@@ -108,6 +114,8 @@ export class GameService {
 			gameStatus.ballPosition = { top: 300, left: 650 };
 			gameStatus.ballVelocity = { x: -5, y: -5 };
 			gameStatus.player1Score++;
+			gameStatus.turnPlayerOne = false;
+			gameStatus.turnPlayerTwo = true;
 			gameStatus.gameStarted = false;
 			if (gameStatus.player1Score >= 3) {
 				gameStatus.gameEnded = true;
@@ -133,12 +141,52 @@ export class GameService {
 		return (gameStatus);
 	}
 
-	// endGame(gameStatus: Game): boolean {
-	// 	if (gameStatus.player1Score >= 3 || gameStatus.player2Score >= 3) {
-	// 		return true;
-	// 	}
-	// 	return false;
-	// }
+	async endGame(gameStatus: Game, roomName: string): Promise<void> {
+		try {
+			let winner: boolean;
+
+			if (this.shareService.playerData[roomName].player1Score === 3) {
+				winner = true;
+			} else {
+				winner = false;
+			}
+
+			const player1: User = await this.authService.findUserById(this.shareService.playerData[roomName].player1);
+			const player2: User = await this.authService.findUserById(this.shareService.playerData[roomName].player2);
+
+			if (winner) {
+				await this.prisma.matchHistory.create({
+					data: {
+						winnerIntraId: player1.intraId,
+						winnerScore: gameStatus.player1Score,
+						winnerName: player1.name,
+						winnerAvatar: player1.avatar,
+						loserIntraId: player2.intraId,
+						loserScore: gameStatus.player2Score,
+						loserName: player2.name,
+						loserAvatar: player2.avatar,
+					}
+				});
+				this.update_win_loss_elo(player1, player2);
+			} else {
+				await this.prisma.matchHistory.create({
+					data: {
+						winnerIntraId: player2.intraId,
+						winnerScore: gameStatus.player2Score,
+						winnerName: player2.name,
+						winnerAvatar: player2.avatar,
+						loserIntraId: player1.intraId,
+						loserScore: gameStatus.player1Score,
+						loserName: player1.name,
+						loserAvatar: player1.avatar,
+					}
+				});
+				this.update_win_loss_elo(player2, player1);
+			}
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
@@ -178,8 +226,13 @@ export class GameService {
 					elo: newWinnerElo,
 				},
 			});
-		} catch (error: any) {
-			throw new InternalServerErrorException("Prisma failed to update user.wins");
+		} catch(error: any) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
 		}
 	}
 
@@ -196,8 +249,13 @@ export class GameService {
 					elo: newLoserElo,
 				},
 			});
-		} catch (error: any) {
-			throw new InternalServerErrorException("Prisma failed to update user.losses");
+		} catch(error: any) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
 		}
 	}
 }

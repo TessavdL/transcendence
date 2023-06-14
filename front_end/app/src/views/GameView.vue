@@ -1,12 +1,27 @@
 
 <template>
 	<div>
-		<button @click="toggleColorMode">Switch to Color Mode</button>
-		{{ isColorMode ? 'Switch to Classic Mode' : 'Switch to Color Mode' }}
+		<!-- <button @click="toggleColorMode"></button> -->
+		<input type="checkbox" id="checkbox" @click="toggleColorMode">
+			<label for="checkbox">
+					<div class="s">
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+					<div class="d"></div>
+				</div>
+			</label>
+		{{ isColorMode ? '' : '' }}
+		<div :class=" isColorMode? 'mode-color':'mode'"><h2>Change Game Mode</h2></div>
 		<!-- condition to check if it is color mode thank you dagmar-->
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
 			<div class="start-button-container"
-				v-if="isPlayerOne && (game.player1Score === game.player2Score) && !game.gameStarted && !isGameOver">
+				v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -17,7 +32,7 @@
 				</a>
 			</div>
 			<div class="start-button-container"
-				v-if="!isPlayerOne && (game.player2Score !== game.player1Score) && !game.gameStarted && !isGameOver">
+				v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
 				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
@@ -32,22 +47,29 @@
 				<!-- <div class="wave"></div> -->
 				<!-- <div class="wave"></div> -->
 			</div>
-			<div class="scoreboard">
-				<div class="score-player1">Player One:
+			<div :class= "isColorMode ? 'scoreboard-color' : 'scoreboard'">
+				<div :class="isColorMode ? 'score-player1-color': 'score-player1'">Player One:
 					<span id="player-1-score">{{ game.player1Score }}</span>
 				</div>
-				<div class="score-player2">Player Two:
+				<div :class="isColorMode ? 'score-player2-color': 'score-player2'">Player Two:
 					<span id="player-2-score">{{ game.player2Score }}</span>
 				</div>
 			</div>
-			<div class="player1-paddle" :style="{ top: game.player1Position + 'px' }"></div>
-			<div class="player2-paddle" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'" :style="{ top: game.player1Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
 			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
 				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
-			<div v-if="isGameOver" class="game-over-canvas">
+			<div>
+				<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
+					<h2>Game Over</h2>
+					<p>Opponent left the game.</p>
+					<p>You win!</p>
+				</div>
+				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
 				<h2>Game Over</h2>
 				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 				<!-- <button @click="toggleGame">Restart</button> -->
+				</div>
 			</div>
 		</div>
 
@@ -60,6 +82,7 @@ import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
 import { HOST } from '@/constants/constants';
+import { data } from 'jquery';
 //import NeonButton from '../components/ButtonsGamePlay.vue';
 
 export default {
@@ -70,6 +93,7 @@ export default {
 			roomName: '',
 			gameOver: false,
 			isColorMode: false,
+			playerDisconnect: false,
 		};
 	},
 	setup() {
@@ -78,6 +102,8 @@ export default {
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
+
+		console.log(game.value?.turnPlayerOne, game.value?.turnPlayerTwo);
 		return { socket, game: computed(() => game.value) };
 	},
 
@@ -88,7 +114,15 @@ export default {
 		},
 		isGameOver() {
 			// Check if the game is over
-			return this.game.player1Score === 3 || this.game.player2Score === 3;
+			// console.log(this.playerDisconnect, 'is Game Over');
+			// return this.playerDisconnect || this.gameOver || this.game.player1Score === 3 || this.game.player2Score === 3;
+			if (this.playerDisconnect || this.game.player1Score === 3 || this.game.player2Score === 3) {
+				this.gameOver = true;
+				window.removeEventListener('keydown', this.handleEvent);
+				return true;
+			}
+			return false;
+
 		}
 	},
 
@@ -114,10 +148,17 @@ export default {
 			requestAnimationFrame(this.update);
 		});
 		this.socket.on('gameEnded', () => {
-			if (this.game.player1Score === 3 || this.game.player2Score === 3) {
-				console.log('game over', this.game.gameEnded);
-				this.game.gameEnded = true;
-			}
+			// if (this.game.player1Score === 3 || this.game.player2Score === 3 || this.playerDisconnect) {
+				
+			// }
+			console.log('game over', this.game.gameEnded);
+			this.game.gameEnded = true;
+			this.gameOver = true;
+			this.playerDisconnect = true;
+		});
+		this.socket.on('disconnectPlayer', () => {
+			console.log('in disconnect');
+			this.socket.disconnect();
 		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
@@ -125,6 +166,8 @@ export default {
 			this.game.gameStarted = gameStatus.gameStarted;
 			this.game.player1Score = gameStatus.player1Score;
 			this.game.player2Score = gameStatus.player2Score;
+			this.game.turnPlayerOne = gameStatus.turnPlayerOne;
+			this.game.turnPlayerTwo = gameStatus.turnPlayerTwo;
 		});
 
 		this.socket.on('updatePaddlePosition', (position: number) => {
@@ -143,7 +186,21 @@ export default {
 				this.movePaddle(position);
 		});
 
-		window.addEventListener('keydown', (event) => {
+		window.addEventListener('keydown', this.handleEvent);
+	},
+
+	beforeRouteLeave() {
+		window.removeEventListener('keydown', this.handleEvent);
+		console.log(this.playerDisconnect, 'beforeRouterLeave');
+		if (this.gameOver === false) {
+			this.socket.emit('endGame', this.roomName);
+		}
+		else 
+			this.socket.disconnect();
+	},
+
+	methods: { 		
+		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
 					movement: 'up',
@@ -162,27 +219,18 @@ export default {
 				};
 				this.socket.emit('movePaddle', data);
 			}
-		});
-	},
-
-	beforeRouteLeave() {
-		this.socket.disconnect();
-	},
-
-	methods: {
+			else if (event.key === ' ' && this.player === 'playerone' && !this.gameOver && !this.game.gameStarted && this.game.turnPlayerOne && !this.game.turnPlayerTwo) 
+				this.toggleGame();
+			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo) 
+				this.toggleGame();
+			console.log(this.gameOver);
+		},
 
 		toggleGame() {
 			if (!this.game.gameStarted) {
 				this.game.gameStarted = true;
 				this.socket.emit('startGame', this.roomName);
 			}
-			// if (this.game.gameStarted) {
-			// 	this.game.gameStarted = false;
-			// }
-			// else {
-			// 	this.game.gameStarted = true;
-			// 	this.socket.emit('startGame', this.roomName);
-			// }
 		},
 		toggleColorMode() {
 			this.isColorMode = !this.isColorMode;
@@ -195,49 +243,12 @@ export default {
 		movePaddlePlayerTwo(position: number) {
 			this.game.player2Position += position;
 		},
-		// movePaddle(position: number) {
-		// 	const targetPosition = this.game.player1Position + position;
-		// 	this.animatePaddle(targetPosition, 'player1Position');
-		// },
-
-		// movePaddlePlayerTwo(position: number) {
-		// 	const targetPosition = this.game.player2Position + position;
-		// 	this.animatePaddle(targetPosition, 'player2Position');
-		// },
-
-		animatePaddle(targetPosition: number, property: 'player1Position' | 'player2Position') {
-			const startTime = performance.now();
-			const startPosition = this.game[property];
-			const duration = 200; // Duration of the animation in milliseconds
-
-			const updatePosition = (currentTime: number) => {
-				const elapsed = currentTime - startTime;
-				if (elapsed >= duration) {
-					this.game[property] = targetPosition;
-					return;
-				}
-				const progress = elapsed / duration;
-				const speed = 1;
-				const newPosition = startPosition + (targetPosition - startPosition) * (progress * speed);
-				this.game[property] = newPosition;
-
-				const easingProgress = Math.sin(progress * Math.PI); // Apply easing function
-				// Calculate the new animation frame position
-				const newAnimationFrame = Math.floor(elapsed / (1000 / 60)); // 60 frames per second
-				requestAnimationFrame(updatePosition);
-				// Skip rendering for intermediate frames
-				if (newAnimationFrame === Math.floor(elapsed / (1000 / 60)))
-					return;
-				// Update the paddle position with easing
-				this.game[property] = startPosition + (targetPosition - startPosition) * easingProgress;
-			};
-			requestAnimationFrame(updatePosition);
-		},
+		
 		update() {
 			if (!this.game.gameStarted)
 				return;
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
-			if (this.game.gameEnded === true) {
+			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
 				this.gameOver = true;
 				return;
@@ -251,6 +262,8 @@ export default {
 				player2Score: this.game.player2Score,
 				gameStarted: this.game.gameStarted,
 				gameEnded: this.game.gameEnded,
+				turnPlayerOne: this.game.turnPlayerOne,
+				turnPlayerTwo: this.game.turnPlayerTwo,
 			};
 			const data = {
 				gameStatus: gameStatus,
@@ -269,57 +282,8 @@ export default {
 @import url("../assets/game_mode/button.css");
 @import url("../assets/game_mode/classic_pong.css");
 @import url("../assets/game_mode/color_pong.css");
+@import url("../assets/game_mode/color_toggle.css");
 
-/* .pong-game-classic::before {
-	content: "";
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 50%;
-	border-left: 8px solid white;
-}
-
-.pong-game-classic {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	height: 600px;
-	width: 800px;
-	background-size: contain;
-	background-color: rgb(13, 12, 11);
-	display: flex;
-	border-top: 8px solid rgb(249, 248, 248);
-	border-bottom: 8px solid rgb(253, 251, 251);
-	border-left: 8px solid rgb(253, 251, 251);
-	border-right: 8px solid rgb(253, 251, 251);
-} */
-
-/* .pong-game {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	height: 600px;
-	width: 800px; */
-/* background: url("../assets/game_images/neon-retro-background.jpeg") no-repeat fixed; */
-/* background-size: contain;
-	background-position: center;
-	background: linear-gradient(315deg,
-	rgb(0, 101, 52) 3%,
-	rgb(206, 162, 60) 38%,
-	rgb(127, 48, 238) 68%,
-	rgba(255, 25, 25, 1) 98%);
-	animation: gradient 12s ease infinite;
-	background-size: 400% 400%;
-	background-attachment: fixed; */
-/* background-color: rgb(13, 12, 11); */
-/* display: flex;
-	border-top: 8px solid rgb(249, 248, 248);
-	border-bottom: 8px solid rgb(253, 251, 251);
-	border-left: 8px solid rgb(253, 251, 251);
-	border-right: 8px solid rgb(253, 251, 251);
-} */
 
 @font-face {
 
@@ -335,6 +299,18 @@ export default {
 @font-face {
 	font-family: "excellent";
 	src: url("../assets/game_images/mexcellent 3d.otf");
+}
+
+.mode h2 {
+	font-family: "arcadeFont";
+	color: rgb(240, 248, 89);
+	top: 200px;
+}
+
+.mode-color h2 {
+	font-family: "excellent";
+	color: rgb(240, 248, 89);
+	top: 200px;
 }
 
 .game-over-canvas {
@@ -393,13 +369,13 @@ export default {
 	max-height: 100%;
 }
 
-.player1-paddle,
+/* .player1-paddle,
 .player2-paddle {
 	position: absolute;
 	width: 15px;
 	height: 80px;
 	background-color: rgb(231, 220, 208);
-}
+} */
 
 .player1-paddle {
 	left: 20px;
@@ -418,7 +394,7 @@ export default {
 	background-color: rgb(33, 34, 32);
 }
 
-.ball-classic {
+/* .ball-classic {
 	position: absolute;
 	width: 20px;
 	height: 20px;
@@ -433,7 +409,7 @@ export default {
 	left: 390px;
 	background-color: white;
 	border-radius: 50%;
-}
+} */
 
 /* body {
 	margin: auto;
