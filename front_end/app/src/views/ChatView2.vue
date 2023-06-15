@@ -1,16 +1,18 @@
 <template>
 	<div class="create-channel">
 		<form @submit.prevent="createChannel">
-			<input v-model="channelName" type="text" placeholder="Channel name" />
+			<label for="channelName">
+				<input id="channelName" v-model="channelName" type="text" placeholder="Channel name" />
+			</label>
 			<br>
 			<ul>
-				<label>
-					<input type="radio" v-model="channelMode" value="PUBLIC" />
+				<label for="public">
+					<input id="public" type="radio" v-model="channelMode" value="PUBLIC" />
 					Public
 				</label>
 
-				<label>
-					<input type="radio" v-model="channelMode" value="PROTECTED" />
+				<label for="protected">
+					<input id="protected" type="radio" v-model="channelMode" value="PROTECTED" />
 					Protected
 				</label>
 
@@ -56,7 +58,7 @@
 	<div class="all-dmchannels" v-if="!joined">
 		<h2>All My DMChannels</h2>
 		<ul style="list-style: none;">
-			<li v-for="dmchannel in dmInfo" :key="dmchannel.channelName">
+			<li v-for="dmchannel in DMChannel" :key="dmchannel.channelName">
 				<a @click="joinDMChannel(dmchannel.channelName)" class="button">{{ dmchannel.otherUserName }}</a>
 			</li>
 		</ul>
@@ -75,10 +77,11 @@
 		<div class="message-container">
 			<h2>All Messages from {{ getActiveChannelName(activeChannel) }}:</h2>
 			<div v-for="mes in allMessages" :key="mes.intraId">
-				[{{ mes.name }}]: 
+				[{{ mes.name }}]:
 				<div class="mes-text">
 					<p v-if="!mes.isLink">{{ mes.text }}</p>
-					<p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(mes.text)">{{ 'here' }}</a> to join</p>
+					<p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(mes.text)">{{ 'here'
+					}}</a> to join</p>
 				</div>
 			</div>
 		</div>
@@ -91,7 +94,7 @@
 				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
 				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
 				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
-                <a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
+				<a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
 			</li>
 		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
@@ -102,7 +105,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
+import type { Channel, Message, User, DMChannel, Member, Punishment } from "../types/ChatType";
 import { useRouter } from "vue-router";
 import _default from "vuex";
 
@@ -113,7 +116,7 @@ export default {
 			activeChannelType: ref(''),
 
 			allUsers: ref<User[]>([]),
-			dmInfo: ref<DMInfo[]>([]),
+			DMChannel: ref<DMChannel[]>([]),
 
 			allNormalChannels: ref<Channel[]>([]),
 			allMyNormalChannels: ref<Channel[]>([]),
@@ -138,7 +141,7 @@ export default {
 		});
 		const router = useRouter();
 		return { axiosInstance, socket, router };
-		
+
 	},
 
 	async mounted() {
@@ -327,7 +330,7 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
-				const dmInfo: DMInfo[] = channels.map((item) => {
+				const DMChannel: DMChannel[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
 						otherUserAvatar: item.otherUser.avatar,
@@ -335,7 +338,7 @@ export default {
 						otherUserName: item.otherUser.name,
 					};
 				});
-				this.dmInfo = dmInfo;
+				this.DMChannel = DMChannel;
 			} catch (error: any) {
 				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
 			}
@@ -346,7 +349,7 @@ export default {
 		},
 
 		isDMMember(otherIntraId: number) {
-			return this.dmInfo.some((item) => item.otherUserIntraId === otherIntraId);
+			return this.DMChannel.some((item) => item.otherUserIntraId === otherIntraId);
 		},
 
 		async isBanned(channelName: string): Promise<Punishment> {
@@ -408,9 +411,9 @@ export default {
 			this.socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
 
-        gameChallenge(otherIntraId: number): void {
-            this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
-        },
+		gameChallenge(otherIntraId: number): void {
+			this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
+		},
 
 		async loadAllMessages(): Promise<void> {
 			try {
@@ -432,7 +435,7 @@ export default {
 		},
 
 		getActiveChannelName(channelName: string) {
-			const channel = this.dmInfo.find((x) => x.channelName === channelName);
+			const channel = this.DMChannel.find((x) => x.channelName === channelName);
 			if (channel) {
 				return (channel.otherUserName);
 			}
@@ -441,10 +444,10 @@ export default {
 			}
 		},
 
-			navigateToLink(link: string) {
-        	// Use your router library to navigate to the link
-        	this.router.push(link);
-    	},
+		navigateToLink(link: string) {
+			// Use your router library to navigate to the link
+			this.router.push(link);
+		},
 	},
 }
 </script>

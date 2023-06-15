@@ -122,44 +122,37 @@ export class ChatGateway
 	async handleJoinChannel(@ConnectedSocket() client: Socket, @MessageBody() channelName: string): Promise<void> {
 		const intraId: number = this.sharedService.clientToIntraId.get(client.id);
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
-
+		console.log({ member });
 		if (!member) {
 			client.emit("joined", null);
 			return;
 		}
-		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
-		const otherJoinedMembersInChannel: (Membership & { user: User; })[] = await this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
 
 		// add client to channel map
-		console.log('all members in joinChannel before', this.channelToClientIds.get(channelName));
+		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
 		this.channelToClientIds.set(channelName, [...otherClientsInChannel, client.id]);
-		console.log('all members in joinChannel after', this.channelToClientIds.get(channelName));
 
 		// join channel
 		client.join(channelName);
+		console.log('joined emitted');
 		client.emit('joined', member);
 
 		if (otherClientsInChannel.length > 0) {
 			// inform all other users in the channel that a user joined
 			client.to(channelName).emit('userJoined', member);
 			// inform current user which other members are in the channel
+			const otherJoinedMembersInChannel: (Membership & { user: User; })[] = await this.getJoinedMembersInChannel(channelName, otherClientsInChannel);
 			client.emit('otherJoinedMembers', otherJoinedMembersInChannel);
 		}
 	}
 
 	private async getJoinedMembersInChannel(channelName: string, otherClientsInChannel: string[]): Promise<(Membership & { user: User })[]> {
 		const otherUserIntraIds: number[] = otherClientsInChannel.map(clientId => this.sharedService.clientToIntraId.get(clientId));
-
 		const uniqueUserIntraIds: number[] = [...new Set(otherUserIntraIds)];
-
 		const otherMembersInChannel: (Membership & { user: User })[] = await this.chatService.getMembersWithUser(channelName);
-
-		const otherJoinedMembersInChannel: (Membership & { user: User })[] = otherMembersInChannel.filter(member => {
-			if (uniqueUserIntraIds.find(intraId => { intraId === member.user.intraId })) {
-				return member;
-			}
-		});
-
+		const otherJoinedMembersInChannel: (Membership & { user: User })[] = otherMembersInChannel.filter(member =>
+			uniqueUserIntraIds.includes(member.intraId)
+		);
 		return otherJoinedMembersInChannel;
 	}
 

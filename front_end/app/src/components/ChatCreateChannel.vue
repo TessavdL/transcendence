@@ -58,7 +58,7 @@ import axios from "axios";
 import { ref, defineEmits, onMounted, computed } from "vue";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
-import { type UserFromList } from "@/types/ChatType"
+import type { UserFromList } from "@/types/ChatType";
 
 const toast = useToast();
 const avatarPrefix = ref("http://localhost:3001/user/get_avatar?avatar=");
@@ -85,11 +85,24 @@ function toggleUserSelection(user: UserFromList) {
 }
 
 async function createChannel() {
+    if (!channelName.value.length || channelName.value.length > 20) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: "Channel name cannot be empty or longer than 20 characters",
+            life: 3000,
+        });
+        return setBackToDefault();
+    }
     createRequestBody();
     await sendCreateChannelRequest()
     if (channelType.value === 'PRIVATE') {
         await addSelectedUsers();
     }
+    setBackToDefault();
+}
+
+function setBackToDefault() {
     channelType.value = '';
     channelName.value = '';
     input.value = '';
@@ -148,7 +161,6 @@ async function getAllUsers(): Promise<void> {
         })
         .then(async (response) => {
             const users = response.data;
-            console.log({ users });
             allUsers.value = users.map(user => {
                 return {
                     intraId: user.intraId,

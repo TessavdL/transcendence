@@ -1,7 +1,7 @@
-export enum ChannelMode {
-	PRIVATE,
-	PROTECTED,
-	PUBLIC
+export interface ChannelMode {
+	PRIVATE: 'PRIVATE',
+	PROTECTED: 'PROTECTED',
+	PUBLIC: 'PUBLIC'
 }
 
 export interface Channel {
@@ -9,12 +9,6 @@ export interface Channel {
 	channelName: string;
 	channelType: string;
 	channelMode: string;
-}
-
-export interface DMChannel {
-	channel: Channel;
-	otherUser: User;
-	user: User;
 }
 
 export interface Message {
@@ -32,7 +26,7 @@ export interface User {
 	avatar: string;
 }
 
-export interface DMInfo {
+export interface DMChannel {
 	channelName: string;
 	otherUserAvatar: string;
 	otherUserIntraId: number;

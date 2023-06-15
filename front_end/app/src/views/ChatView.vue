@@ -16,8 +16,8 @@
 								<i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;"
 									@click="openRoute('/chat/ChatCreateChannel')"></i>
 							</h2>
-							<div class="chanel-list" v-for="channel in myChannels" :key="channel.id">
-								<span @click="openChannel(channel.channelName, channel.channelMode)">
+							<div class="channel-list" v-for="channel in myChannels" :key="channel.id">
+								<span @click="openChannel(channel.channelName)">
 									<i class="bi bi-broadcast-pin" v-if="channel.channelMode === 'PUBLIC'"></i>
 									<i class="bi bi-shield-fill" v-if="channel.channelMode === 'PRIVATE'"></i>
 									<i class="bi bi-lock-fill" v-if="channel.channelMode === 'PROTECTED'"></i>
@@ -30,8 +30,8 @@
 								<i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;"
 									@click="openRoute('/chat/ChatUserList')"></i>
 							</h2>
-							<div class="chanel-list" v-for="channel in myDms" :key="channel.otheruserIntraId">
-								<span @click="openDm(channel.channelName)">{{ channel.otheruserName }}</span>
+							<div class="channel-list" v-for="channel in myDMChannels" :key="channel.otherUserIntraId">
+								<span @click="openDm(channel.channelName)">{{ channel.otherUserName }}</span>
 							</div>
 						</li>
 					</ul>
@@ -49,39 +49,48 @@
 <script setup lang="ts">
 import axios from "axios";
 import { useRouter } from "vue-router";
-import { ref, inject, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import type { Channel, DMChannel, Punishment } from "../types/ChatType";
-import type { Socket } from "socket.io-client";
+import { useToast } from "primevue/usetoast";
+import { ErrorType, errorMessage } from "@/types/ErrorType";
 
-const myChannels = ref<Channel[]>([]);
-const myDms = ref<DMChannel[]>([]);
-const socket = inject("socketioInstance") as Socket;
 const axiosInstance = axios.create({
 	baseURL: 'http://localhost:3001',
 	withCredentials: true,
 });
+const router = useRouter();
+const toast = useToast();
 
-onMounted(() => {
-	socket.on('channelUpdated', () => {
-		console.log("CHANNEL UPDATED");
-	});
+const myChannels = ref<Channel[]>([]);
+const myDMChannels = ref<DMChannel[]>([]);
+
+onMounted(async () => {
+	await getMyDMChannels();
+	await getMyChannels();
 })
 
-const router = useRouter();
+function catchEvent(event) {
+	if (event) {
+		getMyDMChannels();
+		getMyChannels();
+	}
+}
+
 function openRoute(routePath: string) {
 	router.push(routePath);
 }
 function openDm(subpath: string) {
-	router.push({
-		name: 'ChatBoxDm',
-		params: { channelName: subpath },
-	});
-}
-async function openChannel(subpath: string, channelMode: string) {
-	console.log(subpath, channelMode);
 	const data = {
 		channelName: subpath,
-		channelMode: channelMode,
+	};
+	router.push({
+		name: 'ChatBoxDm',
+		params: data,
+	});
+}
+async function openChannel(subpath: string) {
+	const data = {
+		channelName: subpath,
 	};
 	if (await canJoinChannel(subpath) === true) {
 		router.push({
@@ -89,7 +98,6 @@ async function openChannel(subpath: string, channelMode: string) {
 			params: data,
 		});
 	}
-	// TO DO INSERT POPUP THAT SOMEONE IS BANNED
 }
 
 async function isBanned(channelName: string): Promise<Punishment> {
@@ -101,12 +109,12 @@ async function isBanned(channelName: string): Promise<Punishment> {
 async function canJoinChannel(channelName: string): Promise<boolean> {
 	const ban: Punishment = await isBanned(channelName);
 	if (ban.status === true) {
-		if (ban.time === 0) {
-			console.log(`You are still banned for one second`);
-		}
-		else {
-			console.log(`You are still banned for ${ban.time} seconds`);
-		}
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: `You are still banned for ${ban.time} seconds`,
+			life: 3000,
+		});
 		return false;
 	}
 	else {
@@ -114,61 +122,55 @@ async function canJoinChannel(channelName: string): Promise<boolean> {
 	}
 };
 
-onMounted(async () => {
-	await getMyChannels();
-	await getMyDms();
-});
-
-function catchEvent(event) {
-	if (event) {
-		getMyDms();
-		getMyChannels();
+async function getMyChannels(): Promise<void> {
+	try {
+		const response = await axiosInstance.get('chat/getMyChannels')
+		const channels = response.data;
+		const normalChannels: Channel[] = channels.filter((type: any) => {
+			return (type.channelType === 'NORMAL');
+		});
+		myChannels.value = normalChannels.map(channel => {
+			return {
+				id: channel.id,
+				channelName: channel.channelName,
+				channelMode: channel.channelMode,
+				channelType: channel.channelType,
+			};
+		});
+	} catch (error: any) {
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
+		});
 	}
 }
 
-async function getMyChannels(): Promise<void> {
-	await axios
-		.get("http://localhost:3001/chat/getMyChannels", {
-			withCredentials: true,
-		})
-		.then(async (response) => {
-			const channels = response.data;
-			const normalChannels: Channel[] = channels.filter((type) => {
-				return (type.channelType === 'NORMAL');
+async function getMyDMChannels(): Promise<void> {
+	try {
+		const response = await axiosInstance.get('chat/getMyDMChannelsWithUser');
+		const channels = response.data;
+		const newDMChannels: DMChannel[] = [];
+		channels.forEach((channel: any) => {
+			newDMChannels.push({
+				channelName: channel.channel.channelName,
+				otherUserIntraId: channel.otherUser.intraId,
+				otherUserName: channel.otherUser.name,
+				otherUserAvatar: channel.otherUser.avatar,
 			});
-			myChannels.value = normalChannels.map(channel => {
-				return {
-					id: channel.id,
-					channelName: channel.channelName,
-					channelMode: channel.channelMode,
-				};
-			});
-		})
-		.catch((error: any) => {
-			console.log(error?.response?.data?.reason);
 		});
-};
+		myDMChannels.value = [...newDMChannels];
+	} catch (error: any) {
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
+		});
+	}
+}
 
-async function getMyDms(): Promise<void> {
-	await axios
-		.get("http://localhost:3001/chat/getMyDMChannelsWithUser", {
-			withCredentials: true,
-		})
-		.then(async (response) => {
-			const channels = response.data;
-			myDms.value = channels.map(channel => {
-				return {
-					channelName: channel.channel.channelName,
-					otheruserIntraId: channel.otherUser.intraId,
-					otheruserName: channel.otherUser.name,
-					otheruserAvatar: channel.otherUser.avatar,
-				};
-			});
-		})
-		.catch((error: any) => {
-			console.log(error?.response?.data?.reason);
-		});
-};
 </script>
     
 <style scoped>
@@ -188,7 +190,7 @@ h2 {
 	font-weight: bold;
 }
 
-.chanel-list {
+.channel-list {
 	margin-top: 10px;
 	margin-bottom: 10px;
 	margin-left: 10px;

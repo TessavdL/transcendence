@@ -1,10 +1,17 @@
 <template>
-    <div v-if="isReady">
+    <div v-if="channelType === 'PROTECTED' && !hasEnteredPassword" class="input_bar">
+        <form @submit.prevent="checkPassword">
+            <input type="password" id="checkpassword" class="form-control" v-model="password"
+                placeholder="Enter password" />
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+    <div v-if="isReady && hasEnteredPassword">
         <div class="col-sm-7 col-sm-offset-3 col-md-9 col-md-offset-2 chatbox-ch">
             <div class="row">
                 <div class="ch-header d-inline-flex">
                     <div class="ch-name ch-header-item flex-grow-1">
-                        <h3><i class="bi bi-wechat" style="font-size: 2rem; color: #ffffff;"></i> {{ props.channelName }}
+                        <h3><i class="bi bi-wechat" style="font-size: 2rem; color: #ffffff;"></i> {{ activeChannel }}
                         </h3>
                     </div>
                     <div class="ch-dropdown ch-header-item">
@@ -12,14 +19,14 @@
                             style="font-size: 2rem; color: #ffffff;"></i>
                         <ul class="dropdown-menu">
 
-                            <li v-if="!isPrivate() && isMemberOwner()"><a class="dropdown-item"
+                            <li v-if="channelType !== 'PRIVATE' && isMemberOwner()"><a class="dropdown-item"
                                     @click="setChannelSettingsToTrue()">Channel
                                     Settings</a></li>
                             <li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#membersList">View All
                                     Members</a></li>
-                            <li><a class="dropdown-item" href="#" @click="leaveChannel(activeChannel)">Leave Channel</a>
+                            <li><a class="dropdown-item" href="#" @click="leaveChannel()">Leave Channel</a>
                             </li>
-                            <li><a class="dropdown-item" href="#" @click="abandonChannel(activeChannel)">Abandon Channel</a>
+                            <li><a class="dropdown-item" href="#" @click="abandonChannel()">Abandon Channel</a>
                             </li>
 
                         </ul>
@@ -28,23 +35,30 @@
             </div>
 
             <div v-if="channelSettings">
-                <div v-if="isProtected()">
-                    <input type="password" placeholder="Old Password" v-model="oldPassword" />
-                    <input type="password" placeholder="New Password" v-model="newPassword" />
-                    <button @click="changePassword()">Change Password</button>
-                    <button @click="setChannelSettingsToFalse()">Cancel</button>
-                </div>
-                <div v-if="isProtected()">
-                    <input type="password" placeholder="Password" v-model="password" />
-                    <button @click="removePassword()">Remove Password</button>
-                    <button @click="setChannelSettingsToFalse()">Cancel</button>
-                </div>
-                <div v-if="!isProtected()">
-                    <input type="password" placeholder="Password" v-model="password" />
-                    <button @click="setPassword()">Set Password</button>
-                    <button @click="setChannelSettingsToFalse()">Cancel</button>
+                <div class="input-bar">
+                    <form v-if="channelType === 'PROTECTED'" @submit="changePassword()">
+                        <input type="text" id="oldpassword" class="form-control" placeholder="Old Password"
+                            v-model="oldPassword" />
+                        <input type="password" id="newpassword" placeholder="New Password" v-model="newPassword" />
+                        <button type="submit">Change Password</button>
+                    </form>
+
+                    <form v-if="channelType === 'PROTECTED'" @submit="removePassword()">
+                        <input type="password" id="removepassword" class="form-control" placeholder="Password"
+                            v-model="password" />
+                        <button type="submit">Remove Password</button>
+                    </form>
+
+                    <form v-else-if="channelType === 'PUBLIC'" @submit="setPassword()">
+                        <input type="password" id="setpassword" class="form-control" placeholder="Password"
+                            v-model="password" />
+                        <button type="submit">Set Password</button>
+                    </form>
+
+                    <button type="button" @click="setChannelSettingsToFalse()">Back to channel</button>
                 </div>
             </div>
+
 
             <div v-if="!channelSettings" class="ch-body" id="messageBody">
                 <div class="msg-container" v-for="msg in allMessages" :key="msg.text">
@@ -52,11 +66,13 @@
                         <div class="msg-userinfo d-inline-flex">
                             <img :src="'http://localhost:3001/user/get_avatar?avatar=' + msg.avatar" class="avatar-msg"
                                 alt="avatar">
-                            <h5 class="msg-usernaem">{{ msg.name }}</h5>
+                            <h5 class="msg-username">{{ msg.name }}</h5>
                         </div>
-                        <div class="mes-text">
-                            <p v-if="!msg.isLink">{{ msg.text }}</p>
-                            <p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(msg.text)">{{
+                        <div v-if="!msg.isLink" class="msg-text">
+                            <p>{{ msg.text }}</p>
+                        </div>
+                        <div v-else-if="msg.isLink" class="msg-text">
+                            <p>Do you want to play a game? Click <a href="#" @click="navigateToLink(msg.text)">{{
                                 'here' }}</a> to join</p>
                         </div>
                     </div>
@@ -64,13 +80,15 @@
             </div>
 
             <div v-if="!channelSettings" class="ch-input">
-                <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="type in messages here" v-model="messageText"
-                        @keyup.enter="sendMessage()">
-                    <button class="btn btn-outline-secondary" type="button" id="button-msg"
-                        @click="sendMessage()">Send</button>
-                </div>
+                <form @submit.prevent="sendMessage">
+                    <div class="input-group mb-3">
+                        <input type="text" id="message" class="form-control" placeholder="type in messages here"
+                            v-model="messageText">
+                        <button class="btn btn-outline-secondary" type="submit" id="button-msg">Send</button>
+                    </div>
+                </form>
             </div>
+
         </div>
 
         <!-- Modal of Member List -->
@@ -108,17 +126,19 @@
                                                 View Profile</RouterLink>
                                         </a></li>
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-                                            @click="banUser(member.intraId, activeChannel)">Ban</a></li>
+                                            @click="banUser(member.intraId)">Ban</a></li>
                                     <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-                                            @click="muteUser(member.intraId, activeChannel)">Mute</a></li>
-                                    <li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-                                            @click="kickUser(member.intraId, activeChannel)">Kick</a></li>
+                                            @click="muteUser(member.intraId)">Mute</a></li>
+                                    <li v-if="member.role !== 'OWNER' && isActive(member.intraId)"><a class="dropdown-item"
+                                            href="#" @click="kickUser(member.intraId)">Kick</a></li>
                                     <li v-if="member.role == 'MEMBER'"><a class="dropdown-item" href="#"
-                                            @click="promoteMemberToAdmin(member.intraId, activeChannel)">Promote member
+                                            @click="promoteMemberToAdmin(member.intraId)">Promote
+                                            member
                                             to
                                             admin</a></li>
                                     <li v-if="member.role == 'ADMIN'"><a class="dropdown-item" href="#"
-                                            @click="demoteAdmintoMember(member.intraId, activeChannel)">Demote admin to
+                                            @click="demoteAdmintoMember(member.intraId)">Demote
+                                            admin to
                                             member</a></li>
                                     <li v-if="isActive(member.intraId)"><a class="dropdown-item" href="#"
                                             @click="inviteToGame(member.intraId)">Invite
@@ -145,7 +165,7 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, defineProps, inject, onMounted, onUnmounted, onBeforeMount, onUpdated, computed } from "vue";
+import { ref, defineProps, inject, onMounted, onBeforeMount, computed } from "vue";
 import type { Socket } from "socket.io-client";
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
@@ -160,10 +180,6 @@ const props = defineProps({
         type: String,
         required: true,
     },
-    channelMode: {
-        type: String,
-        required: true,
-    },
 });
 
 const toast = useToast();
@@ -172,32 +188,37 @@ const axiosInstance = axios.create({
     baseURL: 'http://localhost:3001',
     withCredentials: true,
 });
+const emit = defineEmits<{
+    (event: "isActionSuccess"): boolean;
+}>();
 
 const activeChannel = ref('');
 const allMessages = ref<Message[]>([]);
 const channelSettings = ref<boolean>(false);
+const channelType = ref('');
 const member = ref<Member>();
 const messageText = ref('');
 const oldPassword = ref('');
 const newPassword = ref('');
+const hasEnteredPassword = ref<boolean>(true);
 const password = ref('');
 const allMembers = ref<Member[]>([]);
 const activeMembers = ref<Member[]>([]);
 const userIntraId = ref<number>(storeUser.state.user.intraId);
 const userRole = ref();
-const joinChannelCalled = ref(false);
+const joinChannelCalled = ref<boolean>(false);
 
 onBeforeMount(async () => {
+    activeChannel.value = props.channelName;
     if (joinChannelCalled.value === false) {
-        await joinChannel(props.channelName);
+        await joinChannel();
         joinChannelCalled.value = true;
     }
 });
 
 onMounted(async () => {
-    socket.on('joined', async (me: Member) => {
-        if (me === null) {
-            // should instead be one where you have to press ok and then get pushed to chat home page
+    socket.on('joined', async (data) => {
+        if (data === null) {
             toast.add({
                 severity: "error",
                 summary: "Error",
@@ -206,14 +227,23 @@ onMounted(async () => {
             });
         }
         else {
-            await loadAllMembers(props.channelName);
-            member.value = me;
-            console.log('in joined', { me });
+            await loadAllMembers();
+            await getChannelType();
+            if (channelType.value === 'PROTECTED') {
+                hasEnteredPassword.value = false;
+            }
+            const memberdata: Member = {
+                intraId: data.user.intraId,
+                name: data.user.name,
+                avatar: data.user.avatar,
+                role: data.role,
+            };
+            member.value = memberdata;
         }
     });
 
-    socket.on('leaveChannel', (data) => {
-        leaveChannel(data);
+    socket.on('leaveChannel', () => {
+        leaveChannel();
     });
 
     socket.on('left', () => {
@@ -222,28 +252,44 @@ onMounted(async () => {
         });
     });
 
-    socket.on('userJoined', (member: Member) => {
-        const memberToAdd: Member = {
-            intraId: member.user.intraId,
-            name: member.user.name,
-            avatar: member.user.avatar,
-            role: member.role,
+    socket.on('userJoined', (data) => {
+        const memberdata: Member = {
+            intraId: data.user.intraId,
+            name: data.user.name,
+            avatar: data.user.avatar,
+            role: data.role,
         };
-        console.log('userJoined', activeMembers.value.length);
-        activeMembers.value.push(member);
-        console.log('userJoined', activeMembers.value.length);
+        console.log('active members after before user joined', activeMembers.value.length);
+        activeMembers.value.push(memberdata);
+        console.log('active members after user joined', activeMembers.value.length);
     });
 
-    socket.on('userLeft', (member: Member) => {
-        console.log('userLeft before', activeMembers.value.length);
-        const index = activeMembers.value.findIndex((activeMember) => activeMember.intraId === member.intraId);
+    socket.on('userLeft', (data) => {
+        const memberToRemove: Member = {
+            intraId: data.user.intraId,
+            name: data.user.name,
+            avatar: data.user.avatar,
+            role: data.role,
+        };
+        console.log('active members after before user left', activeMembers.value.length);
+        const index = activeMembers.value.findIndex((activeMember) => activeMember.intraId === memberToRemove.intraId);
         if (index !== -1) {
             activeMembers.value.splice(index, 1);
         }
-        console.log('userLeft after', activeMembers.value.length);
+        console.log('active members after after user left', activeMembers.value.length);
     });
 
-    socket.on('otherJoinedMembers', (members) => {
+    socket.on('otherJoinedMembers', (data) => {
+        const members = data.map((item) => {
+            const { user, role } = item;
+            return {
+                intraId: user.intraId,
+                name: user.name,
+                avatar: user.avatar,
+                role: role
+            };
+        });
+        console.log('other active members in channel');
         activeMembers.value = [...members];
         activeMembers.value.forEach((member: Member) => {
             console.log(member.intraId);
@@ -256,7 +302,6 @@ onMounted(async () => {
     });
 
     socket.on('createGame', (data) => {
-        console.log(data);
         const gameid = data;
         if (gameid === undefined || gameid === null) {
             toast.add({
@@ -267,7 +312,6 @@ onMounted(async () => {
             });
             return;
         }
-        console.log('Redirecting to game', gameid);
         router.push({
             name: 'Game',
             params: { gameid: gameid },
@@ -275,9 +319,7 @@ onMounted(async () => {
     });
 
     socket.on('inviteForGame', (data) => {
-        console.log("We are in inviteForGame");
-        const gameid = data.gameId;
-        console.log(gameid);
+        const gameid: string = data.gameId;
         if (gameid === undefined || gameid === null) {
             toast.add({
                 severity: "error",
@@ -297,15 +339,13 @@ onMounted(async () => {
         }
         allMessages.value.push(invite);
     });
-
-
 });
 
 onBeforeRouteLeave(() => {
     console.log('leaving page');
     socket.removeAllListeners();
     if (member.value) {
-        leaveChannel(activeChannel.value);
+        leaveChannel();
     }
     $('.modal-backdrop').remove();
 });
@@ -315,9 +355,6 @@ const isReady = computed(() => {
 });
 
 function isActive(intraId: number) {
-    activeMembers.value.forEach((member: Member) => {
-        console.log(member.intraId);
-    })
     return activeMembers.value.some((member) => member.intraId === intraId);
 }
 
@@ -333,28 +370,82 @@ function setChannelSettingsToFalse() {
     channelSettings.value = false;
 }
 
-function isProtected() {
-    return props.channelMode === 'PROTECTED';
+async function isMuted() {
+    const data = {
+        channelName: activeChannel.value,
+    };
+    try {
+        const response = await axiosInstance.get('chat/amIMuted', { params: data });
+        const mute: Punishment = response.data;
+        return mute;
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
 }
 
-function isPrivate() {
-    return props.channelMode === 'PRIVATE';
+async function getChannelType() {
+    try {
+        const data = {
+            channelName: activeChannel.value,
+        }
+        const response = await axiosInstance.get('chat/getChannelType', { params: data });
+        channelType.value = response.data;
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
 }
 
-async function isMuted(channelName: string): Promise<Punishment> {
-    const response = await axiosInstance.get('chat/amIMuted', { params: { channelName: channelName } });
-    const mute: Punishment = response.data;
-    return mute;
+async function checkPassword() {
+    const data = {
+        channelName: activeChannel.value,
+        password: password.value,
+    }
+    try {
+        const response = await axiosInstance.get('chat/checkPassword', { params: data });
+        password.value = '';
+        const check: boolean = response.data;
+        if (check) {
+            hasEnteredPassword.value = true;
+        }
+        else {
+            member.value = undefined;
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: errorMessage(ErrorType.CHECK_PASSWORD_FAILED),
+                life: 3000,
+            });
+        }
+    } catch (error: any) {
+        password.value = '';
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
 }
 
 async function changePassword() {
     const data = {
-        channelName: props.channelName,
+        channelName: activeChannel.value,
         oldPassword: oldPassword.value,
         newPassword: newPassword.value,
     }
     try {
         await axiosInstance.patch('chat/changePassword', data);
+        emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
         toast.add({
@@ -363,6 +454,7 @@ async function changePassword() {
             detail: errorMessage(ErrorType.CHANGE_PASSWORD_FAILED),
             life: 3000,
         });
+        emit("isActionSuccess", false);
     }
     oldPassword.value = '';
     newPassword.value = '';
@@ -370,12 +462,12 @@ async function changePassword() {
 
 async function setPassword() {
     const data = {
-        channelName: props.channelName,
+        channelName: activeChannel.value,
         password: password.value,
     };
     try {
         await axiosInstance.patch('chat/setPassword', data);
-        socket.emit('channelUpdated');
+        emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
         toast.add({
@@ -384,19 +476,19 @@ async function setPassword() {
             detail: errorMessage(ErrorType.SET_PASSWORD_FAILED),
             life: 3000,
         });
+        emit("isActionSuccess", false);
     }
     password.value = '';
 }
 
 async function removePassword() {
     const data = {
-        channelName: props.channelName,
+        channelName: activeChannel.value,
         password: password.value,
     };
-    console.log(data);
     try {
         await axiosInstance.patch('chat/deletePassword', data);
-        socket.emit('channelUpdated');
+        emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
         toast.add({
@@ -405,22 +497,22 @@ async function removePassword() {
             detail: errorMessage(ErrorType.REMOVE_PASSWORD_FAILED),
             life: 3000,
         });
+        emit("isActionSuccess", false);
     }
     password.value = '';
 }
 
-async function joinChannel(channelName: string): Promise<void> {
-    socket.emit('joinChannel', channelName);
-    activeChannel.value = channelName;
+async function joinChannel(): Promise<void> {
+    socket.emit('joinChannel', activeChannel.value);
     await loadAllMessages();
 }
 
 async function loadAllMessages(): Promise<void> {
-    const request = {
+    const data = {
         channelName: activeChannel.value,
     }
     try {
-        const response = await axiosInstance.get('chat/getAllMessagesInChannel', { params: request });
+        const response = await axiosInstance.get('chat/getAllMessagesInChannel', { params: data });
         allMessages.value = response.data;
     }
     catch (error: any) {
@@ -441,50 +533,64 @@ function sendErrorMessage(mute: Punishment) {
     else {
         text = `You are still muted for ${mute.time} seconds`;
     }
-    const data: Message = {
+    const message: Message = {
         channelName: '',
         intraId: 0,
         name: '',
         avatar: './src/assets/prohibited.jpeg',
         text: text,
+        isLink: false
     }
-    allMessages.value.push(data);
+    allMessages.value.push(message);
     messageText.value = '';
     $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
 }
 
 async function sendMessage() {
-    const mute: Punishment = await isMuted(activeChannel.value);
+    const mute: Punishment = await isMuted();
     if (mute.status === true) {
         sendErrorMessage(mute);
     }
     else {
-        const messageData = {
-            messageText: messageText.value,
-            channelName: activeChannel.value,
-        };
-        try {
-            socket.emit('sendMessageToChannel', messageData);
-            messageText.value = '';
-            $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
+        if (!(messageText.value.length > 0)) {
+            return;
         }
-        catch (error: any) {
+        if (messageText.value.length > 140) {
             toast.add({
                 severity: "error",
                 summary: "Error",
-                detail: errorMessage(ErrorType.SEND_MSG_FAILED),
+                detail: "Message cannot be longer than 140 characters",
                 life: 3000,
             });
+            messageText.value = '';
+            return;
         }
+    }
+    const messageData = {
+        messageText: messageText.value,
+        channelName: activeChannel.value,
+    };
+    try {
+        socket.emit('sendMessageToChannel', messageData);
+        messageText.value = '';
+        $("#messageBody").animate({ scrollTop: 20000000 }, "slow");
+    }
+    catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.SEND_MSG_FAILED),
+            life: 3000,
+        });
     }
 }
 
-async function loadAllMembers(channelName: string): Promise<void> {
-    const request = {
-        channelName: channelName,
+async function loadAllMembers(): Promise<void> {
+    const data = {
+        channelName: activeChannel.value,
     }
     try {
-        const response = await axiosInstance.get('chat/getMembersInChannel', { params: request });
+        const response = await axiosInstance.get('chat/getMembersInChannel', { params: data });
         allMembers.value = response.data;
         for (let member of allMembers.value) {
             if (member.intraId == userIntraId.value) {
@@ -502,26 +608,26 @@ async function loadAllMembers(channelName: string): Promise<void> {
     }
 };
 
-async function kickUser(otherIntraId: number, channelName: string): Promise<void> {
-    socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: channelName });
+async function kickUser(otherIntraId: number): Promise<void> {
+    socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
 }
 
-async function banUser(otherIntraId: number, channelName: string): Promise<void> {
-    socket.emit('banUser', { otherIntraId: otherIntraId, channelName: channelName });
+async function banUser(otherIntraId: number): Promise<void> {
+    socket.emit('banUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
 }
 
-async function muteUser(otherIntraId: number, channelName: string): Promise<void> {
-    socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
+async function muteUser(otherIntraId: number): Promise<void> {
+    socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
 }
 
-async function promoteMemberToAdmin(otherIntraId: number, channelName: string): Promise<void> {
+async function promoteMemberToAdmin(otherIntraId: number): Promise<void> {
     try {
         const data = {
-            channelName: channelName,
+            channelName: activeChannel.value,
             otherIntraId: otherIntraId,
         }
         await axiosInstance.patch('chat/promoteMemberToAdmin', data);
-        await loadAllMembers(channelName);
+        await loadAllMembers();
     } catch (error: any) {
         toast.add({
             severity: "error",
@@ -532,14 +638,14 @@ async function promoteMemberToAdmin(otherIntraId: number, channelName: string): 
     }
 }
 
-async function demoteAdmintoMember(otherIntraId: number, channelName: string): Promise<void> {
+async function demoteAdmintoMember(otherIntraId: number): Promise<void> {
     try {
         const data = {
-            channelName: channelName,
+            channelName: activeChannel.value,
             otherIntraId: otherIntraId,
         }
         await axiosInstance.patch('chat/demoteAdminToMember', data);
-        await loadAllMembers(channelName);
+        await loadAllMembers();
     } catch (error: any) {
         toast.add({
             severity: "error",
@@ -551,21 +657,16 @@ async function demoteAdmintoMember(otherIntraId: number, channelName: string): P
 }
 
 function inviteToGame(otherIntraId: number): void {
-    console.log('in invite to game', otherIntraId);
     socket.emit('gameChallenge', { otherIntraId: otherIntraId });
 }
 
-const emit = defineEmits<{
-    (event: "isActionSuccess"): boolean;
-}>();
-
-async function abandonChannel(channelName: string) {
+async function abandonChannel() {
     const data = {
-        channelName: channelName,
+        channelName: activeChannel.value,
     };
     try {
         await axiosInstance.delete('chat/removeUserFromChannel', { data });
-        leaveChannel(props.channelName);
+        leaveChannel();
         emit("isActionSuccess", true);
     } catch (error: any) {
         toast.add({
@@ -578,8 +679,8 @@ async function abandonChannel(channelName: string) {
     }
 }
 
-function leaveChannel(channelName: string): void {
-    socket.emit('leaveChannel', channelName);
+function leaveChannel(): void {
+    socket.emit('leaveChannel', activeChannel.value);
 }
 
 function navigateToLink(gameid: string) {
@@ -623,7 +724,7 @@ h3 {
     margin-right: 10px;
 }
 
-.msg-usernaem {
+.msg-username {
     font-style: italic;
     color: #c8b8b8;
 }
@@ -632,6 +733,10 @@ h3 {
     text-align: left;
     margin-left: 30px;
     font-size: 20px;
+}
+
+.msg-other {
+    align-self: flex-end;
 }
 
 .single-msg {
@@ -654,5 +759,25 @@ h3 {
 
 #membersList {
     color: black;
+}
+
+.input-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.input-bar input[type="text"],
+.input-bar input[type="password"] {
+    flex-grow: 1;
+    margin-right: 10px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.input-bar button {
+    padding: 5px 10px;
 }
 </style>

@@ -57,6 +57,11 @@ export class ChatController {
 		return await this.channelService.removeUserFromChannel(user.intraId, removeUserFromChannelDto.channelName);
 	}
 
+	@Get('getChannelType')
+	async getChannelInfo(@Query() params: { channelName: string }): Promise<string> {
+		return ((await this.channelService.getChannel(params.channelName)).channelMode);
+	}
+
 	@Get('getAllChannels')
 	async getAllChannels(): Promise<Channel[]> {
 		return await this.channelService.getAllChannels();

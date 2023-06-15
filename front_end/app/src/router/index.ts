@@ -88,7 +88,7 @@ const router = createRouter({
 					props: true,
 				},
 				{
-					path: '/chat/ChatBoxChannel/:channelName/:channelMode',
+					path: '/chat/ChatBoxChannel/:channelName',
 					name: 'ChatBoxChannel',
 					component: ChatBoxChannel,
 					props: true,

@@ -10,6 +10,7 @@ export enum ErrorType {
     LOAD_MSG_FAILED,
     SEND_MSG_FAILED,
     CHANGE_PASSWORD_FAILED,
+    CHECK_PASSWORD_FAILED,
     REMOVE_PASSWORD_FAILED,
     SET_PASSWORD_FAILED,
     CHAT_FORBIDDEN,
@@ -33,6 +34,8 @@ export function errorMessage(errorType: ErrorType | undefined): string {
             return "Failed to send messages";
         case ErrorType.CHANGE_PASSWORD_FAILED:
             return "Failed to change password";
+        case ErrorType.CHECK_PASSWORD_FAILED:
+            return "Wrong password, please retry";
         case ErrorType.REMOVE_PASSWORD_FAILED:
             return "Failed to remove password";
         case ErrorType.SET_PASSWORD_FAILED:
