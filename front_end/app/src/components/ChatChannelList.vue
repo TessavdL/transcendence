@@ -5,7 +5,6 @@
             <div class="channel-list-item d-inline-flex align-items-center">
                 <span class="channel-info align-text-bottom" @click="addUserToChannel(channel.channelName)">
                     <i class="bi bi-broadcast-pin" v-if="channel.channelMode === 'PUBLIC'"></i>
-                    <i class="bi bi-shield-fill" v-if="channel.channelMode === 'PRIVATE'"></i>
                     <i class="bi bi-lock-fill" v-if="channel.channelMode === 'PROTECTED'"></i>
                     {{ channel.channelName }}
                 </span>
@@ -67,7 +66,7 @@ async function getAllChannels(): Promise<void> {
         .then(async (response) => {
             const channels = response.data;
             const normalChannels: Channel[] = channels.filter((type) => {
-                return (type.channelType === 'NORMAL');
+                return (type.channelType === 'NORMAL' && type.channelMode !== 'PRIVATE');
             });
             allChannels.value = normalChannels.map(channel => {
                 return {

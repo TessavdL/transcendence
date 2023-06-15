@@ -1,18 +1,16 @@
 <template>
 	<div class="create-channel">
 		<form @submit.prevent="createChannel">
-			<label for="channelName">
-				<input id="channelName" v-model="channelName" type="text" placeholder="Channel name" />
-			</label>
+			<input v-model="channelName" type="text" placeholder="Channel name" />
 			<br>
 			<ul>
-				<label for="public">
-					<input id="public" type="radio" v-model="channelMode" value="PUBLIC" />
+				<label>
+					<input type="radio" v-model="channelMode" value="PUBLIC" />
 					Public
 				</label>
 
-				<label for="protected">
-					<input id="protected" type="radio" v-model="channelMode" value="PROTECTED" />
+				<label>
+					<input type="radio" v-model="channelMode" value="PROTECTED" />
 					Protected
 				</label>
 
@@ -58,7 +56,7 @@
 	<div class="all-dmchannels" v-if="!joined">
 		<h2>All My DMChannels</h2>
 		<ul style="list-style: none;">
-			<li v-for="dmchannel in DMChannel" :key="dmchannel.channelName">
+			<li v-for="dmchannel in dmInfo" :key="dmchannel.channelName">
 				<a @click="joinDMChannel(dmchannel.channelName)" class="button">{{ dmchannel.otherUserName }}</a>
 			</li>
 		</ul>
@@ -105,7 +103,7 @@
 import type { Socket } from "socket.io-client";
 import { inject, ref } from 'vue';
 import axios from "axios";
-import type { Channel, Message, User, DMChannel, Member, Punishment } from "../types/ChatType";
+import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
 import { useRouter } from "vue-router";
 import _default from "vuex";
 
@@ -116,7 +114,7 @@ export default {
 			activeChannelType: ref(''),
 
 			allUsers: ref<User[]>([]),
-			DMChannel: ref<DMChannel[]>([]),
+			dmInfo: ref<DMInfo[]>([]),
 
 			allNormalChannels: ref<Channel[]>([]),
 			allMyNormalChannels: ref<Channel[]>([]),
@@ -330,7 +328,7 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
-				const DMChannel: DMChannel[] = channels.map((item) => {
+				const dmInfo: DMInfo[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
 						otherUserAvatar: item.otherUser.avatar,
@@ -338,7 +336,7 @@ export default {
 						otherUserName: item.otherUser.name,
 					};
 				});
-				this.DMChannel = DMChannel;
+				this.dmInfo = dmInfo;
 			} catch (error: any) {
 				this.errorMessage = error?.response?.data?.reason || "An unknown error occurred";
 			}
@@ -349,7 +347,7 @@ export default {
 		},
 
 		isDMMember(otherIntraId: number) {
-			return this.DMChannel.some((item) => item.otherUserIntraId === otherIntraId);
+			return this.dmInfo.some((item) => item.otherUserIntraId === otherIntraId);
 		},
 
 		async isBanned(channelName: string): Promise<Punishment> {
@@ -435,7 +433,7 @@ export default {
 		},
 
 		getActiveChannelName(channelName: string) {
-			const channel = this.DMChannel.find((x) => x.channelName === channelName);
+			const channel = this.dmInfo.find((x) => x.channelName === channelName);
 			if (channel) {
 				return (channel.otherUserName);
 			}
