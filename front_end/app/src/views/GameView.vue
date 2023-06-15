@@ -203,6 +203,21 @@ export default {
 			this.socket.disconnect();
 	},
 
+	beforeUnmount() {
+		window.removeEventListener('keydown', this.handleEvent);
+		console.log(this.playerDisconnect, 'beforeUnmount');
+		if (this.gameOver === false) {
+			const data = {
+				gameStatus: this.game,
+				roomName: this.roomName,
+				players: this.player
+			}
+			this.socket.emit('endGame', data);
+		}
+		else 
+			this.socket.disconnect();
+	},
+
 	methods: { 		
 		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {

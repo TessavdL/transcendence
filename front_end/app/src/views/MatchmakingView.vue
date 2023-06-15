@@ -33,23 +33,31 @@ export default {
 				})
 			}
 			console.log('Redirecting to game', gameid);
-			this.router.push(`game/${gameid}`);
+			this.router.push({
+				name: 'Game',
+				params: { gameid: gameid }
+			});
 		}),
 
-			this.socket.on('error', (data) => {
-				console.log(data);
-				this.router.push({
-					name: "Home",
-				})
-			}),
-
-			this.socket.on('unauthorized', (data) => {
-				console.log(data);
-				this.router.push({
-					name: "Home",
-				})
+		this.socket.on('error', (data) => {
+			console.log(data);
+			this.router.push({
+				name: "Home",
 			})
+		}),
+
+		this.socket.on('unauthorized', (data) => {
+			console.log(data);
+			this.router.push({
+				name: "Home",
+			})
+		})
 	},
+
+	beforeRouteLeave() {
+		this.socket.removeAllListeners();
+		this.socket.disconnect();
+	}
 }
 
 </script>
