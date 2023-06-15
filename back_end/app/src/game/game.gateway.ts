@@ -3,6 +3,10 @@ import { GameService } from './game.service';
 import { Server, Socket } from 'socket.io';
 import { Game, Players } from './types';
 import { Logger } from '@nestjs/common';
+import { ActivityStatus, User } from '@prisma/client';
+import { AuthService } from 'src/auth/auth.service';
+import { JwtStrategy } from 'src/auth/strategy';
+import { UserService } from 'src/user/user.service';
 
 @WebSocketGateway({
 	cors: {
@@ -14,7 +18,10 @@ import { Logger } from '@nestjs/common';
 export class GameGateway
 	implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
 	constructor(
+		private readonly authService: AuthService,
 		private readonly gameService: GameService,
+		private readonly jwtStrategy: JwtStrategy,
+		private readonly userService: UserService,
 	) { }
 	private readonly logger: Logger = new Logger('GameGateway');
 
@@ -25,14 +32,40 @@ export class GameGateway
 		this.logger.log('GameGateway Initialized');
 	}
 
-	handleConnection(client: Socket) {
+	async handleConnection(client: Socket) {
 		this.logger.log(`Client connect id = ${client.id}`);
+		let user: User;
+
+		try {
+			// verify client
+			const token: string = this.authService.getJwtTokenFromSocket(client);
+			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			user = await this.jwtStrategy.validate(payload);
+		} catch (error: any) {
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+		}
+		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
 		const game: Game = this.gameService.gameData();
 		client.emit('gameData', game);
 		client.emit('connected');
 	}
 
-	handleDisconnect(client: Socket) {
+	async handleDisconnect(client: Socket) {
+		let user: User;
+
+		try {
+			// verify client
+			const token: string = this.authService.getJwtTokenFromSocket(client);
+			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			user = await this.jwtStrategy.validate(payload);
+		} catch (error: any) {
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+		}
+		await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
 		this.logger.log(`Client disconnect id = ${client.id}`);
 	}
 
