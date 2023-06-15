@@ -397,6 +397,7 @@ export class UserService {
 					achievements: true,
 				},
 			});
+			await this.updateAvatarInMatchHistory(intraId, filePath);
 			this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -404,6 +405,29 @@ export class UserService {
 					throw new NotFoundException('Unable to upload avatar');
 				}
 			}
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async updateAvatarInMatchHistory(intraId: number, filePath: string): Promise<void> {
+		try {
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					winnerIntraId: intraId,
+				},
+				data: {
+					winnerAvatar: filePath,
+				},
+			});
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					loserIntraId: intraId,
+				},
+				data: {
+					loserAvatar: filePath,
+				},
+			});
+		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
