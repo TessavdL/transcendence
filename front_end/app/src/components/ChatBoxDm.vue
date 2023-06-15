@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import axios from "axios";
 import { ref, defineProps, inject, onMounted, onUnmounted, onUpdated } from "vue";
-import type { Socket } from "socket.io-client";
+import { io } from "socket.io-client";
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
@@ -79,13 +79,16 @@ onUnmounted(() => {
     socket.off("message");
 });
 
-const toast = useToast();
-
-const socket = inject("socketioInstance") as Socket;
 const axiosInstance = axios.create({
     baseURL: 'http://localhost:3001',
     withCredentials: true,
 });
+const toast = useToast();
+const socket = io(
+    'http://localhost:3001/chat', {
+    withCredentials: true,
+}
+);
 
 const activeChannel = ref('');
 const activeChannelType = ref('');

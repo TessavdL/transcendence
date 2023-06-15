@@ -165,8 +165,7 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, defineProps, inject, onMounted, onBeforeMount, computed } from "vue";
-import type { Socket } from "socket.io-client";
+import { ref, defineProps, onMounted, onBeforeMount, computed } from "vue";
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
@@ -174,6 +173,7 @@ import type { Member, Message, Punishment } from "../types/ChatType";
 import storeUser from "@/store";
 import router from "@/router";
 import { onBeforeRouteLeave } from "vue-router";
+import { Socket, io } from "socket.io-client"
 
 const props = defineProps({
     channelName: {
@@ -183,9 +183,8 @@ const props = defineProps({
 });
 
 const toast = useToast();
-const socket = inject("socketioInstance") as Socket;
 const axiosInstance = axios.create({
-    baseURL: 'http://localhost:3001',
+    baseURL: 'http://localhost:3001/chat',
     withCredentials: true,
 });
 const emit = defineEmits<{
@@ -206,14 +205,17 @@ const allMembers = ref<Member[]>([]);
 const activeMembers = ref<Member[]>([]);
 const userIntraId = ref<number>(storeUser.state.user.intraId);
 const userRole = ref();
-const joinChannelCalled = ref<boolean>(false);
+let socket: Socket;
 
 onBeforeMount(async () => {
-    activeChannel.value = props.channelName;
-    if (joinChannelCalled.value === false) {
-        await joinChannel();
-        joinChannelCalled.value = true;
+    socket = io(
+        'http://localhost:3001/chat', {
+        withCredentials: true,
     }
+    );
+    console.log('in onbefore mount');
+    activeChannel.value = props.channelName;
+    await joinChannel();
 });
 
 onMounted(async () => {
@@ -247,6 +249,7 @@ onMounted(async () => {
     });
 
     socket.on('left', () => {
+        socket.disconnect();
         router.push({
             name: 'Chat',
         });
@@ -375,7 +378,7 @@ async function isMuted() {
         channelName: activeChannel.value,
     };
     try {
-        const response = await axiosInstance.get('chat/amIMuted', { params: data });
+        const response = await axiosInstance.get('amIMuted', { params: data });
         const mute: Punishment = response.data;
         return mute;
     } catch (error: any) {
@@ -393,7 +396,7 @@ async function getChannelType() {
         const data = {
             channelName: activeChannel.value,
         }
-        const response = await axiosInstance.get('chat/getChannelType', { params: data });
+        const response = await axiosInstance.get('getChannelType', { params: data });
         channelType.value = response.data;
     } catch (error: any) {
         toast.add({
@@ -411,7 +414,7 @@ async function checkPassword() {
         password: password.value,
     }
     try {
-        const response = await axiosInstance.get('chat/checkPassword', { params: data });
+        const response = await axiosInstance.get('checkPassword', { params: data });
         password.value = '';
         const check: boolean = response.data;
         if (check) {
@@ -444,7 +447,7 @@ async function changePassword() {
         newPassword: newPassword.value,
     }
     try {
-        await axiosInstance.patch('chat/changePassword', data);
+        await axiosInstance.patch('changePassword', data);
         emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
@@ -466,7 +469,7 @@ async function setPassword() {
         password: password.value,
     };
     try {
-        await axiosInstance.patch('chat/setPassword', data);
+        await axiosInstance.patch('setPassword', data);
         emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
@@ -487,7 +490,7 @@ async function removePassword() {
         password: password.value,
     };
     try {
-        await axiosInstance.patch('chat/deletePassword', data);
+        await axiosInstance.patch('deletePassword', data);
         emit("isActionSuccess", true);
         setChannelSettingsToFalse();
     } catch (error: any) {
@@ -503,8 +506,16 @@ async function removePassword() {
 }
 
 async function joinChannel(): Promise<void> {
-    socket.emit('joinChannel', activeChannel.value);
-    await loadAllMessages();
+    if (socket.connected) {
+        socket.emit('joinChannel', activeChannel.value);
+        await loadAllMessages();
+    }
+    else {
+        socket.on('hasConnected', async () => {
+            socket.emit('joinChannel', activeChannel.value);
+            await loadAllMessages();
+        });
+    }
 }
 
 async function loadAllMessages(): Promise<void> {
@@ -512,7 +523,7 @@ async function loadAllMessages(): Promise<void> {
         channelName: activeChannel.value,
     }
     try {
-        const response = await axiosInstance.get('chat/getAllMessagesInChannel', { params: data });
+        const response = await axiosInstance.get('getAllMessagesInChannel', { params: data });
         allMessages.value = response.data;
     }
     catch (error: any) {
@@ -590,7 +601,7 @@ async function loadAllMembers(): Promise<void> {
         channelName: activeChannel.value,
     }
     try {
-        const response = await axiosInstance.get('chat/getMembersInChannel', { params: data });
+        const response = await axiosInstance.get('getMembersInChannel', { params: data });
         allMembers.value = response.data;
         for (let member of allMembers.value) {
             if (member.intraId == userIntraId.value) {
@@ -626,7 +637,7 @@ async function promoteMemberToAdmin(otherIntraId: number): Promise<void> {
             channelName: activeChannel.value,
             otherIntraId: otherIntraId,
         }
-        await axiosInstance.patch('chat/promoteMemberToAdmin', data);
+        await axiosInstance.patch('promoteMemberToAdmin', data);
         await loadAllMembers();
     } catch (error: any) {
         toast.add({
@@ -644,7 +655,7 @@ async function demoteAdmintoMember(otherIntraId: number): Promise<void> {
             channelName: activeChannel.value,
             otherIntraId: otherIntraId,
         }
-        await axiosInstance.patch('chat/demoteAdminToMember', data);
+        await axiosInstance.patch('demoteAdminToMember', data);
         await loadAllMembers();
     } catch (error: any) {
         toast.add({
@@ -657,7 +668,11 @@ async function demoteAdmintoMember(otherIntraId: number): Promise<void> {
 }
 
 function inviteToGame(otherIntraId: number): void {
-    socket.emit('gameChallenge', { otherIntraId: otherIntraId });
+    const data = {
+        channelName: activeChannel.value,
+        otherIntraId: otherIntraId,
+    }
+    socket.emit('gameChallenge', data);
 }
 
 async function abandonChannel() {
@@ -665,7 +680,7 @@ async function abandonChannel() {
         channelName: activeChannel.value,
     };
     try {
-        await axiosInstance.delete('chat/removeUserFromChannel', { data });
+        await axiosInstance.delete('removeUserFromChannel', { data });
         leaveChannel();
         emit("isActionSuccess", true);
     } catch (error: any) {

@@ -5,7 +5,7 @@ import { ChatGateway } from './chat.gateway';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthModule } from 'src/auth/auth.module';
 import { UserModule } from 'src/user/user.module';
-import { SharedService } from './chat.map.shared.service';
+import { ChatSharedService } from './chat.shared.service';
 import { ChannelModule } from './channel/channel.module';
 import { PasswordModule } from './password/password.module';
 import { RoleModule } from './role/role.module';
@@ -31,7 +31,7 @@ import { GameModule } from 'src/game/game.module';
 	providers: [
 		ChatService,
 		ChatGateway,
-		SharedService,
+		ChatSharedService,
 	],
 })
 export class ChatModule { }
