@@ -32,7 +32,7 @@ export function errorMessage(errorType: ErrorType | undefined): string {
         case ErrorType.CHANGE_NAME_FAILED:
             return "Failed to change user name";
         case ErrorType.CHANGE_AVATAR_FAILED:
-            return "Failed to change avatar";
+            return "Failed to update avatar";
         default:
             return "somethin went wrong";
     }

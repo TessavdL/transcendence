@@ -62,17 +62,18 @@ const storeUser = createStore({
                         commit("updateIntraId", response.data.intraId);
                         commit("updateUserName", response.data.name);
                         commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
-                        // if (
-                        //     response.data.isTwoFactorAuthEnabled &&
-                        //     !response.data.isTwoFactorAuthenticated
-                        // ) {
-                        //     router.push({ name: "2fAuthenticate" });
-                        // } else {
+                        commit("updateTwoFactor", response.data.twofaStatus);
+                        // if (response.data.twofaStatus && !response.data.isTwoFactorAuthenticated) {
+                        // if (response.data.twofaStatus) {
+                        //     router.push({ name: "twofactor" });
+                        // }
+                        // else {
                         //     commit("setAuthenticated");
                         //     commit("updateId", response.data.id);
-                        //     commit("updateUserAvatar", response.data.avatar);
-                        //     commit("updateTwoFactor", response.data.isTwoFactorAuthEnabled);
+                        //     commit("updateIntraId", response.data.intraId);
                         //     commit("updateUserName", response.data.name);
+                        //     commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
+                        //     commit("updateTwoFactor", response.data.twofaStatus);
                         // }
                     })
                     .catch(() => {

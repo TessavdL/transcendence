@@ -65,7 +65,7 @@ async function getAllChannels(): Promise<void> {
         .then(async (response) =>  {
             const channels = response.data;
             const normalChannels: Channel[] = channels.filter((type) => {
-				return (type.channelType === 'NORMAL');
+				return (type.channelType === 'NORMAL' && type.channelMode !== 'PRIVATE');
 			});
 			allChannels.value = normalChannels.map(channel => {
 				return {
@@ -74,7 +74,6 @@ async function getAllChannels(): Promise<void> {
                     channelMode: channel.channelMode,
 				};
 			});
-            console.log(allChannels.value);
         })
         .catch((error: any) => {
             console.log(error?.response?.data?.reason);

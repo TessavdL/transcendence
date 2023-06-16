@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router';
 import storeUser from "@/store";
 
 import HomeView from '@/views/HomeView.vue';
+import TwoFactorAuthEnableView from '@/views/TwoFactorAuthEnableView.vue';
+import TwoFactorAuthVarifyView from '@/views/TwoFactorAuthVarifyView.vue';
 import GameView from "@/views/GameView.vue";
 import ChatView from "@/views/ChatView.vue";
 import ChatView2 from "@/views/ChatView2.vue";
@@ -29,6 +31,16 @@ const router = createRouter({
 			path: '/',
 			name: 'Home',
 			component: HomeView
+		},
+		{
+			path: '/twofactorenable',
+			name: 'twofactorenable',
+			component: TwoFactorAuthEnableView
+		},
+		{
+			path: '/twofactorvarify',
+			name: 'twofactorvarify',
+			component: TwoFactorAuthVarifyView
 		},
 		{
 			path: '/game/:gameid',
@@ -126,21 +138,16 @@ const checkLogInState = async function () {
 };
 
 router.beforeEach(async (to) => {
-	// if (to.name !== "UnAuthorized" && to.name !== "2fAuthenticate") {
-	// if (
-	//   to.name !== "UnAuthorized" &&
-	//   to.name !== "2fAuthenticate" &&
-	//   to.name !== "MatchHistoryView" //TODO this to be removed
-	// ) {
-	//   await checkLogInState();
-	//   if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
-	//     router.push({ name: "Home" });
-	//   }
-	// }
-	await checkLogInState();
-	if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
-		router.push({ name: "Home" });
+	if (to.name !== "twofactorenable" && to.name !== "twofactorvarify") {
+		await checkLogInState();
+		if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
+			router.push({ name: "Home" });
+		}
 	}
+	// await checkLogInState();
+	// if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
+	// 	router.push({ name: "Home" });
+	// }
 });
 
 export default router

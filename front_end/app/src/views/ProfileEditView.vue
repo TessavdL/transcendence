@@ -24,7 +24,7 @@
                     <div class="form-check form-check-item">
                         <input class="form-check-input" type="checkbox" id="twoFactorAuth" :checked="twoFactor" v-model="twoFactor">
                         <label class="form-check-label form-label" for="twoFactorAuth">
-                            Enable two-factor authentication</label>
+                            Two-Factor Authentication (2FA)</label>
                     </div>
                 </div>
             </div>
@@ -49,9 +49,11 @@
 import axios from "axios";
 import { ref } from "vue";
 import storeUser from "@/store";
+import { useRouter } from "vue-router";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 
+const router = useRouter();
 const toast = useToast();
 
 const username = ref<string>(storeUser.state.user.username);
@@ -93,19 +95,29 @@ function fileSelected(event:any) {
 }
 
 async function submitProfileForm() {
+    let done = true;
     if (username.value.length === 0) {
         warnUserNameInvalid("User name can not be empty")
     } else if (username.value !== storeUser.state.user.username) {
         await update_username(username.value)
     }
     if (selectedFile.value) {
-        console.log("here");
         await update_avatar();
     }
-
-    // console.log(username.value);
-    // console.log(avatar.value);
-    // console.log(twoFactor.value);
+    if (twoFactor.value !== storeUser.state.user.twoFactorEnabled) {
+        if (twoFactor.value == true) {
+            toast.add({
+                severity: "info",
+                summary: "info",
+                detail: "enabling the Two-Factor Authentication (2FA), redirecting",
+                life: 3000,
+            });
+            router.push({ name: "twofactorenable" });
+        } else {
+            await disable_2factor();
+        }
+        
+    }
 }
 
 
@@ -154,8 +166,7 @@ async function update_avatar() {
             withCredentials: true,
         })
         .then(async (response) =>  {
-            console.log(response);
-            storeUser.state.user.avatar = selectedFile.value.name;
+            storeUser.state.user.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data;
             toast.add({
                 severity: "success",
                 summary: "Success",
@@ -165,27 +176,40 @@ async function update_avatar() {
         })
         .catch((error: any) => {
             if (error.response) {
-                // server side validation?
-                if (error.response.status == 403) {
-                    toast.add({
-                        severity: "info",
-                        summary: "info",
-                        detail: "File not meet the requirement",
-                        life: 3000,
-                    });
-                }
-                else {
-                    toast.add({
-                        severity: "error",
-                        summary: "Error",
-                        detail: errorMessage(ErrorType.CHANGE_AVATAR_FAILED),
-                        life: 3000,
-                    });
-                }
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMessage(ErrorType.CHANGE_AVATAR_FAILED),
+                    life: 3000,
+                });
             }
         });
 }
 
+async function disable_2factor() {
+    await axios
+        .patch("http://localhost:3001/twofa/off", {
+            withCredentials: true,
+        })
+        .then(async (response) =>  {
+            toast.add({
+                severity: "success",
+                summary: "Success",
+                detail: "Two-Factor Authentication (2FA) disabled",
+                life: 3000,
+            });
+        })
+        .catch((error: any) => {
+            if (error.response) {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: "failed to disable Two-Factor Authentication (2FA)",
+                    life: 3000,
+                });
+            }
+        });
+}
 </script>
 
 <style scoped>
