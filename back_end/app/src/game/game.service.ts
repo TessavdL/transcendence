@@ -128,7 +128,6 @@ export class GameService {
 			ballPosition.top + 20 >= paddleOneTop &&
 			ballPosition.top <= paddleOneBottom) {
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player one');
 		}
 		// Check for collision with player2 paddle
 		if (ballPosition.left + 20 == paddleTwoLeft &&          // Right edge of the ball
@@ -136,7 +135,6 @@ export class GameService {
 			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-			console.log('collision player two');
 		}
 		return (gameStatus);
 	}
@@ -186,14 +184,14 @@ export class GameService {
 					elo: newWinnerElo,
 				},
 			});
-        } catch(error: any) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2001') {
-                    throw new NotFoundException('Unable to update achievement, user not found');
-                }
-            }
-            throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
-        }
+		} catch (error: any) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.wins");
+		}
 	}
 
 	private async update_loser(loserIntraId: number, newLoserElo: number): Promise<void> {
@@ -209,13 +207,13 @@ export class GameService {
 					elo: newLoserElo,
 				},
 			});
-		} catch(error: any) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2001') {
-                    throw new NotFoundException('Unable to update achievement, user not found');
-                }
-            }
-            throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
-        }
+		} catch (error: any) {
+			if (error instanceof Prisma.PrismaClientKnownRequestError) {
+				if (error.code === 'P2001') {
+					throw new NotFoundException('Unable to update achievement, user not found');
+				}
+			}
+			throw new InternalServerErrorException(error.message || "Prisma failed to update user.losses");
+		}
 	}
 }

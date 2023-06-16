@@ -165,7 +165,7 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, defineProps, onMounted, onBeforeMount, computed } from "vue";
+import { ref, defineProps, onMounted, onBeforeMount, computed, onUnmounted } from "vue";
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
@@ -213,7 +213,6 @@ onBeforeMount(async () => {
         withCredentials: true,
     }
     );
-    console.log('in onbefore mount');
     activeChannel.value = props.channelName;
     await joinChannel();
 });
@@ -263,9 +262,8 @@ onMounted(async () => {
             avatar: data.user.avatar,
             role: data.role,
         };
-        console.log('active members after before user joined', activeMembers.value.length);
         activeMembers.value.push(memberdata);
-        console.log('active members after user joined', activeMembers.value.length);
+        console.log(`${memberdata.name} joined`);
     });
 
     socket.on('userLeft', (data) => {
@@ -275,12 +273,11 @@ onMounted(async () => {
             avatar: data.user.avatar,
             role: data.role,
         };
-        console.log('active members after before user left', activeMembers.value.length);
         const index = activeMembers.value.findIndex((activeMember) => activeMember.intraId === memberToRemove.intraId);
         if (index !== -1) {
             activeMembers.value.splice(index, 1);
         }
-        console.log('active members after after user left', activeMembers.value.length);
+        console.log(`${memberToRemove.name} left`);
     });
 
     socket.on('otherJoinedMembers', (data) => {
@@ -293,10 +290,10 @@ onMounted(async () => {
                 role: role
             };
         });
-        console.log('other active members in channel');
         activeMembers.value = [...members];
+        console.log('active members in chat');
         activeMembers.value.forEach((member: Member) => {
-            console.log(member.intraId);
+            console.log(member.name);
         })
     })
 
@@ -345,8 +342,8 @@ onMounted(async () => {
     });
 });
 
-onBeforeRouteLeave(() => {
-    console.log('leaving page');
+onUnmounted(() => {
+    console.log('leaving chat');
     socket.removeAllListeners();
     if (member.value) {
         leaveChannel();
@@ -375,10 +372,10 @@ function setChannelSettingsToFalse() {
 }
 
 async function isMuted() {
-    const data = {
-        channelName: activeChannel.value,
-    };
     try {
+        const data = {
+            channelName: activeChannel.value,
+        };
         const response = await axiosInstance.get('amIMuted', { params: data });
         const mute: Punishment = response.data;
         return mute;

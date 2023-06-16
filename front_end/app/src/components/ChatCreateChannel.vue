@@ -129,7 +129,6 @@ function createRequestBody() {
 }
 
 async function sendCreateChannelRequest() {
-    console.log(requestBody);
     await axios
         .post("http://localhost:3001/chat/createChannel", requestBody, {
             withCredentials: true,
@@ -191,7 +190,6 @@ async function addSelectedUsers() {
                 channelName: channelName.value,
                 otherIntraId: intraId,
             };
-            console.log({ data });
             await axiosInstance.post('chat/addAnotherUserToChannel', data);
         });
     } catch (error: any) {

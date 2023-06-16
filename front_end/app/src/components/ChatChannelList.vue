@@ -75,7 +75,6 @@ async function getAllChannels(): Promise<void> {
                     channelMode: channel.channelMode,
                 };
             });
-            console.log(allChannels.value);
         })
         .catch((error: any) => {
             console.log(error?.response?.data?.reason);

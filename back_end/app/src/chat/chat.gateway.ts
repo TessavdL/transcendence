@@ -107,7 +107,6 @@ export class ChatGateway
 
 		// join channel
 		client.join(channelName);
-		console.log('joined emitted');
 		client.emit('joined', member);
 
 		if (otherClientsInChannel.length > 0) {
@@ -136,9 +135,7 @@ export class ChatGateway
 		const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
 
 		const clientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
-		console.log('in leaveChannel before leave', clientsInChannel);
 		const updatedClientsInChannel: string[] = clientsInChannel.filter(clientId => clientId !== client.id);
-		console.log('in leaveChannel after leave', updatedClientsInChannel);
 		this.channelToClientIds.set(channelName, updatedClientsInChannel);
 		this.clientIdToChannel.delete(client.id);
 
@@ -235,8 +232,6 @@ export class ChatGateway
 		channelName: string,
 		otherIntraId: number,
 	}): Promise<void> {
-		console.log('in gameChallenge');
-		console.log(data.otherIntraId);
 		const intraId: number = this.chatSharedService.clientToIntraId.get(client.id);
 		const user: User = await this.authService.findUserById(intraId);
 		const gameId = intraId + "+" + data.otherIntraId;

@@ -48,7 +48,6 @@ export class ChatController {
 
 	@Post('addAnotherUserToChannel')
 	async addAnotherUserToChannel(@Body() addAnotherUserToChannelDto: AddAnotherUserToChannelDto): Promise<void> {
-		console.log('here');
 		return await this.channelService.addUserToChannel(addAnotherUserToChannelDto.otherIntraId, addAnotherUserToChannelDto.channelName);
 	}
 
