@@ -389,6 +389,24 @@ async function isMuted() {
     }
 }
 
+async function isBanned(channelName: string) {
+    try {
+        const data = {
+            channelName: activeChannel.value,
+        };
+        const response = await axiosInstance.get('amIBanned', { params: { channelName: channelName } });
+        const ban: Punishment = response.data;
+        return ban;
+    } catch (error: any) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: errorMessage(ErrorType.GENERAL),
+            life: 3000,
+        });
+    }
+}
+
 async function getChannelType() {
     try {
         const data = {
@@ -504,6 +522,16 @@ async function removePassword() {
 }
 
 async function joinChannel(): Promise<void> {
+    const ban = await isBanned(activeChannel.value);
+    if (ban && ban.status === true) {
+        toast.add({
+            severity: "error",
+            summary: "Error",
+            detail: `You are still banned for ${ban.time} seconds`,
+            life: 3000,
+        });
+        return;
+    }
     if (socket.connected) {
         socket.emit('joinChannel', activeChannel.value);
     }
