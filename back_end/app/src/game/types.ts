@@ -7,6 +7,8 @@ export interface Game {
 	gameEnded: boolean;
 	player1Score: number;
 	player2Score: number;
+	turnPlayerOne: boolean;
+	turnPlayerTwo: boolean;
 }
 
 export interface Players {

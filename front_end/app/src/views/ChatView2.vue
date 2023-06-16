@@ -75,10 +75,11 @@
 		<div class="message-container">
 			<h2>All Messages from {{ getActiveChannelName(activeChannel) }}:</h2>
 			<div v-for="mes in allMessages" :key="mes.intraId">
-				[{{ mes.name }}]: 
+				[{{ mes.name }}]:
 				<div class="mes-text">
 					<p v-if="!mes.isLink">{{ mes.text }}</p>
-					<p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(mes.text)">{{ 'here' }}</a> to join</p>
+					<p v-else>Do you want to play a game? Click <a href="#" @click="navigateToLink(mes.text)">{{ 'here'
+					}}</a> to join</p>
 				</div>
 			</div>
 		</div>
@@ -91,7 +92,7 @@
 				<a @click="kickUser(member.intraId, activeChannel)" class="button">Kick {{ member.name }}</a>
 				<a @click="banUser(member.intraId, activeChannel)" class="button">Ban{{ member.name }}</a>
 				<a @click="muteUser(member.intraId, activeChannel)" class="button">Mute{{ member.name }}</a>
-                <a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
+				<a @click="gameChallenge(member.intraId)" class="button">Challenge {{ member.name }}</a>
 			</li>
 		</div>
 		<a @click="leaveChannel()" class="button">Leave Room</a>
@@ -105,6 +106,7 @@ import axios from "axios";
 import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
 import { useRouter } from "vue-router";
 import _default from "vuex";
+import { HOST } from "@/constants/constants";
 
 export default {
 	data() {
@@ -133,12 +135,12 @@ export default {
 	setup() {
 		const socket = inject("socketioInstance") as Socket;
 		const axiosInstance = axios.create({
-			baseURL: 'http://localhost:3001',
+			baseURL: `http://${HOST}:3001`,
 			withCredentials: true,
 		});
 		const router = useRouter();
 		return { axiosInstance, socket, router };
-		
+
 	},
 
 	async mounted() {
@@ -408,9 +410,9 @@ export default {
 			this.socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: channelName });
 		},
 
-        gameChallenge(otherIntraId: number): void {
-            this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
-        },
+		gameChallenge(otherIntraId: number): void {
+			this.socket.emit('gameChallenge', { otherIntraId: otherIntraId });
+		},
 
 		async loadAllMessages(): Promise<void> {
 			try {
@@ -441,10 +443,10 @@ export default {
 			}
 		},
 
-			navigateToLink(link: string) {
-        	// Use your router library to navigate to the link
-        	this.router.push(link);
-    	},
+		navigateToLink(link: string) {
+			// Use your router library to navigate to the link
+			this.router.push(link);
+		},
 	},
 }
 </script>

@@ -1,6 +1,7 @@
 import router from "@/router";
 import axios from "axios";
 import { createStore } from "vuex";
+import { HOST } from "../constants/constants";
 
 const storeUser = createStore({
     state: {
@@ -53,7 +54,7 @@ const storeUser = createStore({
         async login({ commit }) {
             if (storeUser.getters.isAuthenticated === false) {
                 await axios
-                    .get("http://localhost:3001/user", {
+                    .get(`http://${HOST}:3001/user`, {
                         withCredentials: true,
                     })
                     .then(async (response) => {
@@ -89,6 +90,5 @@ const storeUser = createStore({
         },
     },
 });
-  
+
 export default storeUser;
-  

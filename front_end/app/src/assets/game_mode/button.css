@@ -22,7 +22,7 @@
 	font-size: xx-large;
 	font-family: arcadeFont;
 	color: var(--color);
-	/* border: 0px solid; */
+	/* border: 2px solid; */
 	border-radius: 10px;
 	text-shadow: 0 0 15px var(--color);
 	text-decoration: none;

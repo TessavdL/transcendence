@@ -52,6 +52,7 @@ import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
 import type { Channel, DmChannel } from "../types/ChatType";
 import { assertVariableDeclarator } from "@babel/types";
+import { HOST } from "@/constants/constants";
 
 const myChannels = ref<Channel[]>([]);
 const myDms = ref<DmChannel[]>([]);
@@ -87,7 +88,7 @@ function catchEvent(event) {
 
 async function getMyChannels(): Promise<void> {
 	await axios
-		.get("http://localhost:3001/chat/getMyChannels", {
+		.get(`http://${HOST}:3001/chat/getMyChannels`, {
 			withCredentials: true,
 		})
 		.then(async (response) => {
@@ -110,7 +111,7 @@ async function getMyChannels(): Promise<void> {
 
 async function getMyDms(): Promise<void> {
 	await axios
-		.get("http://localhost:3001/chat/getMyDMChannelsWithUser", {
+		.get(`http://${HOST}:3001/chat/getMyDMChannelsWithUser`, {
 			withCredentials: true,
 		})
 		.then(async (response) => {

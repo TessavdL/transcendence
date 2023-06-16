@@ -8,11 +8,12 @@
                     <ButtonsFriend :friendStatus="userProfile.friendStatus" :intraId="props.intraId" />
                     <ButtonsBlock :blockedState="userProfile.blockedState" :intraId="props.intraId" />
                 </div>
-                
+
             </div>
 
             <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username" :currentAvatar="userProfile.avatar" />
+                <ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username"
+                    :currentAvatar="userProfile.avatar" />
             </div>
 
         </div>
@@ -26,6 +27,7 @@ import ProfileSideBar from "@/components/ProfileSideBar.vue";
 import ButtonsFriend from '@/components/ButtonsFriend.vue';
 import ButtonsBlock from '@/components/ButtonsBlock.vue';
 import ProfileMainTab from "@/components/ProfileMainTab.vue";
+import { HOST } from "@/constants/constants";
 
 const props = defineProps({
     intraId: String,
@@ -49,12 +51,12 @@ onMounted(async () => {
 
 async function getUserProfile() {
     await axios
-        .get("http://localhost:3001/user/" + props.intraId, {
+        .get(`http://${HOST}:3001/user/` + props.intraId, {
             withCredentials: true,
         })
-        .then(async (response) =>  {
+        .then(async (response) => {
             userProfile.value.intraId = response.data.intraId;
-            userProfile.value.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar;
+            userProfile.value.avatar = `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar;
             userProfile.value.username = response.data.username;
             userProfile.value.activityStatus = response.data.activityStatus;
             userProfile.value.blockedState = response.data.blockedState;
@@ -71,7 +73,6 @@ async function getUserProfile() {
 </script>
 
 <style scoped>
-
 .profile-sidebar {
     position: fixed;
     width: 200px;
@@ -82,7 +83,8 @@ async function getUserProfile() {
     display: block;
     padding: 20px;
     overflow-x: hidden;
-    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    overflow-y: auto;
+    /* Scrollable contents if viewport is shorter than content. */
     color: #ffffff;
     background-color: #0a242f;
 }
@@ -92,5 +94,4 @@ async function getUserProfile() {
     padding-right: 0px;
     color: #FFFF;
 }
-
 </style>
