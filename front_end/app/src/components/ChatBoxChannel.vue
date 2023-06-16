@@ -231,6 +231,7 @@ onMounted(async () => {
         else {
             await loadAllMembers();
             await getChannelType();
+            await loadAllMessages();
             if (channelType.value === 'PROTECTED') {
                 hasEnteredPassword.value = false;
             }
@@ -283,7 +284,7 @@ onMounted(async () => {
     });
 
     socket.on('otherJoinedMembers', (data) => {
-        const members = data.map((item) => {
+        const members = data.map((item: any) => {
             const { user, role } = item;
             return {
                 intraId: user.intraId,
@@ -508,12 +509,10 @@ async function removePassword() {
 async function joinChannel(): Promise<void> {
     if (socket.connected) {
         socket.emit('joinChannel', activeChannel.value);
-        await loadAllMessages();
     }
     else {
         socket.on('hasConnected', async () => {
             socket.emit('joinChannel', activeChannel.value);
-            await loadAllMessages();
         });
     }
 }

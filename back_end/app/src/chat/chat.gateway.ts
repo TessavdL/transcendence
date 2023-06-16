@@ -70,20 +70,24 @@ export class ChatGateway
 
 	@UseGuards(ChatClientGuard)
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
-		this.deleteFromChannels(client.id);
-		console.log('in disconnect after delete from channels', this.channelToClientIds);
+		const intraId: number = this.chatSharedService.clientToIntraId.get(client.id);
+		const channelName: string = this.clientIdToChannel.get(client.id);
+
+		const allClientsInChannel = this.channelToClientIds.get(channelName) || [];
+		const index = allClientsInChannel.findIndex((clientId: string) => clientId === client.id)
+		if (index !== -1) {
+			allClientsInChannel.splice(index, 1);
+		}
+		this.channelToClientIds.set(channelName, allClientsInChannel);
 		this.chatSharedService.clientToIntraId.delete(client.id);
+		this.clientIdToChannel.delete(client.id);
+
+		if (allClientsInChannel.length > 0) {
+			const member: (Membership & { user: User; }) = await this.chatService.getMemberWithUser(channelName, intraId);
+			client.to(allClientsInChannel).emit('userLeft', member);
+		}
 		client.disconnect();
 		this.logger.log(`Client disconnected: ${client.id}`);
-	}
-
-	private deleteFromChannels(clientId: string): void {
-		this.channelToClientIds.forEach(clientIds => {
-			const index: number = clientIds.findIndex(client => client === clientId);
-			if (index !== -1) {
-				clientIds.splice(index, 1);
-			}
-		});
 	}
 
 	@UseGuards(ChatClientGuard)
@@ -99,6 +103,7 @@ export class ChatGateway
 		// add client to channel map
 		const otherClientsInChannel: string[] = this.channelToClientIds.get(channelName) || [];
 		this.channelToClientIds.set(channelName, [...otherClientsInChannel, client.id]);
+		this.clientIdToChannel.set(client.id, channelName);
 
 		// join channel
 		client.join(channelName);
