@@ -11,6 +11,22 @@ import { AchievementsService } from 'src/achievements/achievements.service';
 export class UserService {
 	constructor(private prisma: PrismaService, private authService: AuthService, private achievementsService: AchievementsService) { }
 
+	async getUserWithAchievements(user: User): Promise<(User & { achievements: Achievements })> {
+		try {
+			const return_user = await this.prisma.user.findUnique({
+				where: {
+					intraId: user.intraId,
+				},
+				include: {
+					achievements: true,
+				}
+			})
+			return (return_user);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
 		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
@@ -293,6 +309,22 @@ export class UserService {
 		const userElement: UserElement = await this.createUserElement(otherUser, userWithAllOtherUsers);
 
 		return (userElement);
+	}
+
+	async getOtherUserAchievements(user: User, otherIntraId: number): Promise<( User & { achievements: Achievements })> {
+		try {
+			const return_user: (User & { achievements: Achievements }) = await this.prisma.user.findUnique({
+				where: {
+					intraId: otherIntraId,
+				},
+				include: {
+					achievements: true,
+				}
+			})
+			return (return_user);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
 	}
 
 	getAvatar(avatar: string): StreamableFile {

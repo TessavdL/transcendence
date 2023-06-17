@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put } from '@nestjs/common';
-import { MatchHistory, User } from '@prisma/client';
+import { Achievements, MatchHistory, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { OtherUserIntraDto } from './dto/other-user-intra.dto';
@@ -9,6 +9,7 @@ import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { UpdateUsernameDto } from './dto/update-username-dto';
+import { request } from 'http';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -17,7 +18,7 @@ export class UserController {
 
 	@Get('/')
 	async getUser(@Req() request): Promise<User> {
-		return (await request.user);
+		return (await this.userService.getUserWithAchievements(request.user));
 	}
 
 	@Get('users')
@@ -81,6 +82,13 @@ export class UserController {
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);
 		return (await this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
+	}
+
+	@Get('achievements/:id')
+	async getOtherUserAchievements(@Req() request, @Param() params): Promise<(User & { achievements: Achievements })> {
+		const user: User = request.user;
+		const otherIntraId: number = parseInt(params.id);
+		return (await this.userService.getOtherUserAchievements(user, otherIntraId));
 	}
 
 	@Put('update_username')
