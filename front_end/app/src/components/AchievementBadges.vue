@@ -14,9 +14,16 @@ import { ref } from 'vue';
 import { BadgesType, badgesPicture, badgesTitle, badgesdescription } from '@/types/BadgesType';
 
 const achievements = ref([
-    { achievement: BadgesType.CAHMP, id: 1 },
-    { achievement: BadgesType.SUPER_LOSSER, id: 2 },
-    { achievement: BadgesType.SUPER_WINNER, id: 3 },
+    { achievement: BadgesType.WON_GAME, id: 1 },
+    { achievement: BadgesType.WON_3GAME, id: 2 },
+    { achievement: BadgesType.WON_3GAME_ROW, id: 3 },
+    { achievement: BadgesType.LOSE_GAME, id: 4 },
+    { achievement: BadgesType.LOSE_3GAME, id: 5 },
+    { achievement: BadgesType.PLAYED_GAME, id: 6 },
+    { achievement: BadgesType.CHANGE_NAME, id: 7 },
+    { achievement: BadgesType.UPLOAD_AVATAR, id: 8 },
+    { achievement: BadgesType.ADDED_2FA, id: 9 },
+    { achievement: BadgesType.RANK1, id: 9 }
 ]);
 
 </script>
