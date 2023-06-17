@@ -8,53 +8,59 @@
 
 <script lang="ts">
 import { HOST } from "@/constants/constants";
-import { io } from "socket.io-client";
+import { Socket, io } from "socket.io-client"
+import { onBeforeMount, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
-export default {
+const router = useRouter();
+let socket: Socket;
 
-	setup() {
-		const socket = io(`http://${HOST}:3001/matchmaking`, { withCredentials: true });
-		socket.on('connected', () => {
-			socket.emit('matchmaking');
-		});
-		console.log('created sockect');
-		const router = useRouter();
-		return { socket, router };
-	},
+onBeforeMount(async () => {
+	socket = io(
+		`http://${HOST}:3001/matchmaking`, {
+		withCredentials: true,
+	}
+	);
+})
 
-	mounted() {
-		this.socket.on('createGame', (data) => {
-			console.log(data);
-			const gameid = data;
-			if (gameid === undefined || gameid === null) {
-				this.router.push({
-					name: "Home",
-				})
-			}
-			console.log('Redirecting to game', gameid);
-			this.router.push(`game/${gameid}`);
-		}),
+onMounted(() => {
+	socket.on('connected', () => {
+		socket.emit('matchmaking');
+	})
 
-			this.socket.on('error', (data) => {
-				console.log(data);
-				this.router.push({
-					name: "Home",
-				})
-			}),
-
-			this.socket.on('unauthorized', (data) => {
-				console.log(data);
-				this.router.push({
-					name: "Home",
-				})
+	socket.on('createGame', (data) => {
+		console.log('in create game', data);
+		const gameid = data;
+		if (gameid === undefined || gameid === null) {
+			router.push({
+				name: "Home",
 			})
-	},
-}
+		}
+		console.log('Redirecting to game', gameid);
+		router.push({
+			name: 'Game',
+			params: { gameid: gameid },
+		})
+	})
+
+	socket.on('error', (data) => {
+		console.log(data);
+		router.push({
+			name: "Home",
+		})
+	})
+
+	socket.on('unauthorized', (data) => {
+		console.log(data);
+		router.push({
+			name: "Home",
+		})
+	})
+})
 
 </script>
 
-<style>
+<style scoped>
 h2 {
 	color: white;
 	font-size: 30px;

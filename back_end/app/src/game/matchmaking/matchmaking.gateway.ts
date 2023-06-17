@@ -24,7 +24,6 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 	) {
 		this.otherclient = '';
 	}
-
 	private readonly logger: Logger = new Logger('MatchmakingGateway');
 	private otherclient: string;
 
@@ -67,12 +66,13 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 	handleMatchmaking(client: Socket): void {
 		// check if matchmaking is possible, if not save the client.id
 		if (this.otherclient.length === 0) {
-			console.log('waiting for other player')
+			console.log('waiting for other player', client.id);
 			this.otherclient = client.id;
 			return;
 		}
 
 		// create game
+		console.log('creating game', client.id);
 		const roomName: string = this.generateString(8);
 		const player1: { intraId: number } = {
 			intraId: this.matchMakingSharedService.clientToIntraId.get(this.otherclient),
