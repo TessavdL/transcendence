@@ -9,7 +9,7 @@
 <script lang="ts">
 import { HOST } from "@/constants/constants";
 import { io } from "socket.io-client";
-import { onBeforeRouteUpdate, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 
 export default {
 
