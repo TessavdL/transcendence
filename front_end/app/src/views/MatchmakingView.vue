@@ -5,64 +5,93 @@
 		</h2>
 	</div>
 </template>
-
+  
 <script lang="ts">
 import { HOST } from "@/constants/constants";
-import { Socket, io } from "socket.io-client"
-import { onBeforeMount, onMounted } from "vue";
+import { useToast } from "primevue/usetoast";
+import { Socket, io } from "socket.io-client";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
-const router = useRouter();
-let socket: Socket;
+export default {
+	setup() {
+		const router = useRouter();
+		const toast = useToast();
+		let socket: Socket;
 
-onBeforeMount(async () => {
-	socket = io(
-		`http://${HOST}:3001/matchmaking`, {
-		withCredentials: true,
-	}
-	);
-})
+		onBeforeMount(() => {
+			socket = io(`http://${HOST}:3001/matchmaking`, {
+				withCredentials: true,
+			});
+			waitForConnection()
+		});
 
-onMounted(() => {
-	socket.on('connected', () => {
-		socket.emit('matchmaking');
-	})
+		onMounted(() => {
+			socket.on('createGame', (data) => {
+				const gameid = data;
+				if (gameid === undefined || gameid === null) {
+					toast.add({
+						severity: "error",
+						summary: "Error",
+						detail: 'Gameid is invalid, redirecting to home',
+						life: 3000,
+					});
+					router.push({ name: "Home" });
+				} else {
+					toast.add({
+						severity: "success",
+						summary: "Success",
+						detail: "Match found, redirecting to game",
+						life: 3000,
+					})
+					router.push({ name: 'Game', params: { gameid: gameid } });
+				}
+			});
 
-	socket.on('createGame', (data) => {
-		console.log('in create game', data);
-		const gameid = data;
-		if (gameid === undefined || gameid === null) {
-			router.push({
-				name: "Home",
-			})
+			socket.on('error', (data) => {
+				toast.add({
+					severity: "error",
+					summary: "Error",
+					detail: (data.message || 'An error has occured') + ', redirecting to home',
+					life: 3000,
+				});
+				router.push({ name: "Home" });
+			});
+
+			socket.on('unauthorized', (data) => {
+				toast.add({
+					severity: "error",
+					summary: "Error",
+					detail: (data.message || 'Authorization Failed') + ', redirecting to home',
+					life: 3000,
+				});
+				router.push({ name: "Home" });
+			});
+		});
+
+		function waitForConnection() {
+			if (socket.connected) {
+				socket.emit('matchmaking');
+			}
+			else {
+				socket.on('hasConnected', async () => {
+					socket.emit('matchmaking');
+				});
+			}
 		}
-		console.log('Redirecting to game', gameid);
-		router.push({
-			name: 'Game',
-			params: { gameid: gameid },
-		})
-	})
 
-	socket.on('error', (data) => {
-		console.log(data);
-		router.push({
-			name: "Home",
+		onBeforeUnmount(() => {
+			socket.removeAllListeners();
+			socket.disconnect();
 		})
-	})
-
-	socket.on('unauthorized', (data) => {
-		console.log(data);
-		router.push({
-			name: "Home",
-		})
-	})
-})
-
+	},
+};
 </script>
-
+  
 <style scoped>
 h2 {
 	color: white;
 	font-size: 30px;
 }
 </style>
+  

@@ -42,13 +42,13 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
-			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization Failed' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
 		this.matchMakingSharedService.clientToIntraId.set(client.id, user.intraId);
-		client.emit('connected');
-		this.logger.error(`Client connection accepted: ${client.id}`);
+		client.emit('hasConnected');
+		this.logger.log(`Client connection accepted: ${client.id}`);
 	}
 
 	@UseGuards(MatchmakingClientGuard)
@@ -66,13 +66,11 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 	handleMatchmaking(client: Socket): void {
 		// check if matchmaking is possible, if not save the client.id
 		if (this.otherclient.length === 0) {
-			console.log('waiting for other player', client.id);
 			this.otherclient = client.id;
 			return;
 		}
 
 		// create game
-		console.log('creating game', client.id);
 		const roomName: string = this.generateString(8);
 		const player1: { intraId: number } = {
 			intraId: this.matchMakingSharedService.clientToIntraId.get(this.otherclient),
@@ -81,13 +79,15 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			intraId: this.matchMakingSharedService.clientToIntraId.get(client.id),
 		};
 		if (player1.intraId === player2.intraId) {
-			this.server.to(client.id).to(this.otherclient).emit('error', 'You cannot play against yourself, redirecting home');
+			client.to(this.otherclient).emit('error', { message: 'You cannot play against yourself' });
+			client.emit('error', { message: 'You cannot play against yourself' });
 			this.otherclient = '';
 			return;
 		}
-		this.otherclient = '';
 		this.gameSharedService.playerData.set(roomName, { player1, player2 });
-		this.server.to(client.id).to(this.otherclient).emit('createGame', roomName);
+		client.to(this.otherclient).emit('createGame', roomName);
+		client.emit('createGame', roomName);
+		this.otherclient = '';
 	}
 
 	private generateString(length: number): string {
