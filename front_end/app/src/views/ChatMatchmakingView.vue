@@ -54,7 +54,7 @@ export default {
 
 </script>
 
-<style scoped>
+<style>
 h2 {
 	color: white;
 	font-size: 30px;
