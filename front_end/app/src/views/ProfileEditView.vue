@@ -1,19 +1,18 @@
 <template>
     <div class="profile-edit-form">
         <form @submit.prevent="submitProfileForm">
+            
             <div class="row mb-3 form-item">
                 <label for="inputUsername" class="col-sm-2 col-form-label form-label">User Name</label>
-                <div class="col-sm-10">
-                    <input type="text" class="form-control" id="inputUsername" 
-                    maxlength="10" pattern="[a-zA-Z0-9\-]+"
-                    v-model="username">
-                    <p>maxima 10 charaters, only letters and numbers allowed</p>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="text" class="form-control" id="inputUsername" maxlength="10" pattern="[a-zA-Z0-9\-]+" v-model="username">
+                    <div id="emailHelp" class="form-text">maxima 10 charaters, only letters and numbers allowed</div>
                 </div>
             </div>
 
             <div class="row mb-3 form-item">
                 <label for="inputAvatar" class="col-sm-2 col-form-label form-label">Upload Avatar</label>
-                <div class="col-sm-10">
+                <div class="col-sm-10 col-sm-offset-2">
                     <input type="file" class="form-control" id="inputAvatar" ref="fileInput" name="avatar" accept="image/*"
                     @change="fileSelected($event)"> 
                 </div>
@@ -61,6 +60,11 @@ const avatar = ref<string>(storeUser.state.user.avatar);
 const twoFactor = ref<boolean>(storeUser.state.user.twoFactorEnabled);
 const usernameValid = ref<boolean>(true);
 
+const axiosInstance = axios.create({
+	baseURL: 'http://localhost:3001',
+	withCredentials: true,
+});
+
 function warnUserNameInvalid(message: string) {
   toast.add({
     severity: "error",
@@ -95,7 +99,6 @@ function fileSelected(event:any) {
 }
 
 async function submitProfileForm() {
-    let done = true;
     if (username.value.length === 0) {
         warnUserNameInvalid("User name can not be empty")
     } else if (username.value !== storeUser.state.user.username) {
@@ -115,100 +118,86 @@ async function submitProfileForm() {
             router.push({ name: "twofactorenable" });
         } else {
             await disable_2factor();
+            router.push({ name: "ProfileCurrent" });
         }
         
+    } else {
+        router.push({ name: "ProfileCurrent" });
     }
 }
 
 
 async function update_username(username: string) {
     const requestBody = {username: username}
-    await axios
-        .put("http://localhost:3001/user/update_username", requestBody, {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            storeUser.state.user.username = username;
-            toast.add({
-                severity: "success",
-                summary: "Success",
-                detail: "Username has been changed",
-                life: 3000,
-            });
-        })
-        .catch((error: any) => {
-            if (error.response) {
-                if (error.response.status == 403) {
-                    toast.add({
-                        severity: "info",
-                        summary: "info",
-                        detail: "User name already exist, please choose another one",
-                        life: 3000,
-                    });
-                }
-                else {
-                    toast.add({
-                        severity: "error",
-                        summary: "Error",
-                        detail: errorMessage(ErrorType.CHANGE_NAME_FAILED),
-                        life: 3000,
-                    });
-                }
-            }
+    try {
+        const response = await axiosInstance.put('/user/update_username', requestBody);
+        storeUser.state.user.username = username;
+        toast.add({
+            severity: "success",
+            summary: "success",
+            detail: "Username has been changed",
+            life: 3000,
         });
+    } catch (error: any) {
+        if (error.response) {
+            if (error.response.status == 403) {
+                toast.add({
+                    severity: "info",
+                    summary: "info",
+                    detail: "User name already exist, please choose another one",
+                    life: 3000,
+                });
+            } else {
+                toast.add({
+                    severity: "error",
+                    summary: "Error",
+                    detail: errorMessage(ErrorType.CHANGE_NAME_FAILED),
+                    life: 3000,
+                });
+            }
+        }
+    }
 }
 
 async function update_avatar() {
     const formData = new FormData();
     formData.append("avatar", selectedFile.value);
-    await axios
-        .post("http://localhost:3001/user/avatar", formData, {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            storeUser.state.user.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data;
-            toast.add({
-                severity: "success",
-                summary: "Success",
-                detail: "New avatar has been uploaded",
-                life: 3000,
-            });
-        })
-        .catch((error: any) => {
-            if (error.response) {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: errorMessage(ErrorType.CHANGE_AVATAR_FAILED),
-                    life: 3000,
-                });
-            }
+    try {
+        const response = await axiosInstance.post('/user/avatar', formData);
+        storeUser.state.user.avatar = "http://localhost:3001/user/get_avatar?avatar=" + response.data;
+        toast.add({
+            severity: "success",
+            summary: "success",
+            detail: "Avatar has been updated",
+            life: 3000,
         });
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "error",
+            detail: errorMessage(ErrorType.CHANGE_AVATAR_FAILED),
+            life: 3000,
+        });
+    }
 }
 
 async function disable_2factor() {
-    await axios
-        .patch("http://localhost:3001/twofa/off", {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            toast.add({
-                severity: "success",
-                summary: "Success",
-                detail: "Two-Factor Authentication (2FA) disabled",
-                life: 3000,
-            });
-        })
-        .catch((error: any) => {
-            if (error.response) {
-                toast.add({
-                    severity: "error",
-                    summary: "Error",
-                    detail: "failed to disable Two-Factor Authentication (2FA)",
-                    life: 3000,
-                });
-            }
+    try {
+        const response = await axiosInstance.patch('/twofa/off');
+        toast.add({
+            severity: "success",
+            summary: "success",
+            detail: "Two-Factor Authentication (2FA) disabled",
+            life: 3000,
         });
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "error",
+            detail: "Failed to disable Two-Factor Authentication (2FA)",
+            life: 3000,
+        });
+    }
 }
 </script>
 
@@ -216,7 +205,6 @@ async function disable_2factor() {
 .form-label {
     font-weight: bold;
     color: #FFFF;
-    text-align: start;
 }
 
 .form-item {

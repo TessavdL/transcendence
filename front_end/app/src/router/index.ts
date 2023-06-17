@@ -138,16 +138,16 @@ const checkLogInState = async function () {
 };
 
 router.beforeEach(async (to) => {
-	if (to.name !== "twofactorenable" && to.name !== "twofactorvarify") {
-		await checkLogInState();
-		if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
-			router.push({ name: "Home" });
-		}
-	}
-	// await checkLogInState();
-	// if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
-	// 	router.push({ name: "Home" });
+	// if (to.name !== "twofactorenable" && to.name !== "twofactorvarify") {
+	// 	await checkLogInState();
+	// 	if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
+	// 		router.push({ name: "Home" });
+	// 	}
 	// }
+	await checkLogInState();
+	if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
+		router.push({ name: "Home" });
+	}
 });
 
 export default router

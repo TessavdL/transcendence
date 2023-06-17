@@ -22,7 +22,6 @@ import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import storeUser from "@/store";
 import { useToast } from "primevue/usetoast";
-import { ErrorType, errorMessage } from "@/types/ErrorType";
 
 const router = useRouter();
 const toast = useToast();
@@ -31,43 +30,39 @@ const intraId = ref<number>(-1);
 const twoFactorEnabled = ref<boolean>(false);
 const verificationCode = ref<string>("");
 
+const axiosInstance = axios.create({
+	baseURL: 'http://localhost:3001',
+	withCredentials: true,
+});
+
 onMounted(async () => {
-    const params = new URLSearchParams(window.location.search);
-    const paramsData = params.get('intraId');
-    if (paramsData) {
-        intraId.value = parseInt(paramsData);
-    }
     twoFactorEnabled.value = storeUser.state.user.twoFactorEnabled;
+    intraId.value = storeUser.state.user.intraId;
 });
 
 async function verify2fa() {
     const requestBody = {
         code: verificationCode.value,
     };
-    await axios
-        .patch('http://localhost:3001/twofa/verify', requestBody, {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            toast.add({
-                severity: "success",
-                summary: "success",
-                detail: "enabled 2FA, redirecting to home",
-                life: 3000,
-            });
-            storeUser.state.user.twoFactorEnabled = true;
-            router.push({ name: "Home" });
-        })
-        .catch((error: any) => {
-            console.log(error);
-            verificationCode.value = '';
-            toast.add({
-                severity: "error",
-                summary: "error",
-                detail: "Failed to enable the 2FA",
-                life: 3000,
-            });
+    try {
+        const response = await axiosInstance.patch('/twofa/verify', requestBody);
+        toast.add({
+            severity: "success",
+            summary: "success",
+            detail: "enabled 2FA, redirecting to home",
+            life: 3000,
         });
+        storeUser.state.user.twoFactorEnabled = true;
+        router.push({ name: "Home" });
+    } catch (error) {
+        verificationCode.value = '';
+        toast.add({
+            severity: "error",
+            summary: "error",
+            detail: "Failed to enable the 2FA",
+            life: 3000,
+        });
+    }
 }
 
 async function authenticate2fa() {
@@ -75,35 +70,28 @@ async function authenticate2fa() {
         code: verificationCode.value,
         intraId: intraId.value,
     };
-    await axios
-        .patch('http://localhost:3001/twofa/authenticate', requestBody, {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            toast.add({
-                severity: "success",
-                summary: "success",
-                detail: "Logged in with 2FA, redirecting to home",
-                life: 3000,
-            });
-            router.push({ name: "Home" });
-        })
-        .catch((error: any) => {
-            console.log(error);
-            verificationCode.value = '';
-            toast.add({
-                severity: "error",
-                summary: "error",
-                detail: "Failed to varify the digital code",
-                life: 3000,
-            });
+    try {
+        const response = await axiosInstance.patch('/twofa/authenticate', requestBody);
+        storeUser.state.is2FA = true;
+        toast.add({
+            severity: "success",
+            summary: "success",
+            detail: "Logged in with 2FA, redirecting to home",
+            life: 3000,
         });
+        router.push({ name: "Home" });
+    } catch (error) {
+        verificationCode.value = '';
+        toast.add({
+            severity: "error",
+            summary: "error",
+            detail: "Failed to varify the digital code",
+            life: 3000,
+        });
+    }
 }
 
 async function submitCode() {
-    if (intraId.value === -1) {
-         console.log('Unauthorized user');
-    }
     if (twoFactorEnabled.value === false) {
         await verify2fa();
     }

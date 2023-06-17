@@ -72,18 +72,9 @@ async function getAllChannels(): Promise<void> {
 				return {
 					id: channel.id,
 					channelName: channel.channelName,
-                return (type.channelType === 'NORMAL');
-            });
-            allChannels.value = normalChannels.map(channel => {
-                return {
-                    id: channel.id,
-                    channelName: channel.channelName,
                     channelMode: channel.channelMode,
-				};
-			});
                 };
             });
-            console.log(allChannels.value);
         })
         .catch((error: any) => {
             console.log(error?.response?.data?.reason);

@@ -34,7 +34,7 @@ const props = defineProps({
 });
 
 const userProfile = ref({
-    intraId: 0,
+    intraId: Number(props.intraId),
     avatar: "",
     username: "",
     activityStatus: "ONLINE",
@@ -47,6 +47,7 @@ const userProfile = ref({
 
 onMounted(async () => {
     await getUserProfile();
+    await getUserMatchInfo();
 });
 
 async function getUserProfile() {
@@ -67,6 +68,26 @@ async function getUserProfile() {
         })
         .catch(() => {
             console.log("cannot get users profile infomation");
+        });
+};
+
+async function getUserMatchInfo() {
+    await axios
+        .get('http://localhost:3001/user/usersexceptself', {
+            withCredentials: true,
+        })
+        .then(async (response) => {
+            for (let i = 0; i < response.data.length; i++) {
+                if (response.data[i].intraId === Number(props.intraId)) {
+                    userProfile.value.win = response.data[i].wins;
+                    userProfile.value.loss = response.data[i].losses;
+                    userProfile.value.ladderLevel = response.data[i].elo;
+                }
+            }
+        })
+        .catch((error) => {
+            console.log("cannot get users match infomation");
+            console.log(error);
         });
 };
 

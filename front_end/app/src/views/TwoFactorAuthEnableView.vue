@@ -27,26 +27,27 @@ const confirm = useConfirm();
 const intraId = ref<number>(-1);
 const qrcodeUrl = ref<string>("");
 
-onMounted(async () => {
-    await geQrcode();
+const axiosInstance = axios.create({
+	baseURL: 'http://localhost:3001',
+	withCredentials: true,
 });
 
-async function geQrcode() {
-    await axios
-        .patch("http://localhost:3001/twofa/enable", {
-            withCredentials: true,
-        })
-        .then(async (response) =>  {
-            qrcodeUrl.value = response.data;
-        })
-        .catch(() => {
-            toast.add({
-                severity: "error",
-                summary: "error",
-                detail: "Failed to load QR code, please retry",
-                life: 3000,
-            });
+onMounted(async () => {
+    await getQrcode();
+});
+
+async function getQrcode() {
+    try {
+        const response = await axiosInstance.patch('/twofa/enable');
+		qrcodeUrl.value = response.data;
+    } catch (error) {
+        toast.add({
+            severity: "error",
+            summary: "error",
+            detail: "Failed to load QR code, please retry",
+            life: 3000,
         });
+    }
 };
 
 function RedirectToVarify() {
