@@ -451,7 +451,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 ul,
 h2,
 .create-channel label,
