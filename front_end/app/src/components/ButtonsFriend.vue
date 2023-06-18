@@ -46,7 +46,6 @@ let friendtype = props.friendStatus;
 
 
 const requestFriend = () => {
-    console.log(props.intraId);
     confirm.require({
         message: "Are you sure you want to send a friend request to this user?",
         header: "Confirmation",

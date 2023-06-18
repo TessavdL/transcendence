@@ -51,6 +51,7 @@ async function getMyChannels(): Promise<void> {
 					id: channel.id,
 					channelName: channel.channelName,
 					channelMode: channel.channelMode,
+					channelType: channel.channelType,
 				};
 			});
 		})
@@ -74,6 +75,7 @@ async function getAllChannels(): Promise<void> {
 					id: channel.id,
 					channelName: channel.channelName,
 					channelMode: channel.channelMode,
+					channelType: channel.channelType,
 				};
 			});
 		})
