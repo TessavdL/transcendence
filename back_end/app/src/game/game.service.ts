@@ -128,7 +128,6 @@ export class GameService {
 		else {
 			gameStatus.ballPosition = ballPosition;
 		}
-		console.log('start')
 		// Check for collision with player1 paddle
 		// if (ballPosition.left <= paddleOneRight + 15 &&
 		// 	ballPosition.left >= paddleOneLeft &&
@@ -149,7 +148,6 @@ export class GameService {
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
 		}
-		console.log('end')
 		return (gameStatus);
 	}
 

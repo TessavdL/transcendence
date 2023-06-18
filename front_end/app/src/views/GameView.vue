@@ -192,9 +192,9 @@ export default {
 		window.addEventListener('keydown', this.handleEvent);
 	},
 
-	beforeRouteLeave() {
+	beforeUnmount() {
 		window.removeEventListener('keydown', this.handleEvent);
-		console.log(this.playerDisconnect, 'beforeRouterLeave');
+		console.log(this.playerDisconnect, 'beforeUnmount');
 		if (this.gameOver === false) {
 			const data = {
 				gameStatus: this.game,
