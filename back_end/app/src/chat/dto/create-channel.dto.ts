@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, Matches, Length } from 'class-validator';
 
 enum ChannelMode {
 	PRIVATE = 'PRIVATE',
@@ -14,9 +14,15 @@ export class CreateChannelDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@Matches(/^[\x20-\x7E]+$/, {
+		message: 'Channel name can only contain valid characters',
+	})
+	@Length(1, 20, {
+		message: 'Channel name must be between 1 and 20 characters long',
+	})
 	channelName: string;
 
-    @IsOptional()
+	@IsOptional()
 	@IsString()
 	@IsNotEmpty()
 	password?: string;

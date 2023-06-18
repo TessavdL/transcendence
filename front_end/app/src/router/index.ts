@@ -104,8 +104,8 @@ const router = createRouter({
 			path: '/twofa',
 			name: 'twofa',
 			component: TwofaView
-    },
-    {
+		},
+		{
 			path: '/matchmaking',
 			name: 'Matchmaking',
 			component: MatchmakingView
