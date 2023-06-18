@@ -18,6 +18,7 @@ import router from "@/router";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import { Socket } from "socket.io-client";
+import { HOST } from "@/constants/constants";
 
 const socket: Socket = inject("socketioInstance") as Socket;
 const toast = useToast();
@@ -35,7 +36,7 @@ function redirectToHome() {
 
 async function logOut() {
   await axios
-    .get("http://localhost:3001/auth/logout", {
+    .get(`http://${HOST}:3001/auth/logout`, {
       withCredentials: true,
     })
     .then(() => {

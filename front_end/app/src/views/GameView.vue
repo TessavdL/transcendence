@@ -1,4 +1,3 @@
-
 <template>
 	<div>
 		<!-- <button @click="toggleColorMode"></button> -->
@@ -81,6 +80,7 @@ import io from 'socket.io-client';
 import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
+import { HOST } from '@/constants/constants';
 import { data } from 'jquery';
 //import NeonButton from '../components/ButtonsGamePlay.vue';
 
@@ -96,7 +96,7 @@ export default {
 		};
 	},
 	setup() {
-		const socket = io('http://localhost:3001/pong-game', { withCredentials: true });
+		const socket = io(`http://${HOST}:3001/pong-game`, { withCredentials: true });
 		const game = ref<Game>();
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
@@ -192,14 +192,18 @@ export default {
 		window.removeEventListener('keydown', this.handleEvent);
 		console.log(this.playerDisconnect, 'beforeRouterLeave');
 		if (this.gameOver === false) {
-			this.socket.emit('endGame', this.roomName);
+			const data = {
+				gameStatus: this.game,
+				roomName: this.roomName,
+				players: this.player
+			}
+			this.socket.emit('endGame', data);
 		}
 		else 
 			this.socket.disconnect();
 	},
 
-	methods: {
-
+	methods: { 		
 		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
@@ -246,7 +250,9 @@ export default {
 		
 		update() {
 			if (!this.game.gameStarted)
+			{
 				return;
+			}
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
@@ -278,7 +284,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 @import url("../assets/game_mode/button.css");
 @import url("../assets/game_mode/classic_pong.css");
 @import url("../assets/game_mode/color_pong.css");

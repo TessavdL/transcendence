@@ -2,129 +2,133 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 enum ActivityStatus {
-    ONLINE
-    INGAME
-    OFFLINE
+	ONLINE
+	INGAME
+	OFFLINE
 }
 
 enum FriendStatus {
-    NOT_FRIENDS
-    REQUESTED
-    PENDING
-    FRIENDS
+	NOT_FRIENDS
+	REQUESTED
+	PENDING
+	FRIENDS
 }
 
 enum Role {
-    OWNER
-    ADMIN
-    MEMBER
+	OWNER
+	ADMIN
+	MEMBER
 }
 
 enum ChannelMode {
-    PRIVATE
-    PROTECTED
-    PUBLIC
+	PRIVATE
+	PROTECTED
+	PUBLIC
 }
 
 enum ChannelType {
-    NORMAL
-    DM
+	NORMAL
+	DM
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+	provider	= "postgresql"
+	url			= env("DATABASE_URL")
 }
 
 generator client {
-    provider = "prisma-client-js"
+	provider = "prisma-client-js"
 }
 
 model User {
-    id             Int             @id @default(autoincrement())
-    createdAt      DateTime        @default(now())
-    updatedAt      DateTime        @updatedAt
-    avatar         String?
-    twofaStatus    Boolean         @default(false)
-    twofaSecret    String          @default("")
-    name           String          @unique
-    wins           Int             @default(0)
-    losses         Int             @default(0)
-    elo            Int             @default(1500)
-    intraId        Int             @unique
-    intraName      String          @unique
-    activityStatus ActivityStatus  @default(ONLINE)
-    allOtherUsers  AllOtherUsers[]
-    achievements   Achievements?
-    memberships    Membership[]    @relation("UserMembership")
-    userMessage    UserMessage[]   @relation("UserMessage")
+	id				Int				@id @default(autoincrement())
+	createdAt		DateTime		@default(now())
+	updatedAt		DateTime		@updatedAt
+	avatar			String?
+	twofaStatus		Boolean			@default(false)
+	twofaSecret		String			@default("")
+	name			String			@unique
+	wins			Int				@default(0)
+	losses			Int				@default(0)
+	elo				Int				@default(1500)
+	intraId			Int				@unique
+	intraName		String			@unique
+	activityStatus	ActivityStatus  @default(ONLINE)
+	allOtherUsers	AllOtherUsers[]
+	achievements	Achievements?
+	memberships		Membership[]	@relation("UserMembership")
+	userMessage		UserMessage[]	@relation("UserMessage")
 }
 
 model MatchHistory {
-    id             Int @id @default(autoincrement())
-    intraId        Int
-    otherIntraId   Int
-    scoreUser      Int
-    scoreOtherUser Int
+	id					Int @id @default(autoincrement())
+	winnerIntraId		Int
+	loserIntraId		Int
+	winnerScore			Int
+	loserScore			Int
+	winnerName			String
+	loserName			String
+	winnerAvatar		String
+	loserAvatar			String
 }
 
 model AllOtherUsers {
-    id            Int          @id @default(autoincrement())
-    intraId       Int
-    otherIntraId  Int
-    user          User         @relation(fields: [intraId], references: [intraId])
-    blockedStatus Boolean      @default(false)
-    friendStatus  FriendStatus @default(NOT_FRIENDS)
+	id				Int				@id @default(autoincrement())
+	intraId			Int
+	otherIntraId	Int
+	user			User			@relation(fields: [intraId], references: [intraId])
+	blockedStatus	Boolean			@default(false)
+	friendStatus	FriendStatus	@default(NOT_FRIENDS)
 
-    @@unique([intraId, otherIntraId])
+	@@unique([intraId, otherIntraId])
 }
 
 model Achievements {
-    id             Int     @id @default(autoincrement())
-    intraId        Int     @unique
-    wonGame        Boolean @default(false)
-    won3Game       Boolean @default(false)
-    won3GameRow    Boolean @default(false)
-    loseGame       Boolean @default(false)
-    lose3GameRow   Boolean @default(false)
-    playedGame     Boolean @default(false)
-    changedName    Boolean @default(false)
-    uploadedAvatar Boolean @default(false)
-    added2FA       Boolean @default(false)
-    rank1          Boolean @default(false)
-    user           User    @relation(fields: [intraId], references: [intraId])
+	id				Int		@id @default(autoincrement())
+	intraId			Int		@unique
+	wonGame			Boolean @default(false)
+	won3Game		Boolean @default(false)
+	won3GameRow		Boolean @default(false)
+	loseGame		Boolean @default(false)
+	lose3GameRow	Boolean @default(false)
+	playedGame		Boolean @default(false)
+	changedName		Boolean @default(false)
+	uploadedAvatar	Boolean @default(false)
+	added2FA		Boolean @default(false)
+	rank1			Boolean @default(false)
+	user			User	@relation(fields: [intraId], references: [intraId])
 }
 
 model Channel {
-    id           Int           @id @default(autoincrement())
-    channelMode  ChannelMode
-    channelName  String        @unique
-    channelType  ChannelType   @default(NORMAL)
-    password     String        @default("")
-    userMessages UserMessage[]
-    memberships  Membership[]  @relation("ChannelMembership")
+	id				Int				@id @default(autoincrement())
+	channelMode		ChannelMode
+	channelName		String			@unique
+	channelType		ChannelType		@default(NORMAL)
+	password		String			@default("")
+	userMessages	UserMessage[]
+	memberships		Membership[]	@relation("ChannelMembership")
 }
 
 model Membership {
-    id          Int       @id @default(autoincrement())
-    role        Role      @default(MEMBER)
-    banStatus   Boolean   @default(false)
-    banTimer    DateTime?
-    muteStatus  Boolean   @default(false)
-    muteTimer   DateTime?
-    user        User      @relation("UserMembership", fields: [intraId], references: [intraId])
-    intraId     Int
-    channel     Channel   @relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
-    channelName String
+	id			Int			@id @default(autoincrement())
+	role		Role		@default(MEMBER)
+	banStatus	Boolean		@default(false)
+	banTimer	DateTime?
+	muteStatus	Boolean		@default(false)
+	muteTimer	DateTime?
+	user		User		@relation("UserMembership", fields: [intraId], references: [intraId])
+	intraId		Int
+	channel		Channel		@relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
+	channelName	String
 
-    @@unique([intraId, channelName])
+	@@unique([intraId, channelName])
 }
 
 model UserMessage {
-    id          Int     @id @default(autoincrement())
-    text        String
-    channel     Channel @relation(fields: [channelName], references: [channelName], onDelete: Cascade)
-    channelName String
-    user        User    @relation("UserMessage", fields: [intraId], references: [intraId])
-    intraId     Int
+	id			Int		@id @default(autoincrement())
+	text		String
+	channel		Channel	@relation(fields: [channelName], references: [channelName], onDelete: Cascade)
+	channelName	String
+	user		User	@relation("UserMessage", fields: [intraId], references: [intraId])
+	intraId		Int
 }

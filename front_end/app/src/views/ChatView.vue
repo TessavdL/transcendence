@@ -53,9 +53,10 @@ import { ref, onMounted } from "vue";
 import type { Channel, DMChannel, Punishment } from "../types/ChatType";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
+import { HOST } from "@/constants/constants";
 
 const axiosInstance = axios.create({
-	baseURL: 'http://localhost:3001',
+	baseURL: `http://${HOST}:3001`,
 	withCredentials: true,
 });
 const router = useRouter();

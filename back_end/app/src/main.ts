@@ -2,18 +2,22 @@ import * as cookieParser from 'cookie-parser';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  app.enableCors({
-    origin: 'http://localhost:5173', // replace with your frontend URL
-    credentials: true
-  });
-  app.use(cookieParser());
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-  }));
-  await app.listen(3001);
+	const app = await NestFactory.create(AppModule);
+
+	console.log(`http://${process.env.HOST}:5173`);
+
+	app.enableCors({
+		origin: `http://${process.env.HOST}:5173`,
+		credentials: true
+	});
+	app.use(cookieParser());
+	app.useGlobalPipes(new ValidationPipe({
+		whitelist: true,
+		forbidNonWhitelisted: true,
+	}));
+	await app.listen(3001);
 }
 bootstrap();

@@ -105,6 +105,7 @@ import axios from "axios";
 import type { Channel, Message, User, DMChannel, Member, Punishment } from "../types/ChatType";
 import { useRouter } from "vue-router";
 import _default from "vuex";
+import { HOST } from "@/constants/constants";
 
 export default {
 	data() {
@@ -132,12 +133,12 @@ export default {
 
 	setup() {
 		const socket = io(
-			'http://localhost:3001/chat', {
+			`http://${HOST}:3001/chat`, {
 			withCredentials: true,
 		}
 		);
 		const axiosInstance = axios.create({
-			baseURL: 'http://localhost:3001',
+			baseURL: `http://${HOST}:3001/chat`,
 			withCredentials: true,
 		});
 		const router = useRouter();
@@ -453,7 +454,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 ul,
 h2,
 .create-channel label,

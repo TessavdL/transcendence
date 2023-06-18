@@ -21,7 +21,7 @@ import { ChatClientGuard } from 'src/auth/guards/chat-client-auth-gaurd';
 
 @WebSocketGateway({
 	cors: {
-		origin: 'http://localhost:5173',
+		origin: `http://${process.env.HOST}:5173`,
 		credentials: true,
 	},
 	namespace: '/chat',
