@@ -299,7 +299,7 @@ export default {
 };
 </script>
 
-<style>
+<style scoped>
 @import url("../assets/game_mode/button.css");
 @import url("../assets/game_mode/classic_pong.css");
 @import url("../assets/game_mode/color_pong.css");

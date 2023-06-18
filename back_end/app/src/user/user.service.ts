@@ -11,6 +11,22 @@ import { AchievementsService } from 'src/achievements/achievements.service';
 export class UserService {
 	constructor(private prisma: PrismaService, private authService: AuthService, private achievementsService: AchievementsService) { }
 
+	async getUserWithAchievements(user: User): Promise<(User & { achievements: Achievements })> {
+		try {
+			const return_user = await this.prisma.user.findUnique({
+				where: {
+					intraId: user.intraId,
+				},
+				include: {
+					achievements: true,
+				}
+			})
+			return (return_user);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
 		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
@@ -294,6 +310,22 @@ export class UserService {
 		return (userElement);
 	}
 
+	async getOtherUserAchievements(user: User, otherIntraId: number): Promise<( User & { achievements: Achievements })> {
+		try {
+			const return_user: (User & { achievements: Achievements }) = await this.prisma.user.findUnique({
+				where: {
+					intraId: otherIntraId,
+				},
+				include: {
+					achievements: true,
+				}
+			})
+			return (return_user);
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
 	getAvatar(avatar: string): StreamableFile {
 		const file = createReadStream(join(process.cwd(), avatar));
 		return new StreamableFile(file);
@@ -396,13 +428,37 @@ export class UserService {
 					achievements: true,
 				},
 			});
-			this.achievementsService.checkUploadedAvatar(user);
+			await this.updateAvatarInMatchHistory(intraId, filePath);
+			await this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
 					throw new NotFoundException('Unable to upload avatar');
 				}
 			}
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async updateAvatarInMatchHistory(intraId: number, filePath: string): Promise<void> {
+		try {
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					winnerIntraId: intraId,
+				},
+				data: {
+					winnerAvatar: filePath,
+				},
+			});
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					loserIntraId: intraId,
+				},
+				data: {
+					loserAvatar: filePath,
+				},
+			});
+		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
