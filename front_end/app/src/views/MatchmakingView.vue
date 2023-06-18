@@ -5,66 +5,93 @@
 		</h2>
 	</div>
 </template>
-
+  
 <script lang="ts">
 import { HOST } from "@/constants/constants";
-import { io } from "socket.io-client";
-import { onBeforeRouteUpdate, useRouter } from "vue-router";
+import { useToast } from "primevue/usetoast";
+import { Socket, io } from "socket.io-client";
+import { onBeforeMount, onBeforeUnmount, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 
 export default {
-
 	setup() {
-		const socket = io(`http://${HOST}:3001/matchmaking`, { withCredentials: true });
-		socket.on('connected', () => {
-			socket.emit('matchmaking');
-		});
-		console.log('created sockect');
 		const router = useRouter();
-		return { socket, router };
-	},
+		const toast = useToast();
+		let socket: Socket;
 
-	mounted() {
-		this.socket.on('createGame', (data) => {
-			console.log(data);
-			const gameid = data;
-			if (gameid === undefined || gameid === null) {
-				this.router.push({
-					name: "Home",
-				})
-			}
-			console.log('Redirecting to game', gameid);
-			this.router.push({
-				name: 'Game',
-				params: { gameid: gameid }
+		onBeforeMount(() => {
+			socket = io(`http://${HOST}:3001/matchmaking`, {
+				withCredentials: true,
 			});
-		}),
+			waitForConnection()
+		});
 
-		this.socket.on('error', (data) => {
-			console.log(data);
-			this.router.push({
-				name: "Home",
-			})
-		}),
+		onMounted(() => {
+			socket.on('createGame', (data) => {
+				const gameid = data;
+				if (gameid === undefined || gameid === null) {
+					toast.add({
+						severity: "error",
+						summary: "Error",
+						detail: 'Gameid is invalid, redirecting to home',
+						life: 3000,
+					});
+					router.push({ name: "Home" });
+				} else {
+					toast.add({
+						severity: "success",
+						summary: "Success",
+						detail: "Match found, redirecting to game",
+						life: 3000,
+					})
+					router.push({ name: 'Game', params: { gameid: gameid } });
+				}
+			});
 
-		this.socket.on('unauthorized', (data) => {
-			console.log(data);
-			this.router.push({
-				name: "Home",
-			})
+			socket.on('error', (data) => {
+				toast.add({
+					severity: "error",
+					summary: "Error",
+					detail: (data.message || 'An error has occured') + ', redirecting to home',
+					life: 3000,
+				});
+				router.push({ name: "Home" });
+			});
+
+			socket.on('unauthorized', (data) => {
+				toast.add({
+					severity: "error",
+					summary: "Error",
+					detail: (data.message || 'Authorization Failed') + ', redirecting to home',
+					life: 3000,
+				});
+				router.push({ name: "Home" });
+			});
+		});
+
+		function waitForConnection() {
+			if (socket.connected) {
+				socket.emit('matchmaking');
+			}
+			else {
+				socket.on('hasConnected', async () => {
+					socket.emit('matchmaking');
+				});
+			}
+		}
+
+		onBeforeUnmount(() => {
+			socket.removeAllListeners();
+			socket.disconnect();
 		})
 	},
-
-	beforeRouteLeave() {
-		this.socket.removeAllListeners();
-		this.socket.disconnect();
-	}
-}
-
+};
 </script>
-
+  
 <style scoped>
 h2 {
 	color: white;
 	font-size: 30px;
 }
 </style>
+  
