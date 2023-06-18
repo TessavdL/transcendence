@@ -2,21 +2,23 @@
 	<div>
 		<!-- <button @click="toggleColorMode"></button> -->
 		<input type="checkbox" id="checkbox" @click="toggleColorMode">
-			<label for="checkbox">
-					<div class="s">
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-					<div class="d"></div>
-				</div>
-			</label>
+		<label for="checkbox">
+			<div class="s">
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+				<div class="d"></div>
+			</div>
+		</label>
 		{{ isColorMode ? '' : '' }}
-		<div :class=" isColorMode? 'mode-color':'mode'"><h2>Change Game Mode</h2></div>
+		<div :class="isColorMode ? 'mode-color' : 'mode'">
+			<h2>Change Game Mode</h2>
+		</div>
 		<!-- condition to check if it is color mode thank you dagmar-->
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
 			<div class="start-button-container"
@@ -46,28 +48,30 @@
 				<!-- <div class="wave"></div> -->
 				<!-- <div class="wave"></div> -->
 			</div>
-			<div :class= "isColorMode ? 'scoreboard-color' : 'scoreboard'">
-				<div :class="isColorMode ? 'score-player1-color': 'score-player1'">Player One:
+			<div :class="isColorMode ? 'scoreboard-color' : 'scoreboard'">
+				<div :class="isColorMode ? 'score-player1-color' : 'score-player1'">Player One:
 					<span id="player-1-score">{{ game.player1Score }}</span>
 				</div>
-				<div :class="isColorMode ? 'score-player2-color': 'score-player2'">Player Two:
+				<div :class="isColorMode ? 'score-player2-color' : 'score-player2'">Player Two:
 					<span id="player-2-score">{{ game.player2Score }}</span>
 				</div>
 			</div>
-			<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'" :style="{ top: game.player1Position + 'px' }"></div>
-			<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position" :style="{ top: game.player2Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'"
+				:style="{ top: game.player1Position + 'px' }"></div>
+			<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position"
+				:style="{ top: game.player2Position + 'px' }"></div>
 			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
 				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
 			<div>
-				<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
+				<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
 					<h2>Game Over</h2>
 					<p>Opponent left the game.</p>
 					<p>You win!</p>
 				</div>
-				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' :'game-over-canvas'">
-				<h2>Game Over</h2>
-				<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
-				<!-- <button @click="toggleGame">Restart</button> -->
+				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+					<h2>Game Over</h2>
+					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+					<!-- <button @click="toggleGame">Restart</button> -->
 				</div>
 			</div>
 		</div>
@@ -148,7 +152,7 @@ export default {
 		});
 		this.socket.on('gameEnded', () => {
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3 || this.playerDisconnect) {
-				
+
 			// }
 			console.log('game over', this.game.gameEnded);
 			this.game.gameEnded = true;
@@ -199,11 +203,11 @@ export default {
 			}
 			this.socket.emit('endGame', data);
 		}
-		else 
+		else
 			this.socket.disconnect();
 	},
 
-	methods: { 		
+	methods: {
 		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {
@@ -223,9 +227,9 @@ export default {
 				};
 				this.socket.emit('movePaddle', data);
 			}
-			else if (event.key === ' ' && this.player === 'playerone' && !this.gameOver && !this.game.gameStarted && this.game.turnPlayerOne && !this.game.turnPlayerTwo) 
+			else if (event.key === ' ' && this.player === 'playerone' && !this.gameOver && !this.game.gameStarted && this.game.turnPlayerOne && !this.game.turnPlayerTwo)
 				this.toggleGame();
-			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo) 
+			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo)
 				this.toggleGame();
 			console.log(this.gameOver);
 		},
@@ -247,10 +251,9 @@ export default {
 		movePaddlePlayerTwo(position: number) {
 			this.game.player2Position += position;
 		},
-		
+
 		update() {
-			if (!this.game.gameStarted)
-			{
+			if (!this.game.gameStarted) {
 				return;
 			}
 			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
@@ -453,5 +456,4 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
-}
-</style>
+}</style>
