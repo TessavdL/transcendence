@@ -1,6 +1,10 @@
 #!/bin/bash
 
-host=$(hostname)
+if [ -z "$1" ]; then
+  host=$(hostname)
+else
+  host="$1"
+fi
 echo $host
 
 front_end_env_file="./front_end/app/.env"

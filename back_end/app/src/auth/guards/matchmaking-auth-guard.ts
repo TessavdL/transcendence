@@ -1,15 +1,15 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Socket } from 'socket.io';
-import { UserSharedService } from 'src/user/user.shared.service';
+import { MatchmakingSharedService } from 'src/game/matchmaking/matchmaking.shared.service';
 
 @Injectable()
-export class ClientGuard implements CanActivate {
-    constructor(private readonly sharedService: UserSharedService) { }
+export class MatchmakingClientGuard implements CanActivate {
+    constructor(private readonly matchMakingSharedService: MatchmakingSharedService) { }
 
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         const client = context.switchToWs().getClient<Socket>();
-        const intraId = this.sharedService.clientToIntraId.get(client.id);
+        const intraId = this.matchMakingSharedService.clientToIntraId.get(client.id);
         if (intraId !== undefined) {
             return true;
         }

@@ -1,166 +1,163 @@
 import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
-import { Channel, ChannelMode, User } from '@prisma/client';
+import { Channel, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
-import { ChatService } from './chat.service';
-import { AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
+import { AddAnotherUserToChannelDto, AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
 import { RemoveUserFromChannelDto } from './dto/remove-user-from-channel.dto';
 import { Punishment, DMChannel, Member, Message } from './types';
 import { GetUser } from 'src/decorators/get-user.decorator';
+import { PasswordService } from './password/password.service';
+import { ChannelService } from './channel/channel.service';
+import { MessageService } from './message/message.service';
+import { MemberService } from './member/member.service';
+import { RoleService } from './role/role.service';
+import { PunishmentService } from './punishment/punishment.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('chat')
 export class ChatController {
-	constructor(private readonly chatService: ChatService) { }
+	constructor(
+		private readonly channelService: ChannelService,
+		private readonly memberService: MemberService,
+		private readonly messageService: MessageService,
+		private readonly passwordService: PasswordService,
+		private readonly punishmentService: PunishmentService,
+		private readonly roleService: RoleService,
+	) { }
 
+	// CHANNEL
+
+	// promise could be void?
 	@Post('createChannel')
-	async createChannel(@Req() request, @Body() createChannelDto: CreateChannelDto): Promise<string> {
-		const channelMode: ChannelMode = createChannelDto.channelMode;
-		const channelName: string = createChannelDto.channelName;
-		let password: string = null;
-		if (channelMode === 'PROTECTED') {
-			password = createChannelDto.password;
+	async createChannel(@GetUser() user: User, @Body() createChannelDto: CreateChannelDto): Promise<string> {
+		const channelName = await this.channelService.createChannel(createChannelDto.channelMode, createChannelDto.channelName, user.intraId);
+		if (createChannelDto.channelMode === 'PROTECTED') {
+			this.passwordService.setPasswordAndSetChannelModeToProtected(user, channelName, createChannelDto.password);
 		}
-		const user: User = request.user;
-		return await this.chatService.createChannel(channelMode, channelName, password, user.intraId);
+		return channelName;
 	}
 
 	@Post('createDMChannel')
-	async createDMChannel(@Req() request, @Body() createDMChannelDto: CreateDMChannelDto): Promise<string> {
-		const user: User = request.user;
-		const otherIntraId: number = createDMChannelDto.otherIntraId;
-		return await this.chatService.createDMChannel(user, otherIntraId);
+	async createDMChannel(@GetUser() user: User, @Body() createDMChannelDto: CreateDMChannelDto): Promise<string> {
+		return await this.channelService.createDMChannel(user, createDMChannelDto.otherIntraId);
 	}
 
 	@Post('addUserToChannel')
-	async addUserToChannel(@Req() request, @Body() addUserToChannel: AddUserToChannelDto): Promise<void> {
-		const user: User = request.user;
-		const intraId: number = user.intraId;
-		const channelName: string = addUserToChannel.channelName;
-		return await this.chatService.addUserToChannel(intraId, channelName);
+	async addUserToChannel(@GetUser() user: User, @Body() addUserToChannelDto: AddUserToChannelDto): Promise<void> {
+		return await this.channelService.addUserToChannel(user.intraId, addUserToChannelDto.channelName);
+	}
+
+	@Post('addAnotherUserToChannel')
+	async addAnotherUserToChannel(@Body() addAnotherUserToChannelDto: AddAnotherUserToChannelDto): Promise<void> {
+		return await this.channelService.addUserToChannel(addAnotherUserToChannelDto.otherIntraId, addAnotherUserToChannelDto.channelName);
 	}
 
 	@Delete('removeUserFromChannel')
-	async removeUserFromChannel(@Req() request, @Body() removeUserFromChannelDto: RemoveUserFromChannelDto): Promise<void> {
-		const user: User = request.user;
-		const intraId: number = user.intraId;
-		const channelName: string = removeUserFromChannelDto.channelName;
-		return await this.chatService.removeUserFromChannel(intraId, channelName);
+	async removeUserFromChannel(@GetUser() user: User, @Body() removeUserFromChannelDto: RemoveUserFromChannelDto): Promise<void> {
+		return await this.channelService.removeUserFromChannel(user.intraId, removeUserFromChannelDto.channelName);
+	}
+
+	@Get('getChannelType')
+	async getChannelInfo(@Query() params: { channelName: string }): Promise<string> {
+		return ((await this.channelService.getChannel(params.channelName)).channelMode);
 	}
 
 	@Get('getAllChannels')
 	async getAllChannels(): Promise<Channel[]> {
-		return await this.chatService.getAllChannels();
+		return await this.channelService.getAllChannels();
 	}
 
 	@Get('getMyChannels')
-	async getMyChannels(@Req() request): Promise<Channel[]> {
-		const user = request.user;
-		return await this.chatService.getMyChannels(user);
+	async getMyChannels(@GetUser() user: User): Promise<Channel[]> {
+		return await this.channelService.getMyChannels(user);
 	}
 
 	@Get('getMyDMChannelsWithUser')
-	async getMyDMChannelsWithUser(@Req() request): Promise<DMChannel[]> {
-		const user: User = request.user;
-		return await this.chatService.getMyDMChannelsWithUser(user);
+	async getMyDMChannelsWithUser(@GetUser() user: User): Promise<DMChannel[]> {
+		return await this.channelService.getMyDMChannelsWithUser(user);
 	}
 
+	// MESSAGE
+
+	// uses query, should do more input checking?
 	@Get('getAllMessagesInChannel')
 	async getAllMessagesInChannel(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Message[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.getFilteredMessages(user, channelName);
+		return await this.messageService.getFilteredMessages(user, channelName);
 	}
 
+	// PASSWORD
+	// uses query, should do more input checking?
 	@Get('checkPassword')
 	async checkPassword(@Query() params: { channelName: string, password: string }): Promise<boolean> {
-		const channelName: string = params.channelName;
-		const password: string = params.password;
-		return await this.chatService.checkPassword(channelName, password);
+		return await this.passwordService.checkPassword(params.channelName, params.password);
 	}
 
 	@Patch('changePassword')
-	async changePassword(@Req() request, @Body() changePasswordDto: ChangePasswordDto): Promise<void> {
-		const channelName: string = changePasswordDto.channelName;
-		const oldPassword: string = changePasswordDto.oldPassword;
-		const newPassword: string = changePasswordDto.newPassword;
-		const user: User = request.user;
-		return await this.chatService.changePassword(user, channelName, oldPassword, newPassword);
+	async changePassword(@GetUser() user: User, @Body() changePasswordDto: ChangePasswordDto): Promise<void> {
+		await this.passwordService.changePassword(user, changePasswordDto.channelName, changePasswordDto.oldPassword, changePasswordDto.newPassword);
 	}
 
 	@Patch('deletePassword')
-	async deletePassword(@Req() request, @Body() deletePasswordDto: DeletePasswordDto): Promise<void> {
-		const channelName: string = deletePasswordDto.channelName;
-		const password: string = deletePasswordDto.password;
-		const user: User = request.user;
-		return await this.chatService.deletePasswordAndSetChannelModeToPublic(user, channelName, password);
+	async deletePassword(@GetUser() user: User, @Body() deletePasswordDto: DeletePasswordDto): Promise<void> {
+		await this.passwordService.deletePasswordAndSetChannelModeToPublic(user, deletePasswordDto.channelName, deletePasswordDto.password);
 	}
 
 	@Patch('setPassword')
-	async setPassword(@Req() request, @Body() setPasswordDto: DeletePasswordDto): Promise<void> {
-		const channelName: string = setPasswordDto.channelName;
-		const password: string = setPasswordDto.password;
-		const user: User = request.user;
-		return await this.chatService.setPasswordAndSetChannelModeToProtected(user, channelName, password);
+	async setPassword(@GetUser() user: User, @Body() setPasswordDto: DeletePasswordDto): Promise<void> {
+		await this.passwordService.setPasswordAndSetChannelModeToProtected(user, setPasswordDto.channelName, setPasswordDto.password);
 	}
+
+	// MEMBER	
 
 	@Get('getMembersInChannel')
 	async getMembersInChannel(@Query() params: { channelName: string }): Promise<Member[]> {
 		const channelName: string = params.channelName;
-		return await this.chatService.getMembersInChannel(channelName);
+		return await this.memberService.getMembersInChannel(channelName);
 	}
 
+	// ROLE
+
 	@Patch('promoteMemberToAdmin')
-	async promoteMember(@Req() request, @Body() promoteMemberToAdminDto: PromoteMemberToAdminDto): Promise<void> {
+	async promoteMember(@GetUser() user: User, @Body() promoteMemberToAdminDto: PromoteMemberToAdminDto): Promise<void> {
 		const channelName: string = promoteMemberToAdminDto.channelName;
 		const otherIntraId: number = promoteMemberToAdminDto.otherIntraId;
-		const user: User = request.user;
-		return await this.chatService.promoteMemberToAdmin(user, channelName, otherIntraId);
+		return await this.roleService.promoteMemberToAdmin(user, promoteMemberToAdminDto.channelName, promoteMemberToAdminDto.otherIntraId);
 	}
 
 	@Patch('demoteAdminToMember')
-	async demoteAdmin(@Req() request, @Body() demoteAdminToMember: PromoteMemberToAdminDto): Promise<void> {
+	async demoteAdmin(@GetUser() user: User, @Body() demoteAdminToMember: PromoteMemberToAdminDto): Promise<void> {
 		const channelName: string = demoteAdminToMember.channelName;
 		const otherIntraId: number = demoteAdminToMember.otherIntraId;
-		const user: User = request.user;
-		return await this.chatService.demoteAdminToMember(user, channelName, otherIntraId);
+		return await this.roleService.demoteAdminToMember(user, channelName, otherIntraId);
 	}
 
-	// returns a Punishment object
-	// - status: boolean
-	// - time: number | null, duration of punishment that is left in seconds
+	// PUNISHMENT
+
+	// uses query, should do more input checking?
 	@Get('amIBanned')
-	async amIBanned(@Req() request, @Query() params: { channelName: string }): Promise<Punishment> {
-		const intraId: number = request.user.intraId;
-		const channelName: string = params.channelName;
-		return await this.chatService.isMemberBanned(intraId, channelName);
+	async amIBanned(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
+		return await this.punishmentService.isMemberBanned(user.intraId, params.channelName);
 	}
 
-	// returns a Punishment object
-	// - status: boolean
-	// - time: number | null, duration of punishment that is left in seconds
+	// uses query, should do more input checking?
+	// so far unused
+	// remove?
 	@Get('isMemberBanned')
 	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
-		const intraId: number = params.intraId;
-		const channelName: string = params.channelName;
-		return await this.chatService.isMemberBanned(intraId, channelName);
+		return await this.punishmentService.isMemberBanned(params.intraId, params.channelName);
 	}
 
-	// returns a Punishment object
-	// - status: boolean
-	// - time: number | null, duration of punishment that is left in seconds
+	// uses query, should do more input checking?
 	@Get('amIMuted')
 	async amIMuted(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
-		const intraId: number = user.intraId;
-		const channelName: string = params.channelName;
-		return await this.chatService.isMemberMuted(intraId, channelName);
+		return await this.punishmentService.isMemberMuted(user.intraId, params.channelName);
 	}
 
-	// returns a Punishment object
-	// - status: boolean
-	// - time: number | null, duration of punishment that is left in seconds
+	// uses query, should do more input checking?
+	// so far unused
+	// remove?
 	@Get('isMemberMuted')
 	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
-		const intraId: number = params.intraId;
-		const channelName: string = params.channelName;
-		return await this.chatService.isMemberMuted(intraId, channelName);
+		return await this.punishmentService.isMemberMuted(params.intraId, params.channelName);
 	}
 }

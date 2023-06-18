@@ -100,10 +100,9 @@
 </template>
 
 <script lang='ts'>
-import type { Socket } from "socket.io-client";
-import { inject, ref } from 'vue';
+import { io } from "socket.io-client";
 import axios from "axios";
-import type { Channel, Message, User, DMInfo, Member, Punishment } from "../types/ChatType";
+import type { Channel, Message, User, DMChannel, Member, Punishment } from "../types/ChatType";
 import { useRouter } from "vue-router";
 import _default from "vuex";
 import { HOST } from "@/constants/constants";
@@ -115,7 +114,7 @@ export default {
 			activeChannelType: ref(''),
 
 			allUsers: ref<User[]>([]),
-			dmInfo: ref<DMInfo[]>([]),
+			dmInfo: ref<DMChannel[]>([]),
 
 			allNormalChannels: ref<Channel[]>([]),
 			allMyNormalChannels: ref<Channel[]>([]),
@@ -133,9 +132,13 @@ export default {
 	},
 
 	setup() {
-		const socket = inject("socketioInstance") as Socket;
+		const socket = io(
+			`http://${HOST}:3001/chat`, {
+			withCredentials: true,
+		}
+		);
 		const axiosInstance = axios.create({
-			baseURL: `http://${HOST}:3001`,
+			baseURL: `http://${HOST}:3001/chat`,
 			withCredentials: true,
 		});
 		const router = useRouter();
@@ -329,7 +332,7 @@ export default {
 			try {
 				const response = await this.axiosInstance.get('chat/getMyDMChannelsWithUser');
 				const channels = response.data;
-				const dmInfo: DMInfo[] = channels.map((item) => {
+				const dmInfo: DMChannel[] = channels.map((item) => {
 					return {
 						channelName: item.channel.channelName,
 						otherUserAvatar: item.otherUser.avatar,
