@@ -1,40 +1,53 @@
 <template>
 	<div class="create-channel-container">
-		<input class="search-bar form-control" type="text" v-model="input" placeholder="Search Channel" />
 		<form @submit.prevent="createChannel">
-			<div class="input-container">
-				<div class="mb-3 channel-name">
-					<label for="channelName" class="form-label">Channel Name</label>
-					<input type="text" class="form-control" id="channelName" v-model="channelName">
-				</div>
+			<div class="mb-3 channel-name">
+				<label for="channelName" class="form-label">Channel Name</label>
+				<input type="text" class="form-control" id="channelName" v-model="channelName">
+			</div>
 
-				<div class="form-check form-check-inline channel-type">
-					<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-public" value="PUBLIC"
-						v-model="channelType">
-					<label class="form-check-label" for="type-public">public</label>
-				</div>
-				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-protected"
-						value="PROTECTED" v-model="channelType">
-					<label class="form-check-label" for="type-protected">protected</label>
-				</div>
-				<div class="form-check form-check-inline">
-					<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-private" value="PRIVATE"
-						v-model="channelType">
-					<label class="form-check-label" for="type-private">private</label>
-				</div>
+			<div class="form-check form-check-inline channel-type">
+				<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-public" value="PUBLIC"
+					v-model="channelType">
+				<label class="form-check-label" for="type-public">public</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-protected" value="PROTECTED"
+					v-model="channelType">
+				<label class="form-check-label" for="type-protected">protected</label>
+			</div>
+			<div class="form-check form-check-inline">
+				<input class="form-check-input" type="radio" name="inlineRadioOptions" id="type-private" value="PRIVATE"
+					v-model="channelType">
+				<label class="form-check-label" for="type-private">private</label>
+			</div>
 
-				<div class="mb-3 channel-password" v-if="channelType === 'PROTECTED'">
-					<label for="channelPassword" class="form-label">Channel Password</label>
-					<input type="password" class="form-control" id="channelPassword" v-model="channelPassword" minlength="4"
-						required placeholder="minimal 4 charaters">
+			<div class="mb-3 channel-password" v-if="channelType === 'PROTECTED'">
+				<label for="channelPassword" class="form-label">Channel Password</label>
+				<input type="password" class="form-control" id="channelPassword" v-model="channelPassword" minlength="4"
+					required placeholder="minimum 4 characters">
+			</div>
+			<div v-if="channelType === 'PRIVATE'">
+				<div class="user-list-container">
+					<input class="search-bar form-control" type="text" v-model="input" placeholder="Search User" />
+					<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
+						<div class="user-list-item d-inline-flex align-items-center">
+							<button type="button" class="btn btn-outline-light" @click="toggleUserSelection(user)">
+								{{ user.selected ? 'Cancel' : 'Select' }}
+							</button>
+							<img :src="avatarPrefix + user.avatar" class="avatar-pic-mini" alt="avatar">
+							<span class="user-name align-text-bottom">{{ user.name }}</span>
+						</div>
+						<div class="no-result" v-if="input && !filteredList().length">
+							<p>No results found!</p>
+						</div>
+					</div>
 				</div>
+			</div>
 
-				<div class="submit-channel">
-					<button type="submit" class="btn btn-outline-light"
-						style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;">Create
-						Channel</button>
-				</div>
+			<div v-if="channelType !== ''" class="submit-channel">
+				<button type="submit" class="btn btn-outline-light"
+					style="color:#ffffff; background-color: #09252f; border: 2px solid #ffffff;">Create Channel</button>
 			</div>
 		</form>
 	</div>
@@ -42,28 +55,61 @@
 
 <script setup lang="ts">
 import axios from "axios";
-import { ref, defineEmits } from "vue";
+import { ref, defineEmits, onMounted } from "vue";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
-import { ChannelMode } from "@/types/ChatType"
-import { HOST } from "../constants/constants";
+import type { UserFromList } from "@/types/ChatType";
+import { HOST } from "@/constants/constants";
 
 const toast = useToast();
-
+const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 const channelName = ref('');
-const channelType = ref(ChannelMode.PUBLIC);
+const channelType = ref('');
 const channelPassword = ref('');
+const allUsers = ref<UserFromList[]>([]);
+const axiosInstance = axios.create({
+	baseURL: `http://${HOST}:3001`,
+	withCredentials: true,
+});
+const input = ref('');
 
 const emit = defineEmits<{
 	(event: "isActionSuccess"): boolean;
 }>();
 
-let input = ref("");
+onMounted(async () => {
+	await getAllUsers();
+})
 
-function createChannel() {
+function toggleUserSelection(user: UserFromList) {
+	user.selected = !user.selected;
+}
+
+async function createChannel() {
+	if (!channelName.value.length || channelName.value.length > 20) {
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: "Channel name cannot be empty or longer than 20 characters",
+			life: 3000,
+		});
+		return setBackToDefault();
+	}
 	createRequestBody();
-	console.log(requestBody);
-	sendCreateChannelRequest();
+	await sendCreateChannelRequest()
+	if (channelType.value === 'PRIVATE') {
+		await addSelectedUsers();
+	}
+	setBackToDefault();
+}
+
+function setBackToDefault() {
+	channelType.value = '';
+	channelName.value = '';
+	input.value = '';
+	allUsers.value.forEach((user: UserFromList) => {
+		user.selected = false;
+	})
 }
 
 let requestBody = {};
@@ -106,7 +152,52 @@ async function sendCreateChannelRequest() {
 			});
 			emit("isActionSuccess", false);
 		});
+}
+
+async function getAllUsers(): Promise<void> {
+	await axios
+		.get(`http://${HOST}:3001/user/usersexceptself`, {
+			withCredentials: true,
+		})
+		.then(async (response) => {
+			const users = response.data;
+			allUsers.value = users.map(user => {
+				return {
+					intraId: user.intraId,
+					name: user.name,
+					avatar: user.avatar,
+					selected: false,
+				};
+			});
+		})
+		.catch((error: any) => {
+			console.log(error?.response?.data?.reason);
+		});
 };
+
+function filteredList() {
+	return allUsers.value.filter((user) =>
+		user.name.toLowerCase().includes(input.value.toLocaleLowerCase())
+	);
+}
+
+async function addSelectedUsers() {
+	const selectedUsers = allUsers.value.filter(user => user.selected);
+	const intraIds = selectedUsers.map(user => user.intraId);
+
+	try {
+		intraIds.forEach(async (intraId: number) => {
+			const data = {
+				channelName: channelName.value,
+				otherIntraId: intraId,
+			};
+			await axiosInstance.post('chat/addAnotherUserToChannel', data);
+		});
+	} catch (error: any) {
+		console.log(error?.response?.data?.reason || 'an error has occured');
+	}
+}
+
 </script>
 
 <style scoped>
@@ -132,88 +223,29 @@ async function sendCreateChannelRequest() {
 	margin-top: 30px;
 	margin-bottom: 30px;
 }
-</style>
-<!-- 
-<style scoped>
-.create-channel-container {
+
+.search-bar {
+	width: 100%;
+	/* margin-left: 30px; */
+}
+
+.user-list-item {
+	width: 100%;
+	margin: 5px auto;
+}
+
+.avatar-pic-mini {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	object-fit: cover;
 	margin-left: 30px;
+	margin-right: 20px;
+	margin-top: 10px;
 }
 
-.channel-type {
-	/* display: flex; */
-	justify-content: space-between;
-	margin-bottom: 18px;
+.user-name {
+	color: #FFFF;
+	font-size: 25px;
 }
-
-.input-container {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	position: relative;
-}
-
-.input-container input {
-	padding-right: 120px;
-}
-
-.input-container .btn {
-	position: absolute;
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	color: #ffffff;
-	background-color: #09252f;
-	border: 1px solid #ffffff;
-}
-
-.form-check-label {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 5px;
-	font-size: 18px;
-	color: #ffffff;
-	/* background-color: #09252f; */
-	border: 1px solid #ffffff;
-	padding: 5px 10px;
-	width: 100px;
-}
-
-.channel-password {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	position: relative;
-}
-
-.channel-password label {
-	display: flex;
-}
-
-.channel-password input {
-	padding-right: 120px;
-	color: #ffffff;
-	background-color: #09252f;
-	border: 1px solid #ffffff;
-	position: absolute;
-	margin-top: 150px;
-}
-
-.channel-password input::placeholder {
-	color: #ffffff;
-	position: absolute;
-	top: 50%;
-	left: 10px;
-	transform: translateY(-50%);
-}
-
-.channel-password .btn {
-	position: absolute;
-	right: 0;
-	top: 50%;
-	transform: translateY(-50%);
-	color: #ffffff;
-	background-color: #09252f;
-	border: 1px solid #ffffff;
-}
-</style> -->
+</style>

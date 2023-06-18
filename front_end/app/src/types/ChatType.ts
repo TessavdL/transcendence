@@ -1,7 +1,7 @@
-export enum ChannelMode {
-	PRIVATE,
-	PROTECTED,
-	PUBLIC
+export interface ChannelMode {
+	PRIVATE: 'PRIVATE',
+	PROTECTED: 'PROTECTED',
+	PUBLIC: 'PUBLIC'
 }
 
 export interface Channel {
@@ -9,13 +9,6 @@ export interface Channel {
 	channelName: string;
 	channelType: string;
 	channelMode: string;
-}
-
-export interface DmChannel {
-	channelName: string;
-	otheruserName: string;
-	otheruserAvatar: string;
-	otheruserIntraId: number;
 }
 
 export interface Message {
@@ -33,7 +26,7 @@ export interface User {
 	avatar: string;
 }
 
-export interface DMInfo {
+export interface DMChannel {
 	channelName: string;
 	otherUserAvatar: string;
 	otherUserIntraId: number;
@@ -50,4 +43,11 @@ export interface Member {
 export interface Punishment {
 	status: boolean;
 	time: number | null;
+}
+
+export interface UserFromList {
+	intraId: number;
+	name: string;
+	avatar: string;
+	selected: boolean;
 }
