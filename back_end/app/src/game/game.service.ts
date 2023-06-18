@@ -1,11 +1,12 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
-import { Prisma, User } from '@prisma/client';
+import { Achievements, Prisma, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserService } from 'src/user/user.service';
 import { K } from './constants';
 import { GameSharedService } from './game.shared.service';
 import { Game, Players } from './types';
 import { AuthService } from 'src/auth/auth.service';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class GameService {
@@ -14,6 +15,7 @@ export class GameService {
 		private readonly userService: UserService,
 		private readonly authService: AuthService,
 		private readonly shareService: GameSharedService,
+		private readonly achievementsService: AchievementsService,
 	) { }
 
 	gameData(): Game {
@@ -228,7 +230,7 @@ export class GameService {
 
 	private async update_winner(winnerIntraId: number, newWinnerElo: number): Promise<void> {
 		try {
-			await this.prisma.user.update({
+			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
 					intraId: winnerIntraId,
 				},
@@ -236,9 +238,30 @@ export class GameService {
 					wins: {
 						increment: 1,
 					},
+					winStreak: {
+						increment: 1,
+					},
 					elo: newWinnerElo,
+					lossStreak: 0,
 				},
+				include: {
+					achievements: true,
+				}
 			});
+			await this.achievementsService.checkPlayedGame(user);
+			if (user.wins === 1) {
+				await this.achievementsService.checkWonGame(user);
+			}
+			else if (user.wins === 3) {
+				await this.achievementsService.checkWon3Game(user);
+			}
+			if (user.winStreak === 3) {
+				await this.achievementsService.checkWon3GameRow(user);
+			}
+			const leaderboard: User[] = await this.userService.getLeaderboard();
+			if (leaderboard[0].intraId === user.intraId) {
+				await this.achievementsService.checkRank1(user);
+			}
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
@@ -251,7 +274,7 @@ export class GameService {
 
 	private async update_loser(loserIntraId: number, newLoserElo: number): Promise<void> {
 		try {
-			await this.prisma.user.update({
+			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
 					intraId: loserIntraId,
 				},
@@ -259,9 +282,23 @@ export class GameService {
 					losses: {
 						increment: 1,
 					},
+					lossStreak: {
+						increment: 1,
+					},
 					elo: newLoserElo,
+					winStreak: 0,
 				},
+				include: {
+					achievements: true,
+				}
 			});
+			await this.achievementsService.checkPlayedGame(user);
+			if (user.losses === 1) {
+				this.achievementsService.checkLoseGame(user);
+			}
+			if (user.lossStreak === 3) {
+				this.achievementsService.checkLose3GameRow(user);
+			}
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
