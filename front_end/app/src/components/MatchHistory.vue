@@ -1,8 +1,8 @@
 <template>
     <div class="match-history d-flex flex-row justify-content-around align-items-center">
-        <MiniProfile :avatar="props.currentAvatar" :username="props.currentName" />
-        <p class="match-score">{{ props.matchRecord.currentScore }} - {{ props.matchRecord.otherScore }}</p>
-        <MiniProfile :avatar="avatarPrefix + props.matchRecord.otherAvatar" :username="props.matchRecord.otherName" />
+        <MiniProfile :avatar="avatarPrefix + props.matchRecord.winnerAvatar" :username="props.matchRecord.winnerName" />
+        <p class="match-score">{{ props.matchRecord.winnerScore }} - {{ props.matchRecord.loserScore }}</p>
+        <MiniProfile :avatar="avatarPrefix + props.matchRecord.loserAvatar" :username="props.matchRecord.loserName" />
     </div>
 </template>
 

@@ -5,13 +5,13 @@ import { WsException } from '@nestjs/websockets';
 import { Punishment, DMChannel, Member, Message } from './types';
 import * as argon2 from "argon2";
 import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from './constants';
-import { SharedService } from './chat.map.shared.service';
+import { ChatSharedService } from './chat.shared.service';
 
 @Injectable()
 export class ChatService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly sharedMap: SharedService,
+		private readonly sharedMap: ChatSharedService,
 	) { }
 
 	private readonly logger: Logger = new Logger('UserService initialized');

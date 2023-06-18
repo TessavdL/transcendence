@@ -25,18 +25,19 @@
 <script setup lang="ts">
 import axios from "axios";
 import { ref, onMounted } from "vue";
+import storeUser from "@/store";
 import ProfileSideBar from "@/components/ProfileSideBar.vue";
 import ProfileMainTab from "@/components/ProfileMainTab.vue";
 import { HOST } from "@/constants/constants";
 
 const userProfile = ref({
-    intraId: 0,
+    intraId: storeUser.state.user.intraId,
     avatar: "",
     username: "",
     activityStatus: "ONLINE",
-    win: "00",
-    loss: "00",
-    ladderLevel: "00",
+    win: 0,
+    loss: 0,
+    ladderLevel: 0,
 });
 
 onMounted(async () => {
@@ -53,9 +54,9 @@ async function getCurrentUserProfile() {
             userProfile.value.avatar = `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar;
             userProfile.value.username = response.data.name;
             userProfile.value.activityStatus = response.data.activityStatus;
-            // userProfile.value.win = response.data.win;
-            // userProfile.value.loss = response.data.loss;
-            // userProfile.value.ladderLevel = response.data.ladderLevel;
+            userProfile.value.win = response.data.wins;
+            userProfile.value.loss = response.data.losses;
+            userProfile.value.ladderLevel = response.data.elo;
         })
         .catch(() => {
             console.log("cannot get users profile infomation");

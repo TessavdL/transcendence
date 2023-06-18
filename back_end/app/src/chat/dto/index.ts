@@ -1,4 +1,5 @@
 export * from './add-user-to-channel.dto';
+export * from './add-another-user-to-channel.dto';
 export * from './change-password-dto';
 export * from './create-channel.dto'
 export * from './create-dm-channel.dto';

@@ -34,6 +34,9 @@
                                 <li><RouterLink class="nav-link" 
                                     :to="{name: 'ProfileCurrent'}">
                                     View Profile</RouterLink></li>
+                                <li><RouterLink class="nav-link" 
+                                    :to="{name: 'ProfileEdit'}">
+                                    Edit Profile</RouterLink></li>
                                 <li><RouterLink class="nav-link" to="/logout">Log Out</RouterLink></li>
                             </ul>
                         </li>
