@@ -145,7 +145,7 @@ export class GameService {
 		else if (gameStatus.ballVelocity.x > 0 &&                // T added check for ball direction (if ball direction is negative it will never be a collision)
 			ballPosition.left + 20 >= paddleTwoLeft &&          // Right edge of the ball
 			ballPosition.left <= paddleTwoRight + 15 &&               // Left edge of the paddle
-			(ballPosition.top + 20 && ballPosition.left + 20) >= paddleTwoTop &&             // Bottom edge of the ball, T (added ballPoistion.top + 20 && ball position.left + 20)
+			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball, T (added ballPoistion.top + 20 && ball position.left + 20)
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
 		}
