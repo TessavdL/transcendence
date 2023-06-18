@@ -429,13 +429,37 @@ export class UserService {
 					achievements: true,
 				},
 			});
-			this.achievementsService.checkUploadedAvatar(user);
+			await this.updateAvatarInMatchHistory(intraId, filePath);
+			await this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
 					throw new NotFoundException('Unable to upload avatar');
 				}
 			}
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async updateAvatarInMatchHistory(intraId: number, filePath: string): Promise<void> {
+		try {
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					winnerIntraId: intraId,
+				},
+				data: {
+					winnerAvatar: filePath,
+				},
+			});
+			await this.prisma.matchHistory.updateMany({
+				where: {
+					loserIntraId: intraId,
+				},
+				data: {
+					loserAvatar: filePath,
+				},
+			});
+		} catch (error) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
