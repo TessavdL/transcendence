@@ -188,9 +188,9 @@ export default {
 		window.addEventListener('keydown', this.handleEvent);
 	},
 
-	beforeRouteLeave() {
+	beforeUnmount() {
 		window.removeEventListener('keydown', this.handleEvent);
-		console.log(this.playerDisconnect, 'beforeRouterLeave');
+		console.log(this.playerDisconnect, 'beforeUnmount');
 		if (this.gameOver === false) {
 			const data = {
 				gameStatus: this.game,
@@ -203,7 +203,7 @@ export default {
 			this.socket.disconnect();
 	},
 
-	methods: { 		
+	methods: {
 		handleEvent(event: KeyboardEvent) {
 			if (event.key === 'ArrowUp') {
 				const data = {

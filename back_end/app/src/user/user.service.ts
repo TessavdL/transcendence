@@ -224,7 +224,7 @@ export class UserService {
 		}
 	}
 
-	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<ActivityStatus> {
+	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<void> {
 		try {
 			await this.prisma.user.update({
 				where: {
@@ -239,7 +239,6 @@ export class UserService {
 					intraId: intraId,
 				},
 			});
-			return (user.activityStatus);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
