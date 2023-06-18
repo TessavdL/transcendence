@@ -25,7 +25,7 @@
 			</div>
 
 			<div class="tab-pane fade" id="achievement-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
-				<AchievementBadges />
+				<AchievementBadges :currentIntraId="props.currentIntraId" />
 			</div>
 
 			<div class="tab-pane fade" id="ladder-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
@@ -52,12 +52,6 @@ const props = defineProps({
 });
 
 const toast = useToast();
-
-// const matches = ref([
-//     { otherName: 'John', otherAvatar: 'src/assets/default_avatars/Cody_Sleepy.jpeg', otherScore: 5, currentScore: 10, id: 1 },
-//     { otherName: 'Mark', otherAvatar: 'src/assets/default_avatars/Cody_Seal.jpeg', otherScore: 10, currentScore: 9, id: 2 },
-//     { otherName: 'Peter', otherAvatar: 'src/assets/default_avatars/Cody_Sad.jpeg', otherScore: 7, currentScore: 10, id: 3 }
-// ])
 
 const matches = ref([])
 
@@ -117,5 +111,4 @@ button[aria-selected="true"] {
 
 button[aria-selected="false"] {
 	color: #ffffff;
-}
-</style>
+}</style>
