@@ -1,15 +1,17 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import { Achievements, User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { authenticator } from 'otplib'
 import { toDataURL } from 'qrcode';
 import { ConfigService } from '@nestjs/config';
+import { AchievementsService } from 'src/achievements/achievements.service';
 
 @Injectable()
 export class TwofaService {
 	constructor(
 		private readonly prisma: PrismaService,
-		private readonly configService: ConfigService
+		private readonly configService: ConfigService,
+		private readonly achievementsService: AchievementsService,
 	) { }
 
 	async getTwofaStatus(user: User): Promise<boolean> {
@@ -30,15 +32,20 @@ export class TwofaService {
 
 	async setTwofaStatus(user: User, status: boolean): Promise<void> {
 		try {
-			await this.prisma.user.update({
+			const userAndAchievements: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
 					intraId: user.intraId,
 				},
 				data: {
 					twofaStatus: status,
 				},
+				include: {
+					achievements: true,
+				}
 			});
-
+			if (status === true) {
+				await this.achievementsService.checkAdded2FA(userAndAchievements);
+			}
 		} catch (error: any) {
 			throw new InternalServerErrorException('Prisma failed to set twofa status');
 		}
