@@ -398,7 +398,7 @@ export class UserService {
 				},
 			});
 			await this.updateAvatarInMatchHistory(intraId, filePath);
-			this.achievementsService.checkUploadedAvatar(user);
+			await this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
 				if (error.code === 'P2001') {
