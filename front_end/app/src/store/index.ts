@@ -65,25 +65,26 @@ const storeUser = createStore({
                         withCredentials: true,
                     })
                     .then(async (response) => {
-                        commit("setAuthenticated");
-                        commit("updateId", response.data.id);
-                        commit("updateIntraId", response.data.intraId);
-                        commit("updateUserName", response.data.name);
-                        commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
-                        commit("updateTwoFactor", response.data.twofaStatus);
+                        // commit("setAuthenticated");
+                        // commit("updateId", response.data.id);
                         // commit("updateIntraId", response.data.intraId);
+                        // commit("updateUserName", response.data.name);
+                        // commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
                         // commit("updateTwoFactor", response.data.twofaStatus);
-                        // if (response.data.twofaStatus && !this.state.is2FA) {
-                        //     router.push({ name: "twofactorvarify" });
-                        // }
-                        // else {
-                        //     commit("setAuthenticated");
-                        //     commit("updateId", response.data.id);
-                        //     commit("updateIntraId", response.data.intraId);
-                        //     commit("updateUserName", response.data.name);
-                        //     commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
-                        //     commit("updateTwoFactor", response.data.twofaStatus);
-                        // }
+
+                        commit("updateIntraId", response.data.intraId);
+                        commit("updateTwoFactor", response.data.twofaStatus);
+                        if (response.data.twofaStatus && !this.state.is2FA) {
+                            router.push({ name: "twofactorvarify" });
+                        }
+                        else {
+                            commit("setAuthenticated");
+                            commit("updateId", response.data.id);
+                            commit("updateIntraId", response.data.intraId);
+                            commit("updateUserName", response.data.name);
+                            commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
+                            commit("updateTwoFactor", response.data.twofaStatus);
+                        }
                     })
                     .catch(() => {
                         console.log("user is not unauthorized");
