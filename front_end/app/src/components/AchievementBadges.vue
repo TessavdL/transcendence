@@ -49,7 +49,6 @@ async function getAchievement() {
 	try {
 		const response = await axiosInstance.get('/user/achievements/' + props.currentIntraId);
 		badges.value = parseAchievements(response.data.achievements);
-		console.log(badges);
 	} catch (error) {
 		toast.add({
 			severity: "error",
