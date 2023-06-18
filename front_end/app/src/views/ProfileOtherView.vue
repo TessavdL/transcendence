@@ -62,9 +62,6 @@ async function getUserProfile() {
             userProfile.value.activityStatus = response.data.activityStatus;
             userProfile.value.blockedState = response.data.blockedState;
             userProfile.value.friendStatus = response.data.friendStatus;
-            // userProfile.value.win = response.data.win;
-            // userProfile.value.loss = response.data.loss;
-            // userProfile.value.ladderLevel = response.data.ladderLevel;
         })
         .catch(() => {
             console.log("cannot get users profile infomation");
