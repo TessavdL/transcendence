@@ -432,11 +432,10 @@ async function checkPassword() {
 		const response = await axiosInstance.get('checkPassword', { params: data });
 		password.value = '';
 		const check: boolean = response.data;
-		if (check) {
+		if (check === true) {
 			hasEnteredPassword.value = true;
 		}
 		else {
-			member.value = undefined;
 			toast.add({
 				severity: "error",
 				summary: "Error",

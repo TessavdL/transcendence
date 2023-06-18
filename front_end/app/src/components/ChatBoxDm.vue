@@ -4,7 +4,7 @@
 			<div class="row">
 				<div class="dm-header d-inline-flex">
 					<div class="dm-avatar dm-header-item">
-						<img :src="otherUserAvatar" class="avatar-pic-mini" alt="avatar">
+						<img :src="avatarPrefix + otherUserAvatar" class="avatar-pic-mini" alt="avatar">
 					</div>
 					<div class="dm-name dm-header-item flex-grow-1">
 						<h3>{{ otherUserName }}</h3>
@@ -227,7 +227,7 @@ async function getDMChannel(): Promise<void> {
 			const otherUser = thisDm.otherUser;
 			otherUserIntraId.value = otherUser.intraId;
 			otherUserName.value = otherUser.name;
-			otherUserAvatar.value = avatarPrefix + otherUser.avatar;
+			otherUserAvatar.value = otherUser.avatar;
 		} else {
 			toast.add({
 				severity: "error",
