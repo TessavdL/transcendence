@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, Length } from 'class-validator';
 
 export class DeletePasswordDto {
 	@IsString()
@@ -7,6 +7,7 @@ export class DeletePasswordDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@Length(4)
 	password: string;
 }
 
