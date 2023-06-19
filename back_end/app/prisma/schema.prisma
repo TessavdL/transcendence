@@ -49,7 +49,9 @@ model User {
 	twofaSecret		String			@default("")
 	name			String			@unique
 	wins			Int				@default(0)
+	winStreak		Int				@default(0)
 	losses			Int				@default(0)
+	lossStreak		Int				@default(0)
 	elo				Int				@default(1500)
 	intraId			Int				@unique
 	intraName		String			@unique
