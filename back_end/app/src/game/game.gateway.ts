@@ -69,6 +69,10 @@ export class GameGateway
 		}
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
+		const roomName = this.clientToRoomName.get(client.id);
+		if (roomName) {
+			client.emit('gameEnded');
+		}
 		this.clientToRoomName.delete(client.id);
 		client.disconnect();
 	}
