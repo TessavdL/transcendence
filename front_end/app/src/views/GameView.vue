@@ -73,6 +73,9 @@
 					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 					<!-- <button @click="toggleGame">Restart</button> -->
 				</div>
+				<div v-else-if="playerInvalid" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+					<h2>Game Over</h2>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -102,6 +105,7 @@ export default {
 			toast,
 			router,
 			raf: -1,
+			playerInvalid: false,
 		};
 	},
 	setup() {
@@ -109,7 +113,7 @@ export default {
 		const game = ref<Game>();
 
 		socket.on('hasConnected', () => {
-			socket.emit('getGameData');
+			socket.emit('setup');
 		})
 
 		socket.on('gameData', (gameObject: Game) => {
@@ -192,30 +196,41 @@ export default {
 				this.movePaddle(position);
 		});
 
+		this.socket.on('unauthorized', (error: any) => {
+			const errorMessage = error.message || 'Error';
+			this.toast.add({
+				severity: "error",
+				summary: "Error",
+				detail: `${errorMessage}`,
+				life: 3000,
+			});
+			this.gameOver = true;
+		});
+
 		this.socket.on('error', (error: any) => {
 			const errorMessage = error.message || 'Error';
 			this.toast.add({
 				severity: "error",
 				summary: "Error",
-				detail: `${errorMessage}, redirecting to home`,
+				detail: `${errorMessage}`,
 				life: 3000,
 			});
-			this.router.push({
-				name: 'Home',
-			});
+			this.gameOver = true;
+			this.playerInvalid = true;
 		});
 
 		window.addEventListener('keydown', this.handleEvent);
 	},
 
 	beforeUnmount() {
+		console.log('in before unmount')
 		window.cancelAnimationFrame(this.raf);
 		window.removeEventListener('keydown', this.handleEvent);
 		if (this.gameOver === false) {
 			const data = {
 				gameStatus: this.game,
 				roomName: this.roomName,
-				players: this.player
+				player: this.player
 			}
 			this.socket.emit('endGame', data);
 		}

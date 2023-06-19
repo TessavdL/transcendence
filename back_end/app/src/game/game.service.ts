@@ -140,7 +140,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player2Score >= 3) {
 				gameStatus.gameEnded = true;
-				this.endGame(gameStatus, roomName);
+				this.endGame(gameStatus.player1Score, gameStatus.player2Score, roomName);
 			}
 			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
@@ -157,7 +157,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player1Score >= 3) {
 				gameStatus.gameEnded = true;
-				this.endGame(gameStatus, roomName);
+				this.endGame(gameStatus.player1Score, gameStatus.player2Score, roomName);
 			}
 			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
@@ -187,16 +187,16 @@ export class GameService {
 		return (gameStatus);
 	}
 
-	async endGame(gameStatus: Game, roomName: string): Promise<void> {
+	async endGame(player1Score: number, player2Score: number, roomName: string): Promise<void> {
 		try {
 			const players: Players = this.gameSharedService.playerData.get(roomName);
-			if (!roomName || !players || !gameStatus) {
+			if (!players) {
 				return;
 			}
 			this.gameSharedService.playerData.delete(roomName);
 			let winner: boolean;
 
-			if (gameStatus.player1Score === 3) {
+			if (player1Score === 3) {
 				winner = true;
 			} else {
 				winner = false;
@@ -209,11 +209,11 @@ export class GameService {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player1.intraId,
-						winnerScore: gameStatus.player1Score,
+						winnerScore: player1Score,
 						winnerName: player1.name,
 						winnerAvatar: player1.avatar,
 						loserIntraId: player2.intraId,
-						loserScore: gameStatus.player2Score,
+						loserScore: player2Score,
 						loserName: player2.name,
 						loserAvatar: player2.avatar,
 					}
@@ -223,11 +223,11 @@ export class GameService {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player2.intraId,
-						winnerScore: gameStatus.player2Score,
+						winnerScore: player2Score,
 						winnerName: player2.name,
 						winnerAvatar: player2.avatar,
 						loserIntraId: player1.intraId,
-						loserScore: gameStatus.player1Score,
+						loserScore: player1Score,
 						loserName: player1.name,
 						loserAvatar: player1.avatar,
 					}

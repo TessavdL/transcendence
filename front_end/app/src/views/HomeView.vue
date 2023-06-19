@@ -34,11 +34,6 @@ const playGame = () => {
 		name: "Matchmaking",
 	})
 }
-const watchGame = () => {
-	router.push({
-		name: "Chat",
-	})
-}
 
 </script>
 

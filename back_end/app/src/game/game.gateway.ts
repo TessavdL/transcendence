@@ -9,7 +9,6 @@ import { JwtStrategy } from 'src/auth/strategy';
 import { UserService } from 'src/user/user.service';
 import { GameSharedService } from './game.shared.service';
 import { GameClientGuard } from 'src/auth/guards/game-client-auth-guard';
-import { disconnect } from 'process';
 
 @WebSocketGateway({
 	cors: {
@@ -45,27 +44,32 @@ export class GameGateway
 		this.logger.log(`Client connect id = ${client.id}`);
 		let user: User;
 		try {
-			// verify client
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
-			this.server.to(client.id).emit('error', { message: 'Authorization is required before a connection can be made' });
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
 		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
-		// send gameData when both players have joined
-
-		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
-		this.intraIdToClientId.set(user.intraId, client.id);
-
 		client.emit('hasConnected');
 	}
 
-	@UseGuards(GameClientGuard)
-	@SubscribeMessage('getGameData')
-	handleGameData(client: Socket) {
+	@SubscribeMessage('setup')
+	async handleGameData(client: Socket) {
+		let user: User;
+		try {
+			const token: string = this.authService.getJwtTokenFromSocket(client);
+			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			user = await this.jwtStrategy.validate(payload);
+		} catch (error: any) {
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+		}
+		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
+		this.intraIdToClientId.set(user.intraId, client.id);
 		const game: Game = this.gameService.gameData();
 		client.emit('gameData', game);
 		client.emit('readyToJoin');
@@ -80,8 +84,17 @@ export class GameGateway
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
 		const roomName = this.clientToRoomName.get(client.id);
-		if (roomName && this.gameSharedService.playerData.get(roomName)) {
-			client.to(roomName).emit('gameEnded');
+		if (roomName) {
+			const playerData = this.gameSharedService.playerData.get(roomName);
+			if (playerData) {
+				if (playerData.player1.clientId === client.id) {
+					this.gameService.endGame(0, 3, roomName);
+				}
+				else if (playerData.player2.clientId === client.id) {
+					this.gameService.endGame(3, 0, roomName);
+				}
+				client.to(roomName).emit('gameEnded');
+			}
 		}
 		client.disconnect();
 		this.clientToRoomName.delete(client.id);
@@ -161,6 +174,9 @@ export class GameGateway
 		roomName: string,
 		player: string,
 	}) {
+		if (!object.gameStatus || !object.roomName || !object.player) {
+			return;
+		}
 		client.to(object.roomName).emit('gameEnded');
 		if (object.player === 'playerone') {
 			object.gameStatus.player2Score = 3;
@@ -169,7 +185,7 @@ export class GameGateway
 			object.gameStatus.player1Score = 3;
 			object.gameStatus.player2Score = 0;
 		}
-		this.gameService.endGame(object.gameStatus, object.roomName);
+		this.gameService.endGame(object.gameStatus.player1Score, object.gameStatus.player2Score, object.roomName);
 		client.emit('disconnectPlayer');
 	}
 }
