@@ -25,8 +25,11 @@ export class GameGateway
 		private readonly gameSharedService: GameSharedService,
 		private readonly jwtStrategy: JwtStrategy,
 		private readonly userService: UserService,
-	) { }
+	) {
+		this.clientToRoomName = new Map<string, string>();
+	}
 	private readonly logger: Logger = new Logger('GameGateway');
+	private clientToRoomName: Map<string, string>;
 
 	@WebSocketServer()
 	server: Server;
@@ -66,6 +69,7 @@ export class GameGateway
 		}
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
+		this.clientToRoomName.delete(client.id);
 		client.disconnect();
 	}
 
@@ -80,6 +84,7 @@ export class GameGateway
 			return;
 		}
 		client.join(roomName);
+		this.clientToRoomName.set(client.id, roomName);
 		if (this.gameSharedService.playerData.get(roomName).player1.intraId === intraId && players.player2.joined === true) {
 			client.emit('playerisSet', players);
 			client.to(roomName).emit('playerisSet', players);
