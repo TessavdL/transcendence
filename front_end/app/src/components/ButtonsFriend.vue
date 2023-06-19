@@ -44,7 +44,6 @@ const componentRerender = () => {
 
 let friendtype = props.friendStatus;
 
-
 const requestFriend = () => {
     confirm.require({
         message: "Are you sure you want to send a friend request to this user?",
@@ -56,7 +55,6 @@ const requestFriend = () => {
 }
 
 const acceptFriend = () => {
-    console.log(props.intraId);
     confirm.require({
         message: "Are you sure you want to add this user as friend?",
         header: "Confirmation",
