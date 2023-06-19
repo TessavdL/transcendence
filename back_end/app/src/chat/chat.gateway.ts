@@ -234,7 +234,7 @@ export class ChatGateway
 	}): Promise<void> {
 		const intraId: number = this.chatSharedService.clientToIntraId.get(client.id);
 		const user: User = await this.authService.findUserById(intraId);
-		const gameId = intraId + "+" + data.otherIntraId;
+		const gameId: string = this.generateString(8);
 		const player1: { intraId: number } = {
 			intraId: intraId,
 		};
@@ -251,6 +251,16 @@ export class ChatGateway
 			user: user,
 		};
 		client.to(otherClientIds).emit("inviteForGame", info);
+	}
+
+	private generateString(length: number): string {
+		const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		let result = '';
+		const charactersLength = characters.length;
+		for (let i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
 	}
 
 	private getClientIds(clientIdsInChannel: string[], otherIntraId: number): string[] {
