@@ -14,7 +14,7 @@ export class GameService {
 		private readonly prisma: PrismaService,
 		private readonly userService: UserService,
 		private readonly authService: AuthService,
-		private readonly shareService: GameSharedService,
+		private readonly gameSharedService: GameSharedService,
 		private readonly achievementsService: AchievementsService,
 	) { }
 
@@ -34,9 +34,35 @@ export class GameService {
 		return (game);
 	}
 
-	assignPlayers(roomName: string): Players {
-		const players: Players = this.shareService.playerData.get(roomName);
-		return (players);
+	assignPlayers(clientId: string, intraId: number, roomName: string): Players | null {
+		let playerSet: Players;
+		let player1: { clientId: string, intraId: number, joined: boolean };
+		let player2: { clientId: string, intraId: number, joined: boolean };
+		const players: Players = this.gameSharedService.playerData.get(roomName);
+		if (players && players.player1.intraId === intraId) {
+			player1 = {
+				clientId: clientId,
+				intraId: intraId,
+				joined: true,
+			};
+			player2 = players.player2;
+			this.gameSharedService.playerData.set(roomName, { player1, player2 });
+			playerSet = { player1, player2 };
+		}
+		else if (players && players.player2.intraId === intraId) {
+			player2 = {
+				clientId: clientId,
+				intraId: intraId,
+				joined: true,
+			};
+			player1 = players.player1;
+			this.gameSharedService.playerData.set(roomName, { player1, player2 });
+			playerSet = { player1, player2 };
+		}
+		else {
+			return null;
+		}
+		return (playerSet);
 	}
 
 	movement(movement: string): number {
@@ -155,7 +181,7 @@ export class GameService {
 
 	async endGame(gameStatus: Game, roomName: string): Promise<void> {
 		try {
-			const players: Players = this.shareService.playerData.get(roomName);
+			const players: Players = this.gameSharedService.playerData.get(roomName);
 			let winner: boolean;
 
 			if (gameStatus.player1Score === 3) {
