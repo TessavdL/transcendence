@@ -107,6 +107,11 @@ export default {
 	setup() {
 		const socket = io(`http://${HOST}:3001/pong-game`, { withCredentials: true });
 		const game = ref<Game>();
+
+		socket.on('hasConnected', () => {
+			socket.emit('getGameData');
+		})
+
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
@@ -129,7 +134,7 @@ export default {
 	},
 
 	mounted() {
-		this.socket.on('connected', () => {
+		this.socket.on('readyToJoin', () => {
 			if (typeof this.$route.params.gameid === 'string') {
 				this.roomName = this.$route.params.gameid;
 			}

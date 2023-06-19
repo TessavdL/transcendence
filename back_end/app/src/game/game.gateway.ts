@@ -9,6 +9,7 @@ import { JwtStrategy } from 'src/auth/strategy';
 import { UserService } from 'src/user/user.service';
 import { GameSharedService } from './game.shared.service';
 import { GameClientGuard } from 'src/auth/guards/game-client-auth-guard';
+import { disconnect } from 'process';
 
 @WebSocketGateway({
 	cors: {
@@ -53,25 +54,21 @@ export class GameGateway
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
-
-		if (this.intraIdToClientId.get(user.intraId)) {
-			this.logger.error(`Client connection refused: ${client.id}`);
-			client.disconnect();
-			return;
-		}
-
 		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
 		// send gameData when both players have joined
-		const game: Game = this.gameService.gameData();
+
 		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
 		this.intraIdToClientId.set(user.intraId, client.id);
-		client.emit('gameData', game);
-		client.emit('connected');
+
+		client.emit('hasConnected');
 	}
 
 	@UseGuards(GameClientGuard)
-	handleConnected(client: Socket) {
-
+	@SubscribeMessage('getGameData')
+	handleGameData(client: Socket) {
+		const game: Game = this.gameService.gameData();
+		client.emit('gameData', game);
+		client.emit('readyToJoin');
 	}
 
 	@UseGuards(GameClientGuard)
@@ -83,7 +80,7 @@ export class GameGateway
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
 		const roomName = this.clientToRoomName.get(client.id);
-		if (roomName) {
+		if (roomName && this.gameSharedService.playerData.get(roomName)) {
 			client.to(roomName).emit('gameEnded');
 		}
 		this.clientToRoomName.delete(client.id);
@@ -94,6 +91,7 @@ export class GameGateway
 	@UseGuards(GameClientGuard)
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomName: string) {
+		console.log('clientid = ', client.id);
 		const intraId: number = this.gameSharedService.clientToIntraId.get(client.id);
 		const players: Players = this.gameService.assignPlayers(client.id, intraId, roomName);
 
