@@ -182,6 +182,10 @@ export class GameService {
 	async endGame(gameStatus: Game, roomName: string): Promise<void> {
 		try {
 			const players: Players = this.gameSharedService.playerData.get(roomName);
+			if (!roomName || !players || !gameStatus) {
+				return;
+			}
+			this.gameSharedService.playerData.delete(roomName);
 			let winner: boolean;
 
 			if (gameStatus.player1Score === 3) {

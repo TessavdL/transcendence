@@ -27,9 +27,11 @@ export class GameGateway
 		private readonly userService: UserService,
 	) {
 		this.clientToRoomName = new Map<string, string>();
+		this.intraIdToClientId = new Map<number, string>();
 	}
 	private readonly logger: Logger = new Logger('GameGateway');
 	private clientToRoomName: Map<string, string>;
+	private intraIdToClientId: Map<number, string>;
 
 	@WebSocketServer()
 	server: Server;
@@ -41,7 +43,6 @@ export class GameGateway
 	async handleConnection(client: Socket) {
 		this.logger.log(`Client connect id = ${client.id}`);
 		let user: User;
-
 		try {
 			// verify client
 			const token: string = this.authService.getJwtTokenFromSocket(client);
@@ -52,13 +53,25 @@ export class GameGateway
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
-		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
 
+		if (this.intraIdToClientId.get(user.intraId)) {
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+			return;
+		}
+
+		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
 		// send gameData when both players have joined
 		const game: Game = this.gameService.gameData();
 		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
+		this.intraIdToClientId.set(user.intraId, client.id);
 		client.emit('gameData', game);
 		client.emit('connected');
+	}
+
+	@UseGuards(GameClientGuard)
+	handleConnected(client: Socket) {
+
 	}
 
 	@UseGuards(GameClientGuard)
@@ -70,11 +83,11 @@ export class GameGateway
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
 		const roomName = this.clientToRoomName.get(client.id);
-		console.log(roomName);
 		if (roomName) {
 			client.to(roomName).emit('gameEnded');
 		}
 		this.clientToRoomName.delete(client.id);
+		this.intraIdToClientId.delete(intraId);
 		client.disconnect();
 	}
 
