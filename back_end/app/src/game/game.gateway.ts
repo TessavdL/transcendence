@@ -83,9 +83,9 @@ export class GameGateway
 		if (roomName && this.gameSharedService.playerData.get(roomName)) {
 			client.to(roomName).emit('gameEnded');
 		}
+		client.disconnect();
 		this.clientToRoomName.delete(client.id);
 		this.intraIdToClientId.delete(intraId);
-		client.disconnect();
 	}
 
 	@UseGuards(GameClientGuard)
