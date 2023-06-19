@@ -75,7 +75,6 @@ async function getUsers() {
         })
         .then(async (response) => {
             users.value = response.data;
-            console.log(users.value[3].friendStatus);
         })
         .catch(() => {
             console.log("failed get users infomation");
