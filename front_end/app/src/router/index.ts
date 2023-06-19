@@ -22,8 +22,6 @@ import UsersView from "@/views/UsersView.vue";
 import MatchmakingView from "@/views/MatchmakingView.vue";
 import ChatMatchmakingView from "@/views/ChatMatchmakingView.vue";
 
-import TwofaView from "@/views/TwofaView.vue";
-
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes: [
@@ -111,11 +109,6 @@ const router = createRouter({
 			path: '/chat2',
 			name: 'Chat2',
 			component: ChatView2
-		},
-		{
-			path: '/twofa',
-			name: 'twofa',
-			component: TwofaView
 		},
 		{
 			path: '/matchmaking',
