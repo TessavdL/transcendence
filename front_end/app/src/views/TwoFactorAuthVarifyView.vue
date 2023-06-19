@@ -54,6 +54,7 @@ async function verify2fa() {
 			life: 3000,
 		});
 		storeUser.state.user.twoFactorEnabled = true;
+		storeUser.state.is2FA = true;
 		router.push({ name: "Home" });
 	} catch (error) {
 		verificationCode.value = '';

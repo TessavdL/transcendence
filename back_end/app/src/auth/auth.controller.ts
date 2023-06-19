@@ -20,9 +20,10 @@ export class AuthController {
 	@UseGuards(AuthGuard42)
 	@Get('callback')
 	async handleIntraReturn(@GetUser() user: User, @Res({ passthrough: true }) res: Response): Promise<void> {
-		if (user.twofaStatus === true) {
-			return res.redirect(`http://${process.env.HOST}:5173/twofa?intraId=${user.intraId}`);
-		}
+		// if (user.twofaStatus === true) {
+		// 	// return res.redirect(`http://${process.env.HOST}:5173/twofa?intraId=${user.intraId}`);
+		// 	return res.redirect(`http://${process.env.HOST}:5173/twofactorvarify`);
+		// }
 		return this.authService.setBearerToken(user, res);
 	}
 
