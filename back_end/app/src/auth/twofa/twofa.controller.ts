@@ -45,7 +45,7 @@ export class TwofaController {
 			throw new UnauthorizedException('Two factor authentication failed: Code was not valid');
 		}
 
-		await this.set_twofa_status_to_true(user);
+		await this.twofaService.setTwofaStatus(user, true);
 		return true;
 	}
 
