@@ -79,7 +79,7 @@ export class UserController {
 
 	@Get(':id')
 	async getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
-		if (!!params || params.id) {
+		if (!params || !params.id) {
 			throw new BadRequestException();
 		}
 		const user: User = request.user;
