@@ -241,16 +241,8 @@ export class GameService {
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
-		await this.update_winner(winner.intraId, newWinnerElo);
 		await this.update_loser(loser.intraId, newLoserElo);
-	}
-
-	async update_win_loss_elo_based_on_intraId(winnerIntraId: number, loserIntraId: number): Promise<void> {
-		const winner: User = await this.userService.getUserBasedOnIntraId(winnerIntraId);
-		const loser: User = await this.userService.getUserBasedOnIntraId(loserIntraId);
-		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
-		await this.update_winner(winnerIntraId, newWinnerElo);
-		await this.update_loser(loserIntraId, newLoserElo);
+		await this.update_winner(winner.intraId, newWinnerElo);
 	}
 
 	private calculate_new_elo(winnerElo: number, loserElo: number): { newWinnerElo: number, newLoserElo: number } {
