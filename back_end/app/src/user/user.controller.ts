@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put, All, NotFoundException, Res } from '@nestjs/common';
 import { Achievements, MatchHistory, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -79,6 +79,9 @@ export class UserController {
 
 	@Get(':id')
 	async getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
+		if (!params || !params.id) {
+			throw new BadRequestException();
+		}
 		const user: User = request.user;
 		const otherIntraId: number = parseInt(params.id);
 		return (await this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
@@ -109,5 +112,10 @@ export class UserController {
 
 		await this.userService.updateAvatar(user.intraId, filePath);
 		return (filePath);
+	}
+
+	@All('/*')
+	handleWildcard(@Req() request: Request) {
+		throw new NotFoundException(`Route not found`);
 	}
 }

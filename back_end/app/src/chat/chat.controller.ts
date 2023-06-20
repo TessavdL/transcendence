@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, Req, UseGuards, Delete, All, NotFoundException } from '@nestjs/common';
 import { Channel, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { AddAnotherUserToChannelDto, AddUserToChannelDto, ChangePasswordDto, CreateChannelDto, CreateDMChannelDto, DeletePasswordDto, PromoteMemberToAdminDto } from './dto';
@@ -94,12 +94,12 @@ export class ChatController {
 
 	@Patch('changePassword')
 	async changePassword(@GetUser() user: User, @Body() changePasswordDto: ChangePasswordDto): Promise<void> {
-		await this.passwordService.changePassword(user, changePasswordDto.channelName, changePasswordDto.oldPassword, changePasswordDto.newPassword);
+		return await this.passwordService.changePassword(user, changePasswordDto.channelName, changePasswordDto.oldPassword, changePasswordDto.newPassword);
 	}
 
 	@Patch('deletePassword')
 	async deletePassword(@GetUser() user: User, @Body() deletePasswordDto: DeletePasswordDto): Promise<void> {
-		await this.passwordService.deletePasswordAndSetChannelModeToPublic(user, deletePasswordDto.channelName, deletePasswordDto.password);
+		return await this.passwordService.deletePasswordAndSetChannelModeToPublic(user, deletePasswordDto.channelName, deletePasswordDto.password);
 	}
 
 	@Patch('setPassword')
@@ -159,5 +159,10 @@ export class ChatController {
 	@Get('isMemberMuted')
 	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
 		return await this.punishmentService.isMemberMuted(params.intraId, params.channelName);
+	}
+
+	@All('*')
+	handleWildcard() {
+		throw new NotFoundException('Endpoint not found');
 	}
 }

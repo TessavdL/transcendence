@@ -45,6 +45,7 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization Failed' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
+			return;
 		}
 		this.matchMakingSharedService.clientToIntraId.set(client.id, user.intraId);
 		client.emit('hasConnected');
@@ -72,11 +73,15 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 
 		// create game
 		const roomName: string = this.generateString(8);
-		const player1: { intraId: number } = {
+		const player1: { clientId: string, intraId: number, joined: boolean } = {
+			clientId: '',
 			intraId: this.matchMakingSharedService.clientToIntraId.get(this.otherclient),
+			joined: false,
 		};
-		const player2: { intraId: number } = {
+		const player2: { clientId: string, intraId: number, joined: boolean } = {
+			clientId: '',
 			intraId: this.matchMakingSharedService.clientToIntraId.get(client.id),
+			joined: false,
 		};
 		if (player1.intraId === player2.intraId) {
 			client.to(this.otherclient).emit('error', { message: 'You cannot play against yourself' });
