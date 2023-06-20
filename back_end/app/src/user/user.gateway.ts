@@ -5,17 +5,14 @@ import {
 	type OnGatewayInit,
 	WebSocketGateway,
 	WebSocketServer,
-	SubscribeMessage,
 } from '@nestjs/websockets';
-import { Logger, UseGuards } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { AuthService } from 'src/auth/auth.service';
 import { JwtStrategy } from 'src/auth/strategy';
 import { ActivityStatus, User } from '@prisma/client';
 import { UserService } from './user.service';
-import { ClientGuard } from 'src/auth/guards/client-auth.guard';
 import { UserSharedService } from './user.shared.service';
-import { disconnect } from 'process';
 
 @WebSocketGateway({
 	cors: {

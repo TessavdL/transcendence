@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put, All, NotFoundException, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, BadRequestException, UploadedFile, Query, StreamableFile, Put, All, NotFoundException } from '@nestjs/common';
 import { Achievements, MatchHistory, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -9,7 +9,6 @@ import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { UpdateUsernameDto } from './dto/update-username-dto';
-import { request } from 'http';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')

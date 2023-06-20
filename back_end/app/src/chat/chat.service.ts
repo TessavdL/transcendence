@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
-import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role, AllOtherUsers } from '@prisma/client';
+import { Channel, Membership, User, UserMessage, ChannelType, ChannelMode, Role } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { WsException } from '@nestjs/websockets';
 import { Punishment, DMChannel, Member, Message } from './types';
