@@ -5,6 +5,7 @@ import {
 	type OnGatewayInit,
 	WebSocketGateway,
 	WebSocketServer,
+	SubscribeMessage,
 } from '@nestjs/websockets';
 import { Logger, UseGuards } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
@@ -14,6 +15,7 @@ import { ActivityStatus, User } from '@prisma/client';
 import { UserService } from './user.service';
 import { ClientGuard } from 'src/auth/guards/client-auth.guard';
 import { UserSharedService } from './user.shared.service';
+import { disconnect } from 'process';
 
 @WebSocketGateway({
 	cors: {
@@ -52,7 +54,7 @@ export class UserGateway
 			client.disconnect();
 		}
 		try {
-			if (this.isActive(user.intraId) === false) {
+			if (this.isActive(client.id, user.intraId) === false) {
 				await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
 			}
 			this.userSharedService.clientToIntraId.set(client.id, user.intraId);
@@ -66,10 +68,10 @@ export class UserGateway
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
 			const intraId: number = this.userSharedService.clientToIntraId.get(client.id);
-			this.userSharedService.clientToIntraId.delete(client.id);
-			if (this.isActive(intraId) === false) {
+			if (this.isActive(client.id, intraId) === false) {
 				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
 			}
+			this.userSharedService.clientToIntraId.delete(client.id);
 			client.disconnect();
 			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
@@ -77,12 +79,12 @@ export class UserGateway
 		}
 	}
 
-	private isActive(intraId: number): boolean {
-		for (const [clientId, clientIntraId] of this.userSharedService.clientToIntraId.entries()) {
-			if (clientIntraId === intraId) {
+	private isActive(clientId: string, intraId: number): boolean {
+		this.userSharedService.clientToIntraId.forEach((value: number, clientId: string) => {
+			if (value === intraId && clientId !== clientId) {
 				return true;
 			}
-		}
+		})
 		return false;
 	}
 }
