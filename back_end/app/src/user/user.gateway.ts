@@ -64,7 +64,6 @@ export class UserGateway
 		}
 	}
 
-	@UseGuards(ClientGuard)
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
 			const intraId: number = this.userSharedService.clientToIntraId.get(client.id);

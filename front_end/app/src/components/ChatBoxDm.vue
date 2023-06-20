@@ -207,7 +207,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-	console.log('leaving chat');
 	socket.removeAllListeners();
 	if (member.value) {
 		leaveChannel();
