@@ -76,13 +76,9 @@ export class GameService {
 			left: gameStatus.ballPosition.left + gameStatus.ballVelocity.x,
 		};
 		// Check for collision with top or bottom walls
-		if (ballPosition.top <= 0 || ballPosition.top >= 565) {       // T suggestion: move after check for score
+		if (ballPosition.top <= 0 || ballPosition.top >= 565) {
 			gameStatus.ballVelocity.y = -gameStatus.ballVelocity.y;
 		}
-		// Check for collision with left or right walls
-		// if (ballPosition.left <= 0 || ballPosition.left >= 780) {
-		// 	gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
-		// }
 		const paddleOneLeft = 0;
 		const paddleOneRight = 15;
 		const paddleOneTop = gameStatus.player1Position;
@@ -108,7 +104,6 @@ export class GameService {
 				gameStatus.gameEnded = true;
 				this.endGame(gameStatus, roomName);
 			}
-			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
 		else if (ballPosition.left + 20 >= 770 || //old value 780
 			ballPosition.left + 20 >= paddleTwoLeft &&
@@ -125,16 +120,10 @@ export class GameService {
 				gameStatus.gameEnded = true;
 				this.endGame(gameStatus, roomName);
 			}
-			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
 		else {
 			gameStatus.ballPosition = ballPosition;
 		}
-		// Check for collision with player1 paddle
-		// if (ballPosition.left <= paddleOneRight + 15 &&
-		// 	ballPosition.left >= paddleOneLeft &&
-		// 	ballPosition.top + 20 >= paddleOneTop &&
-		// 	ballPosition.top + 20 <= paddleOneBottom) 
 		if (gameStatus.ballVelocity.x < 0 &&                        // T added check for ball direction (if ball direction is positive it will never be a collision)
 			ballPosition.left <= paddleOneRight + 15 &&
 			ballPosition.left >= paddleOneLeft &&
@@ -146,7 +135,7 @@ export class GameService {
 		else if (gameStatus.ballVelocity.x > 0 &&                // T added check for ball direction (if ball direction is negative it will never be a collision)
 			ballPosition.left + 20 >= paddleTwoLeft &&          // Right edge of the ball
 			ballPosition.left <= paddleTwoRight + 15 &&               // Left edge of the paddle
-			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball, T (added ballPoistion.top + 20 && ball position.left + 20)
+			ballPosition.top + 20 >= paddleTwoTop &&             // Bottom edge of the ball
 			ballPosition.top <= paddleTwoBottom) {               // Top edge of the paddle
 			gameStatus.ballVelocity.x = -gameStatus.ballVelocity.x;
 		}

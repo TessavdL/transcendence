@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<!-- <button @click="toggleColorMode"></button> -->
+		<!-- <button for togglemode -->
 		<input type="checkbox" id="checkbox" @click="toggleColorMode">
 		<label for="checkbox">
 			<div class="s">
@@ -23,7 +23,6 @@
 		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
 			<div class="start-button-container"
 				v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
-				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
 					<span></span>
@@ -34,7 +33,6 @@
 			</div>
 			<div class="start-button-container"
 				v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
-				<!-- <button @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start' }}</button> -->
 				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
 				}}
 					<span></span>
@@ -45,8 +43,6 @@
 			</div>
 			<div>
 				<div class="wave"></div>
-				<!-- <div class="wave"></div> -->
-				<!-- <div class="wave"></div> -->
 			</div>
 			<div :class="isColorMode ? 'scoreboard-color' : 'scoreboard'">
 				<div :class="isColorMode ? 'score-player1-color' : 'score-player1'">Player One:
@@ -71,7 +67,6 @@
 				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
 					<h2>Game Over</h2>
 					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
-					<!-- <button @click="toggleGame">Restart</button> -->
 				</div>
 			</div>
 		</div>
@@ -86,7 +81,6 @@ import { computed, ref } from 'vue';
 import storeUser from '@/store';
 import { HOST } from '@/constants/constants';
 import { data } from 'jquery';
-//import NeonButton from '../components/ButtonsGamePlay.vue';
 
 export default {
 	data() {
@@ -105,20 +99,14 @@ export default {
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
-
-		console.log(game.value?.turnPlayerOne, game.value?.turnPlayerTwo);
 		return { socket, game: computed(() => game.value) };
 	},
 
 	computed: {
 		isPlayerOne() {
-			console.log('checking player');
 			return this.player === 'playerone';
 		},
 		isGameOver() {
-			// Check if the game is over
-			// console.log(this.playerDisconnect, 'is Game Over');
-			// return this.playerDisconnect || this.gameOver || this.game.player1Score === 3 || this.game.player2Score === 3;
 			if (this.playerDisconnect || this.game.player1Score === 3 || this.game.player2Score === 3) {
 				this.gameOver = true;
 				window.removeEventListener('keydown', this.handleEvent);
@@ -151,16 +139,11 @@ export default {
 			requestAnimationFrame(this.update);
 		});
 		this.socket.on('gameEnded', () => {
-			// if (this.game.player1Score === 3 || this.game.player2Score === 3 || this.playerDisconnect) {
-
-			// }
-			console.log('game over', this.game.gameEnded);
 			this.game.gameEnded = true;
 			this.gameOver = true;
 			this.playerDisconnect = true;
 		});
 		this.socket.on('disconnectPlayer', () => {
-			console.log('in disconnect');
 			this.socket.disconnect();
 		});
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
@@ -194,7 +177,6 @@ export default {
 
 	beforeUnmount() {
 		window.removeEventListener('keydown', this.handleEvent);
-		console.log(this.playerDisconnect, 'beforeUnmount');
 		if (this.gameOver === false) {
 			const data = {
 				gameStatus: this.game,
@@ -231,7 +213,6 @@ export default {
 				this.toggleGame();
 			else if (event.key === ' ' && this.player === 'playertwo' && !this.gameOver && !this.game.gameStarted && !this.game.turnPlayerOne && this.game.turnPlayerTwo)
 				this.toggleGame();
-			console.log(this.gameOver);
 		},
 
 		toggleGame() {
@@ -256,7 +237,6 @@ export default {
 			if (!this.game.gameStarted) {
 				return;
 			}
-			// if (this.game.player1Score === 3 || this.game.player2Score === 3) {
 			if (this.game.gameEnded === true || this.playerDisconnect) {
 				this.game.gameStarted = false;
 				this.gameOver = true;
@@ -293,7 +273,6 @@ export default {
 @import url("../assets/game_mode/color_pong.css");
 @import url("../assets/game_mode/color_toggle.css");
 
-
 @font-face {
 
 	font-family: "Joy";
@@ -315,13 +294,11 @@ export default {
 	color: rgb(240, 248, 89);
 	top: 200px;
 }
-
 .mode-color h2 {
 	font-family: "excellent";
 	color: rgb(240, 248, 89);
 	top: 200px;
 }
-
 .game-over-canvas {
 	position: absolute;
 	top: 0;
@@ -335,7 +312,6 @@ export default {
 	background-color: rgba(0, 0, 0, 0.5);
 	z-index: 999;
 }
-
 .game-over-canvas h2 {
 	font-family: "arcadeFont";
 	font-size: 64px;
@@ -358,7 +334,6 @@ export default {
 	left: 20px;
 	right: 20px;
 }
-
 .score-player1,
 .score-player2 {
 	font-size: 40px;
@@ -366,31 +341,14 @@ export default {
 	color: rgb(217, 250, 32);
 	font-family: "arcadeFont";
 }
-
-/* .score-player1 {
-	order: 1;
-}
-.score-player2 {
-	order: 3;
-} */
 .pong-game img {
 	max-width: 100%;
 	max-height: 100%;
 }
-
-/* .player1-paddle,
-.player2-paddle {
-	position: absolute;
-	width: 15px;
-	height: 80px;
-	background-color: rgb(231, 220, 208);
-} */
-
 .player1-paddle {
 	left: 20px;
 	top: 260px;
 }
-
 .player2-paddle {
 	right: 20px;
 	top: 260px;
@@ -402,33 +360,6 @@ export default {
 	height: 20px;
 	background-color: rgb(33, 34, 32);
 }
-
-/* .ball-classic {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	background-color: rgb(243, 246, 240);
-}
-
-.ball-round {
-	position: absolute;
-	width: 20px;
-	height: 20px;
-	top: 290px;
-	left: 390px;
-	background-color: white;
-	border-radius: 50%;
-} */
-
-/* body {
-	margin: auto;
-	font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-	overflow: auto;
-	background: linear-gradient(315deg, rgba(101,0,94,1) 3%, rgba(60,132,206,1) 38%, rgba(48,238,226,1) 68%, rgba(255,25,25,1) 98%);
-	animation: gradient 15s ease infinite;
-	background-size: 400% 400%;
-	background-attachment: fixed;
-} */
 
 @keyframes gradient {
 	0% {
@@ -445,8 +376,7 @@ export default {
 }
 
 .wave {
-	/* background: rgb(255 255 255 / 25%); */
-	/* border-radius: 100% 100% 0 0; */
+
 	position: fixed;
 	width: 150%;
 	height: 16em;
@@ -456,4 +386,5 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
-}</style>
+}
+</style>
