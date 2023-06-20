@@ -27,9 +27,11 @@ export class GameGateway
 		private readonly userService: UserService,
 	) {
 		this.clientToRoomName = new Map<string, string>();
+		this.intraIdToClientId = new Map<number, string>();
 	}
 	private readonly logger: Logger = new Logger('GameGateway');
 	private clientToRoomName: Map<string, string>;
+	private intraIdToClientId: Map<number, string>;
 
 	@WebSocketServer()
 	server: Server;
@@ -41,24 +43,36 @@ export class GameGateway
 	async handleConnection(client: Socket) {
 		this.logger.log(`Client connect id = ${client.id}`);
 		let user: User;
-
 		try {
-			// verify client
 			const token: string = this.authService.getJwtTokenFromSocket(client);
 			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
-			this.server.to(client.id).emit('error', { message: 'Authorization is required before a connection can be made' });
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
 		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
+		client.emit('hasConnected');
+	}
 
-		// send gameData when both players have joined
-		const game: Game = this.gameService.gameData();
+	@SubscribeMessage('setup')
+	async handleGameData(client: Socket) {
+		let user: User;
+		try {
+			const token: string = this.authService.getJwtTokenFromSocket(client);
+			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			user = await this.jwtStrategy.validate(payload);
+		} catch (error: any) {
+			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
+			this.logger.error(`Client connection refused: ${client.id}`);
+			client.disconnect();
+		}
 		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
+		this.intraIdToClientId.set(user.intraId, client.id);
+		const game: Game = this.gameService.gameData();
 		client.emit('gameData', game);
-		client.emit('connected');
+		client.emit('readyToJoin');
 	}
 
 	@UseGuards(GameClientGuard)
@@ -70,17 +84,27 @@ export class GameGateway
 		this.logger.log(`Client disconnect id = ${client.id}`);
 		this.gameSharedService.clientToIntraId.delete(client.id);
 		const roomName = this.clientToRoomName.get(client.id);
-		console.log(roomName);
 		if (roomName) {
-			client.to(roomName).emit('gameEnded');
+			const playerData = this.gameSharedService.playerData.get(roomName);
+			if (playerData) {
+				if (playerData.player1.clientId === client.id) {
+					this.gameService.endGame(0, 3, roomName);
+				}
+				else if (playerData.player2.clientId === client.id) {
+					this.gameService.endGame(3, 0, roomName);
+				}
+				client.to(roomName).emit('gameEnded');
+			}
 		}
-		this.clientToRoomName.delete(client.id);
 		client.disconnect();
+		this.clientToRoomName.delete(client.id);
+		this.intraIdToClientId.delete(intraId);
 	}
 
 	@UseGuards(GameClientGuard)
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomName: string) {
+		console.log('clientid = ', client.id);
 		const intraId: number = this.gameSharedService.clientToIntraId.get(client.id);
 		const players: Players = this.gameService.assignPlayers(client.id, intraId, roomName);
 
@@ -149,9 +173,9 @@ export class GameGateway
 		gameStatus: Game,
 		roomName: string,
 		player: string,
-		}) {
+	}) {
 		if (!object.gameStatus || !object.roomName || !object.player) {
-			return ;
+			return;
 		}
 		client.to(object.roomName).emit('gameEnded');
 		if (object.player === 'playerone') {
@@ -161,7 +185,7 @@ export class GameGateway
 			object.gameStatus.player1Score = 3;
 			object.gameStatus.player2Score = 0;
 		}
-		this.gameService.endGame(object.gameStatus, object.roomName);
+		this.gameService.endGame(object.gameStatus.player1Score, object.gameStatus.player2Score, object.roomName);
 		client.emit('disconnectPlayer');
 	}
 }

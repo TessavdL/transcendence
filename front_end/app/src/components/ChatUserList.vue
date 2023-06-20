@@ -1,10 +1,13 @@
 <template>
     <div class="user-list-containner">
-        <input class="search-bar form-control" type="text" v-model="input" placeholder="Search User" />
+        <label for="searchuser" class="form-label">Search User</label>
+        <input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
         <div class="users-list" v-for="user in filteredList()" :key="user.intraId">
             <div class="user-list-item d-inline-flex align-items-center" @click="createDMChannel(user.intraId, user.name)">
                 <img :src="avatarPrefix + user.avatar" class="avatar-pic-mini" alt="avatar">
-                <span class="user-name align-text-bottom">{{ user.name }}</span>
+                <span class="user-name align-text-bottom" style="cursor: pointer;">
+                    {{ user.name }}
+                </span>
             </div>
         </div>
         <div class="no-result" v-if="input && !filteredList().length">
@@ -157,5 +160,10 @@ async function createDMChannel(intraId: number, otherUserName: string) {
 .user-name {
     color: #FFFF;
     font-size: 25px;
+}
+
+.form-label {
+    font-weight: bold;
+    font-size: 30px;
 }
 </style>

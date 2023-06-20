@@ -1,9 +1,13 @@
 <template>
-	<div v-if="channelType === 'PROTECTED' && !hasEnteredPassword" class="input_bar">
-		<form @submit.prevent="checkPassword">
-			<input type="password" id="checkpassword" class="form-control" v-model="password"
-				placeholder="Enter password" />
-			<button type="submit">Submit</button>
+	<div v-if="channelType === 'PROTECTED' && !hasEnteredPassword">
+		<form @submit.prevent="checkPassword" class="password-form">
+			<div class="form-group">
+				<label for="checkpassword" class="form-label">Enter Password</label>
+				<div class="input-group">
+					<input type="password" id="checkpassword" class="form-control" v-model="password" />
+					<button type="submit" class="btn btn-outline-light">Submit</button>
+				</div>
+			</div>
 		</form>
 	</div>
 	<div v-if="isReady && hasEnteredPassword">
@@ -22,6 +26,8 @@
 							<li v-if="channelType !== 'PRIVATE' && isMemberOwner()"><a class="dropdown-item"
 									@click="setChannelSettingsToTrue()">Channel
 									Settings</a></li>
+							<li v-if="isMemberOwner()"><a class="dropdown-item" @click="inviteToChannelToTrue()">Invite To
+									Channel</a></li>
 							<li><a class="dropdown-item" data-bs-toggle="modal" data-bs-target="#membersList">View All
 									Members</a></li>
 							<li><a class="dropdown-item" href="#" @click="leaveChannel()">Leave Channel</a>
@@ -34,33 +40,69 @@
 				</div>
 			</div>
 
-			<div v-if="channelSettings">
-				<div class="input-bar">
-					<form v-if="channelType === 'PROTECTED'" @submit="changePassword()">
-						<input type="text" id="oldpassword" class="form-control" placeholder="Old Password"
-							v-model="oldPassword" />
-						<input type="password" id="newpassword" placeholder="New Password" v-model="newPassword" />
-						<button type="submit">Change Password</button>
+			<div v-if="channelSettings && !inviteToChannel">
+				<div class="password-container">
+					<form v-if="channelType === 'PROTECTED'" @submit.prevent="changePassword()" class="form-inline">
+						<label for="oldpassword" class="form-label">Change Password</label>
+						<div class="input-group">
+							<input type="password" id="oldpassword" class="form-control" placeholder="Old Password"
+								v-model="oldPassword" />
+							<input type="password" id="newpassword" class="form-control" placeholder="New Password"
+								v-model="newPassword" minlength="4" />
+							<button type="submit" class="btn btn-outline-light">Change Password</button>
+						</div>
 					</form>
 
-					<form v-if="channelType === 'PROTECTED'" @submit="removePassword()">
-						<input type="password" id="removepassword" class="form-control" placeholder="Password"
-							v-model="password" />
-						<button type="submit">Remove Password</button>
+					<form v-if="channelType === 'PROTECTED'" @submit.prevent="removePassword()" class="form-inline">
+						<label for="removepassword" class="form-label">Remove Password</label>
+						<div class="input-group">
+							<input type="password" id="removepassword" class="form-control" placeholder="Password"
+								v-model="password" />
+							<button type="submit" class="btn btn-outline-light">Remove Password</button>
+						</div>
 					</form>
 
-					<form v-else-if="channelType === 'PUBLIC'" @submit="setPassword()">
-						<input type="password" id="setpassword" class="form-control" placeholder="Password"
-							v-model="password" />
-						<button type="submit">Set Password</button>
+					<form v-else-if="channelType === 'PUBLIC'" @submit.prevent="setPassword()" class="form-inline">
+						<label for="setpassword" class="form-label">Set Password</label>
+						<div class="input-group">
+							<input type="password" id="setpassword" class="form-control" placeholder="Password"
+								v-model="password" minlength="4" />
+							<button type="submit" class="btn btn-outline-light">Set Password</button>
+						</div>
 					</form>
+				</div>
 
-					<button type="button" @click="setChannelSettingsToFalse()">Back to channel</button>
+				<div class="password-button-container">
+					<button type="button" class="btn btn-outline-light btn-back-to-channel"
+						@click="setChannelSettingsToFalse()">Back to channel</button>
 				</div>
 			</div>
 
+			<div v-if="inviteToChannel" class="user-list-container">
+				<label for="searchuser" class="form-label">Search User</label>
+				<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
+				<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
+					<div class="user-list-item d-inline-flex align-items-center">
+						<button type="button" class="btn btn-outline-light" @click="toggleUserSelection(user)">
+							{{ user.selected ? 'Cancel' : 'Select' }}
+						</button>
+						<img :src="avatarPrefix + user.avatar" class="avatar-pic-mini" alt="avatar">
+						<span class="user-name align-text-bottom">{{ user.name }}</span>
+					</div>
+					<div class="no-result" v-if="input && !filteredList().length">
+						<p>No results found!</p>
+					</div>
+				</div>
+				<button type="button" class="btn btn-outline-light mt-3" @click="addUsersToChannel">Add Users to
+					Channel</button>
 
-			<div v-if="!channelSettings" class="ch-body" id="messageBody">
+				<div class="password-button-container">
+					<button type="button" class="btn btn-outline-light btn-back-to-channel"
+						@click="inviteToChannelTofalse">Back to channel</button>
+				</div>
+			</div>
+
+			<div v-if="!channelSettings && !inviteToChannel" class="ch-body" id="messageBody">
 				<div class="msg-container" v-for="msg in allMessages" :key="msg.text">
 					<div class="single-msg d-flex flex-column">
 						<div class="msg-userinfo d-inline-flex">
@@ -78,7 +120,7 @@
 				</div>
 			</div>
 
-			<div v-if="!channelSettings" class="ch-input">
+			<div v-if="!channelSettings && !inviteToChannel" class="ch-input">
 				<form @submit.prevent="sendMessage">
 					<div class="input-group mb-3">
 						<input type="text" id="message" class="form-control" placeholder="type in messages here"
@@ -167,7 +209,7 @@ import { ref, defineProps, onMounted, onBeforeMount, computed, onUnmounted } fro
 import $ from "jquery";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
-import type { Member, Message, Punishment } from "../types/ChatType";
+import type { Member, Message, Punishment, UserFromList } from "../types/ChatType";
 import storeUser from "@/store";
 import router from "@/router";
 import { Socket, io } from "socket.io-client"
@@ -190,20 +232,23 @@ const emit = defineEmits<{
 }>();
 
 const activeChannel = ref('');
+const allMembers = ref<Member[]>([]);
+const allUsers = ref<UserFromList[]>([]);
 const allMessages = ref<Message[]>([]);
+const activeMembers = ref<Member[]>([]);
+const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 const channelSettings = ref<boolean>(false);
 const channelType = ref('');
+const inviteToChannel = ref(false);
+const input = ref('');
 const member = ref<Member>();
 const messageText = ref('');
 const oldPassword = ref('');
 const newPassword = ref('');
 const hasEnteredPassword = ref<boolean>(true);
 const password = ref('');
-const allMembers = ref<Member[]>([]);
-const activeMembers = ref<Member[]>([]);
 const userIntraId = ref<number>(storeUser.state.user.intraId);
 const userRole = ref();
-const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 let socket: Socket;
 
 onBeforeMount(async () => {
@@ -230,6 +275,7 @@ onMounted(async () => {
 			await loadAllMembers();
 			await getChannelType();
 			await loadAllMessages();
+			await getAllUsers();
 			if (channelType.value === 'PROTECTED') {
 				hasEnteredPassword.value = false;
 			}
@@ -342,7 +388,6 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-	console.log('leaving chat');
 	socket.removeAllListeners();
 	if (member.value) {
 		leaveChannel();
@@ -364,10 +409,23 @@ function isMemberOwner() {
 
 function setChannelSettingsToTrue() {
 	channelSettings.value = true;
+	inviteToChannelTofalse();
 }
 
 function setChannelSettingsToFalse() {
 	channelSettings.value = false;
+}
+
+function inviteToChannelToTrue() {
+	inviteToChannel.value = true;
+}
+
+function inviteToChannelTofalse() {
+	inviteToChannel.value = false;
+}
+
+function toggleUserSelection(user: UserFromList) {
+	user.selected = !user.selected;
 }
 
 async function isMuted() {
@@ -405,6 +463,76 @@ async function isBanned(channelName: string) {
 		});
 	}
 }
+
+function cleanup() {
+	input.value = '';
+	allUsers.value.forEach((user: UserFromList) => {
+		user.selected = false;
+	})
+	inviteToChannelTofalse();
+}
+
+async function addUsersToChannel() {
+	const selectedUsers = allUsers.value.filter(user => user.selected);
+	if (selectedUsers.length === 0) {
+		toast.add({
+			severity: "info",
+			summary: "Info",
+			detail: "No user selected",
+			life: 3000,
+		});
+		return cleanup();
+	}
+	const intraIds = selectedUsers.map(user => user.intraId);
+
+	try {
+		intraIds.forEach(async (intraId: number) => {
+			const data = {
+				channelName: activeChannel.value,
+				otherIntraId: intraId,
+			};
+			await axiosInstance.post('addAnotherUserToChannel', data);
+			await loadAllMembers();
+		});
+	} catch (error: any) {
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
+		});
+		return cleanup();
+	}
+	return cleanup();
+}
+
+function filteredList() {
+	return allUsers.value.filter((user) =>
+		user.name.toLowerCase().includes(input.value.toLowerCase()) &&
+		!allMembers.value.some((member) => member.intraId === user.intraId)
+	);
+}
+
+async function getAllUsers(): Promise<void> {
+	await axios
+		.get(`http://${HOST}:3001/user/usersexceptself`, {
+			withCredentials: true,
+		})
+		.then(async (response) => {
+			const users = response.data;
+			allUsers.value = users.map(user => {
+				return {
+					intraId: user.intraId,
+					name: user.name,
+					avatar: user.avatar,
+					selected: false,
+				};
+			});
+		})
+		.catch((error: any) => {
+			console.log(error?.response?.data?.reason);
+		});
+};
 
 async function getChannelType() {
 	try {
@@ -444,17 +572,19 @@ async function checkPassword() {
 			});
 		}
 	} catch (error: any) {
+		const message: string = error.message;
 		password.value = '';
 		toast.add({
 			severity: "error",
 			summary: "Error",
-			detail: errorMessage(ErrorType.GENERAL),
+			detail: message || errorMessage(ErrorType.GENERAL),
 			life: 3000,
 		});
 	}
 }
 
 async function changePassword() {
+
 	const data = {
 		channelName: activeChannel.value,
 		oldPassword: oldPassword.value,
@@ -462,8 +592,7 @@ async function changePassword() {
 	}
 	try {
 		await axiosInstance.patch('changePassword', data);
-		emit("isActionSuccess", true);
-		setChannelSettingsToFalse();
+		location.reload();
 	} catch (error: any) {
 		toast.add({
 			severity: "error",
@@ -471,7 +600,6 @@ async function changePassword() {
 			detail: errorMessage(ErrorType.CHANGE_PASSWORD_FAILED),
 			life: 3000,
 		});
-		emit("isActionSuccess", false);
 	}
 	oldPassword.value = '';
 	newPassword.value = '';
@@ -484,8 +612,7 @@ async function setPassword() {
 	};
 	try {
 		await axiosInstance.patch('setPassword', data);
-		emit("isActionSuccess", true);
-		setChannelSettingsToFalse();
+		location.reload();
 	} catch (error: any) {
 		toast.add({
 			severity: "error",
@@ -493,7 +620,6 @@ async function setPassword() {
 			detail: errorMessage(ErrorType.SET_PASSWORD_FAILED),
 			life: 3000,
 		});
-		emit("isActionSuccess", false);
 	}
 	password.value = '';
 }
@@ -505,8 +631,7 @@ async function removePassword() {
 	};
 	try {
 		await axiosInstance.patch('deletePassword', data);
-		emit("isActionSuccess", true);
-		setChannelSettingsToFalse();
+		location.reload();
 	} catch (error: any) {
 		toast.add({
 			severity: "error",
@@ -514,7 +639,6 @@ async function removePassword() {
 			detail: errorMessage(ErrorType.REMOVE_PASSWORD_FAILED),
 			life: 3000,
 		});
-		emit("isActionSuccess", false);
 	}
 	password.value = '';
 }
@@ -794,23 +918,47 @@ h3 {
 	color: black;
 }
 
-.input-bar {
+.form-label {
+	font-weight: bold;
+	font-size: 30px;
+}
+
+.input-group {
 	display: flex;
-	align-items: center;
-	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+.password-button-container {
+	margin-top: 20px;
+}
+
+.btn-back-to-channel {
+	margin-right: 20px;
+}
+
+.search-bar {
+	width: 100%;
+	/* margin-left: 30px; */
+}
+
+.user-list-item {
+	width: 100%;
+	margin: 5px auto;
+}
+
+.avatar-pic-mini {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	object-fit: cover;
+	margin-left: 30px;
+	margin-right: 20px;
 	margin-top: 10px;
 }
 
-.input-bar input[type="text"],
-.input-bar input[type="password"] {
-	flex-grow: 1;
-	margin-right: 10px;
-	padding: 5px;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-}
-
-.input-bar button {
-	padding: 5px 10px;
+.user-name {
+	color: #FFFF;
+	font-size: 25px;
 }
 </style>

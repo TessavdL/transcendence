@@ -1,4 +1,4 @@
-import { Controller, Get, Res, UseGuards } from '@nestjs/common';
+import { All, Controller, Get, NotFoundException, Res, UseGuards } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -31,5 +31,10 @@ export class AuthController {
 	@Get('logout')
 	logout(@GetUser() user: User, @Res({ passthrough: true }) res: Response) {
 		return this.authService.logout(user, res);
+	}
+
+	@All('*')
+	handleWildcard() {
+	  throw new NotFoundException('Endpoint not found');
 	}
 }

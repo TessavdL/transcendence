@@ -40,6 +40,10 @@ export class GameService {
 		let player2: { clientId: string, intraId: number, joined: boolean };
 		const players: Players = this.gameSharedService.playerData.get(roomName);
 		if (players && players.player1.intraId === intraId) {
+			if (!(players.player1.clientId === '' || players.player1.clientId === clientId)) {
+				console.log(players.player1.clientId, clientId);
+				return (null);
+			}
 			player1 = {
 				clientId: clientId,
 				intraId: intraId,
@@ -50,6 +54,10 @@ export class GameService {
 			playerSet = { player1, player2 };
 		}
 		else if (players && players.player2.intraId === intraId) {
+			if (!(players.player2.clientId === '' || players.player2.clientId === clientId)) {
+				console.log(players.player1.clientId, clientId);
+				return (null);
+			}
 			player2 = {
 				clientId: clientId,
 				intraId: intraId,
@@ -132,7 +140,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player2Score >= 3) {
 				gameStatus.gameEnded = true;
-				this.endGame(gameStatus, roomName);
+				this.endGame(gameStatus.player1Score, gameStatus.player2Score, roomName);
 			}
 			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
@@ -149,7 +157,7 @@ export class GameService {
 			gameStatus.gameStarted = false;
 			if (gameStatus.player1Score >= 3) {
 				gameStatus.gameEnded = true;
-				this.endGame(gameStatus, roomName);
+				this.endGame(gameStatus.player1Score, gameStatus.player2Score, roomName);
 			}
 			// return (gameStatus); // suggestion to add to make sure when game starts the ball direction is still valid
 		}
@@ -179,12 +187,16 @@ export class GameService {
 		return (gameStatus);
 	}
 
-	async endGame(gameStatus: Game, roomName: string): Promise<void> {
+	async endGame(player1Score: number, player2Score: number, roomName: string): Promise<void> {
 		try {
 			const players: Players = this.gameSharedService.playerData.get(roomName);
+			if (!players) {
+				return;
+			}
+			this.gameSharedService.playerData.delete(roomName);
 			let winner: boolean;
 
-			if (gameStatus.player1Score === 3) {
+			if (player1Score === 3) {
 				winner = true;
 			} else {
 				winner = false;
@@ -197,11 +209,11 @@ export class GameService {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player1.intraId,
-						winnerScore: gameStatus.player1Score,
+						winnerScore: player1Score,
 						winnerName: player1.name,
 						winnerAvatar: player1.avatar,
 						loserIntraId: player2.intraId,
-						loserScore: gameStatus.player2Score,
+						loserScore: player2Score,
 						loserName: player2.name,
 						loserAvatar: player2.avatar,
 					}
@@ -211,11 +223,11 @@ export class GameService {
 				await this.prisma.matchHistory.create({
 					data: {
 						winnerIntraId: player2.intraId,
-						winnerScore: gameStatus.player2Score,
+						winnerScore: player2Score,
 						winnerName: player2.name,
 						winnerAvatar: player2.avatar,
 						loserIntraId: player1.intraId,
-						loserScore: gameStatus.player1Score,
+						loserScore: player1Score,
 						loserName: player1.name,
 						loserAvatar: player1.avatar,
 					}
@@ -229,16 +241,8 @@ export class GameService {
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
-		await this.update_winner(winner.intraId, newWinnerElo);
 		await this.update_loser(loser.intraId, newLoserElo);
-	}
-
-	async update_win_loss_elo_based_on_intraId(winnerIntraId: number, loserIntraId: number): Promise<void> {
-		const winner: User = await this.userService.getUserBasedOnIntraId(winnerIntraId);
-		const loser: User = await this.userService.getUserBasedOnIntraId(loserIntraId);
-		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
-		await this.update_winner(winnerIntraId, newWinnerElo);
-		await this.update_loser(loserIntraId, newLoserElo);
+		await this.update_winner(winner.intraId, newWinnerElo);
 	}
 
 	private calculate_new_elo(winnerElo: number, loserElo: number): { newWinnerElo: number, newLoserElo: number } {

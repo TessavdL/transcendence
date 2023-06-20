@@ -4,12 +4,12 @@
             <div class="container-fluid">
                 <!-- Logo -->
                 <a class="navbar-brand me-auto" href="#">
-                    <img src="../assets/logo_lang.png" alt="The Big Pong Theory" class="logo">
+                    <img src="../assets/logo_lang.png" alt="The Big Pong Theory" class="logo" @click="redirectHome">
                 </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
-                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <!-- navbar items -->
@@ -26,18 +26,24 @@
                         </li>
 
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <img :src="storeUser.state.user.avatar" alt="Avatar" class="avatar d-inline-block align-text-center">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <img :src="storeUser.state.user.avatar" alt="Avatar"
+                                    class="avatar d-inline-block align-text-center">
                                 {{ storeUser.state.user.username }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
-                                <li><RouterLink class="nav-link" 
-                                    :to="{name: 'ProfileCurrent'}">
-                                    View Profile</RouterLink></li>
-                                <li><RouterLink class="nav-link" 
-                                    :to="{name: 'ProfileEdit'}">
-                                    Edit Profile</RouterLink></li>
-                                <li><RouterLink class="nav-link" to="/logout">Log Out</RouterLink></li>
+                                <li>
+                                    <RouterLink class="nav-link" :to="{ name: 'ProfileCurrent' }">
+                                        View Profile</RouterLink>
+                                </li>
+                                <li>
+                                    <RouterLink class="nav-link" :to="{ name: 'ProfileEdit' }">
+                                        Edit Profile</RouterLink>
+                                </li>
+                                <li>
+                                    <RouterLink class="nav-link" to="/logout">Log Out</RouterLink>
+                                </li>
                             </ul>
                         </li>
                     </ul>
@@ -50,6 +56,15 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import storeUser from "@/store";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+function redirectHome() {
+    router.push({
+        name: 'Home',
+    });
+}
 
 </script>
 
@@ -63,6 +78,7 @@ import storeUser from "@/store";
 .navbar {
     font-size: 20px;
 }
+
 .avatar {
     object-fit: cover;
     width: 35px;
@@ -72,6 +88,4 @@ import storeUser from "@/store";
 
 li {
     margin: 0px 5px 0px 0px;
-}
-
-</style>
+}</style>
