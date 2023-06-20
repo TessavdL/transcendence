@@ -707,6 +707,7 @@ async function sendMessage() {
 	const mute: Punishment = await isMuted();
 	if (mute.status === true) {
 		sendErrorMessage(mute);
+		return ;
 	}
 	else {
 		if (!(messageText.value.length > 0)) {
