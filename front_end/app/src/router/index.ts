@@ -6,7 +6,6 @@ import TwoFactorAuthEnableView from '@/views/TwoFactorAuthEnableView.vue';
 import TwoFactorAuthVarifyView from '@/views/TwoFactorAuthVarifyView.vue';
 import GameView from "@/views/GameView.vue";
 import ChatView from "@/views/ChatView.vue";
-import ChatView2 from "@/views/ChatView2.vue";
 import ProfileCurrentView from "@/views/ProfileCurrentView.vue";
 import ProfileOtherView from "@/views/ProfileOtherView.vue";
 import ProfileEditView from "@/views/ProfileEditView.vue";
@@ -20,7 +19,6 @@ import ChatBoxChannel from "@/components/ChatBoxChannel.vue";
 import LogoutView from "@/views/LogoutView.vue";
 import UsersView from "@/views/UsersView.vue";
 import MatchmakingView from "@/views/MatchmakingView.vue";
-import ChatMatchmakingView from "@/views/ChatMatchmakingView.vue";
 
 const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
@@ -106,19 +104,9 @@ const router = createRouter({
 			],
 		},
 		{
-			path: '/chat2',
-			name: 'Chat2',
-			component: ChatView2
-		},
-		{
 			path: '/matchmaking',
 			name: 'Matchmaking',
 			component: MatchmakingView
-		},
-		{
-			path: '/chatMatchmaking/:gameid',
-			name: 'chatMatchmaking',
-			component: ChatMatchmakingView
 		},
 	]
 })
