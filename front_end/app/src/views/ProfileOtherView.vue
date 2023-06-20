@@ -67,7 +67,7 @@ async function getUserProfile() {
 			userProfile.value.friendStatus = response.data.friendStatus;
 		})
 		.catch(() => {
-			console.log("cannot get users profile infomation");
+			return ;
 		});
 };
 
@@ -86,8 +86,7 @@ async function getUserMatchInfo() {
 			}
 		})
 		.catch((error) => {
-			console.log("cannot get users match infomation");
-			console.log(error);
+			return ;
 		});
 };
 

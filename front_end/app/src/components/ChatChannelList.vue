@@ -56,8 +56,13 @@ async function getMyChannels(): Promise<void> {
 			});
 		})
 		.catch((error: any) => {
-			console.log(error?.response?.data?.reason);
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
 		});
+	});
 };
 
 async function getAllChannels(): Promise<void> {
@@ -80,8 +85,13 @@ async function getAllChannels(): Promise<void> {
 			});
 		})
 		.catch((error: any) => {
-			console.log(error?.response?.data?.reason);
+			toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
 		});
+	});
 };
 
 function filteredList() {
