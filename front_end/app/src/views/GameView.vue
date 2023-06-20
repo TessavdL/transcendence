@@ -68,9 +68,11 @@
 					<h2>Game Over</h2>
 					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
 				</div>
+				<div v-else-if="playerInvalid" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+					<h2>Game Over</h2>
+				</div>
 			</div>
 		</div>
-
 	</div>
 </template>
 
@@ -80,10 +82,13 @@ import type { Game, Players } from '../types/GameType';
 import { computed, ref } from 'vue';
 import storeUser from '@/store';
 import { HOST } from '@/constants/constants';
-import { data } from 'jquery';
+import { useToast } from 'primevue/usetoast';
+import { useRouter } from 'vue-router';
 
 export default {
 	data() {
+		const toast = useToast();
+		const router = useRouter();
 		return {
 			game: ref<Game>,
 			player: '',
@@ -91,11 +96,20 @@ export default {
 			gameOver: false,
 			isColorMode: false,
 			playerDisconnect: false,
+			toast,
+			router,
+			raf: -1,
+			playerInvalid: false,
 		};
 	},
 	setup() {
 		const socket = io(`http://${HOST}:3001/pong-game`, { withCredentials: true });
 		const game = ref<Game>();
+
+		socket.on('hasConnected', () => {
+			socket.emit('setup');
+		})
+
 		socket.on('gameData', (gameObject: Game) => {
 			game.value = gameObject;
 		});
@@ -106,6 +120,7 @@ export default {
 		isPlayerOne() {
 			return this.player === 'playerone';
 		},
+
 		isGameOver() {
 			if (this.playerDisconnect || this.game.player1Score === 3 || this.game.player2Score === 3) {
 				this.gameOver = true;
@@ -113,12 +128,11 @@ export default {
 				return true;
 			}
 			return false;
-
 		}
 	},
 
 	mounted() {
-		this.socket.on('connected', () => {
+		this.socket.on('readyToJoin', () => {
 			if (typeof this.$route.params.gameid === 'string') {
 				this.roomName = this.$route.params.gameid;
 			}
@@ -126,6 +140,7 @@ export default {
 		});
 
 		this.socket.on('playerisSet', async (players: Players) => {
+			console.log('in player is set');
 			if (storeUser.state.user.intraId === players.player1.intraId) {
 				this.player = 'playerone';
 			}
@@ -136,16 +151,19 @@ export default {
 
 		this.socket.on('gameStarted', () => {
 			this.game.gameStarted = true;
-			requestAnimationFrame(this.update);
+			this.raf = requestAnimationFrame(this.update);
 		});
+
 		this.socket.on('gameEnded', () => {
 			this.game.gameEnded = true;
 			this.gameOver = true;
 			this.playerDisconnect = true;
 		});
+		
 		this.socket.on('disconnectPlayer', () => {
 			this.socket.disconnect();
 		});
+
 		this.socket.on('updategameStatus', (gameStatus: Game) => {
 			this.game.ballPosition = gameStatus.ballPosition;
 			this.game.ballVelocity = gameStatus.ballVelocity;
@@ -172,10 +190,35 @@ export default {
 				this.movePaddle(position);
 		});
 
+		this.socket.on('unauthorized', (error: any) => {
+			const errorMessage = error.message || 'Error';
+			this.toast.add({
+				severity: "error",
+				summary: "Error",
+				detail: `${errorMessage}`,
+				life: 3000,
+			});
+			this.gameOver = true;
+		});
+
+		this.socket.on('error', (error: any) => {
+			const errorMessage = error.message || 'Error';
+			this.toast.add({
+				severity: "error",
+				summary: "Error",
+				detail: `${errorMessage}`,
+				life: 3000,
+			});
+			this.gameOver = true;
+			this.playerInvalid = true;
+		});
+
 		window.addEventListener('keydown', this.handleEvent);
 	},
 
 	beforeUnmount() {
+		console.log('in before unmount')
+		window.cancelAnimationFrame(this.raf);
 		window.removeEventListener('keydown', this.handleEvent);
 		if (this.gameOver === false) {
 			const data = {
@@ -221,10 +264,11 @@ export default {
 				this.socket.emit('startGame', this.roomName);
 			}
 		},
+
 		toggleColorMode() {
 			this.isColorMode = !this.isColorMode;
-
 		},
+
 		movePaddle(position: number) {
 			this.game.player1Position += position;
 		},

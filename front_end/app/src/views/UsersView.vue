@@ -18,7 +18,7 @@
                             </h3>
                         </li>
                         <li class="nav-item">
-                            <h3 class="nav-link" @click="handleFilter('friendStatus')">
+                            <h3 class="nav-link" @click="handleFilter('friendStatusFriend')">
                                 <i class="bi bi-person-heart fs-4" style="font-size: 2rem; color: #ffffff;"></i>
                                 Friends
                             </h3>
@@ -30,7 +30,7 @@
                             </h3>
                         </li>
                         <li class="nav-item">
-                            <h3 class="nav-link" @click="handleFilter('friendStatus')">
+                            <h3 class="nav-link" @click="handleFilter('friendStatusPending')">
                                 <i class="bi bi-person-add fs-4" style="font-size: 2rem; color: #ffffff;"></i>
                                 Pending
                             </h3>
@@ -92,7 +92,14 @@ const handleFilter = async (cat: String) => {
             );
         });;
     }
-    else if (cat === 'friendStatus') {
+    else if (cat === 'friendStatusFriend') {
+        filteredUsers.value = filteredUsers.value.filter((user) => {
+            return (
+                user.friendStatus === "FRIENDS"
+            );
+        });;
+    }
+    else if (cat === 'friendStatusPending') {
         filteredUsers.value = filteredUsers.value.filter((user) => {
             return (
                 user.friendStatus === "PENDING"

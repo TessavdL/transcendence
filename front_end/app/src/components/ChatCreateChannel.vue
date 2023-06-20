@@ -29,7 +29,8 @@
 			</div>
 			<div v-if="channelType === 'PRIVATE'">
 				<div class="user-list-container">
-					<input class="search-bar form-control" type="text" v-model="input" placeholder="Search User" />
+					<label for="searchuser" class="form-label">Search User</label>
+					<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
 					<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
 						<div class="user-list-item d-inline-flex align-items-center">
 							<button type="button" class="btn btn-outline-light" @click="toggleUserSelection(user)">
@@ -161,7 +162,7 @@ async function getAllUsers(): Promise<void> {
 		})
 		.then(async (response) => {
 			const users = response.data;
-			allUsers.value = users.map(user => {
+			allUsers.value = users.map((user: any) => {
 				return {
 					intraId: user.intraId,
 					name: user.name,
@@ -194,7 +195,12 @@ async function addSelectedUsers() {
 			await axiosInstance.post('chat/addAnotherUserToChannel', data);
 		});
 	} catch (error: any) {
-		console.log(error?.response?.data?.reason || 'an error has occured');
+		toast.add({
+			severity: "error",
+			summary: "Error",
+			detail: errorMessage(ErrorType.GENERAL),
+			life: 3000,
+		});
 	}
 }
 

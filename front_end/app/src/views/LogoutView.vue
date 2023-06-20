@@ -43,8 +43,7 @@ async function logOut() {
 			storeUser.dispatch("logout");
 			isVisible.value = false;
 			socket.emit("exitUserSocketRoom");
-			// socket.disconnect();
-			socket.emit('logout');
+			socket.disconnect();
 			redirectToHome();
 		})
 		.catch(() => {

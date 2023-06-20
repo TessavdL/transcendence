@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, UnauthorizedException, UseGuards, Res } from '@nestjs/common';
+import { Body, Controller, Get, Patch, UnauthorizedException, UseGuards, Res, All, NotFoundException } from '@nestjs/common';
 import { TwofaService } from './twofa.service';
 import { JwtAuthGuard } from '../guards';
 import { GetUser } from 'src/decorators/get-user.decorator';
@@ -63,5 +63,10 @@ export class TwofaController {
 
 		await this.authService.setBearerTokenForTwofa(user, res);
 		return true;
+	}
+
+	@All('*')
+	handleWildcard() {
+		throw new NotFoundException('Endpoint not found');
 	}
 }
