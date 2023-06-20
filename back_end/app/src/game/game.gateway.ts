@@ -149,7 +149,10 @@ export class GameGateway
 		gameStatus: Game,
 		roomName: string,
 		player: string,
-	}) {
+		}) {
+		if (!object.gameStatus || !object.roomName || !object.player) {
+			return ;
+		}
 		client.to(object.roomName).emit('gameEnded');
 		if (object.player === 'playerone') {
 			object.gameStatus.player2Score = 3;

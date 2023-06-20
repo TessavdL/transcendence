@@ -5,8 +5,8 @@
 				<ProfileSideBar :userProfile="userProfile" />
 
 				<div class="profile-buttons">
-					<ButtonsFriend :friendStatus="userProfile.friendStatus" :intraId="props.intraId" />
-					<ButtonsBlock :blockedState="userProfile.blockedState" :intraId="props.intraId" />
+					<ButtonsFriend v-if="isInfoGot" :friendStatus="userProfile.friendStatus" :intraId="props.intraId" />
+					<ButtonsBlock v-if="isInfoGot" :blockedState="userProfile.blockedState" :intraId="props.intraId" />
 				</div>
 
 			</div>
@@ -40,14 +40,17 @@ const userProfile = ref({
 	activityStatus: "ONLINE",
 	blockedState: false,
 	friendStatus: "NOT_FRIENDS",
-	win: "00",
-	loss: "00",
-	ladderLevel: "00",
+	win: 0,
+	loss: 0,
+	ladderLevel: 0,
 });
+
+const isInfoGot = ref(false);
 
 onMounted(async () => {
 	await getUserProfile();
 	await getUserMatchInfo();
+	isInfoGot.value = true;
 });
 
 async function getUserProfile() {
