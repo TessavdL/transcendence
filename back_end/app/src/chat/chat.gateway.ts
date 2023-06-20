@@ -235,12 +235,12 @@ export class ChatGateway
 		const intraId: number = this.chatSharedService.clientToIntraId.get(client.id);
 		const user: User = await this.authService.findUserById(intraId);
 		const gameId: string = this.generateString(8);
-		const player1: { clientId: string; intraId: number, joined: boolean } = {
+		const player1: { clientId: string, intraId: number, joined: boolean } = {
 			clientId: '',
 			intraId: intraId,
 			joined: false,
 		};
-		const player2: { clientId: string; intraId: number, joined: boolean } = {
+		const player2: { clientId: string, intraId: number, joined: boolean } = {
 			clientId: '',
 			intraId: data.otherIntraId,
 			joined: false,
