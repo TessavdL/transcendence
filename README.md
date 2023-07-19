@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html><div class="welcome">
   <h1>Hi there, welcome to <i>Pong</i> 👋</h1>
-  <subtitle><i>Pong</i> (also know as transcendence in the 42 curriculum) is a web application for the classic arcade game <i>Pong</i>.<br>
+  <subtitle><i>Pong</i> (also known as transcendence in the 42 curriculum) is a web application for the classic arcade game <i>Pong</i>.<br>
 <i>Pong</i> is implemented as a <code>Docker</code> container. 
 The <code>Docker</code> container acts as a server that runs the <i>Pong</i> web application.
 By hosting the game within the container, multiple users can access the web page and play the game simultaneously on the same server.<br>
@@ -15,7 +15,7 @@ The <code>NestJS</code> backend handles HTTP endpoints, WebSocket Gateways, and 
   <h2>User</h2>
   Users can find information on other users on the user page. They can see each other's username, avatar and activity status.
   The activity status can be online, in a game or offline.
-  If someone wants more information on a user they can clikc their profile and it will also display their match history and ranking.
+  If someone wants more information on a user they can click their profile and it will also display their match history and ranking.
   Users can send friend requests, accept friend requests and block other users.
   This is also the place where users can find the match history and leaderboard.
 </div>
@@ -68,7 +68,7 @@ The <code>NestJS</code> backend handles HTTP endpoints, WebSocket Gateways, and 
   </div>
   <h4>Rules</h4>
   <p>Player1 starts left and player2 starts right. Players can move their paddles up and down.
-  If the ball hits the padde it's reflected back to the other player. The goal is to get the ball behind the other player to score a point.
+  If the ball hits the paddle it's reflected back to the other player. The goal is to get the ball behind the other player to score a point.
   The first person who scores three points wins the game. After the game has ended a game over screen is visible and the match history is updated.</p>
   <h4>Controls</h4>
     <p>Move paddle up and down with <code>arrow key up</code> and <code>arrow key down</code> respectively</p>
@@ -129,7 +129,7 @@ JWT_SECRET=""
 HOST="localhost"
 ```
 <p>For <code>DATABASE_URL</code> replace <code>POSTGRES_PASSWORD</code> with the value of <code>POSTGRES_PASSWORD</code> and <code>POSTGRES_DB</code> with the value of <code>POSTGRES_DB</code> from the previous <code>./.env</code> file.</p>
-<p>For <code>TWO_FACTOR_AUTHENTICATION_APP_NAME</code> change the value beween the <code>"</code> to your liking.</p>
+<p>For <code>TWO_FACTOR_AUTHENTICATION_APP_NAME</code> change the value between the <code>"</code> to your liking.</p>
 <p>For <code>JWT_SECRET</code> set the value to a random string that is 32 characters long.</p>
 <p>For <code>HOST</code> set the value to localhost if you're not planning on using the app with more than one person. Otherwise, set the value to your local ipaddress.
 We used this to find our local ipaddress on MacOS/Linux: <code>ip addr show eth0 | awk '/inet / {split($2, a, "/"); print a[1]}'</code>.</p>
