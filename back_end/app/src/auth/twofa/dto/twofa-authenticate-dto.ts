@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsNumberString, Length } from "class-validator";
+import { IsNotEmpty, IsString, IsNumberString, Length } from "class-validator";
 
 export class TwofaAuthenticateDto {
     @IsNotEmpty()
@@ -7,6 +7,6 @@ export class TwofaAuthenticateDto {
     code: string;
 
     @IsNotEmpty()
-    @IsNumber()
-    intraId: number;
+    @IsString()
+    id: string;
 }

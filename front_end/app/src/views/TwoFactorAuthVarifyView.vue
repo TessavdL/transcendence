@@ -27,7 +27,7 @@ import { HOST } from "@/constants/constants";
 const router = useRouter();
 const toast = useToast();
 
-const intraId = ref<number>(-1);
+const id = ref<string>("");
 const twoFactorEnabled = ref<boolean>(false);
 const verificationCode = ref<string>("");
 
@@ -38,7 +38,7 @@ const axiosInstance = axios.create({
 
 onMounted(async () => {
 	twoFactorEnabled.value = storeUser.state.user.twoFactorEnabled;
-	intraId.value = storeUser.state.user.intraId;
+	id.value = storeUser.state.user.id;
 });
 
 async function verify2fa() {
@@ -70,7 +70,7 @@ async function verify2fa() {
 async function authenticate2fa() {
 	const requestBody = {
 		code: verificationCode.value,
-		intraId: intraId.value,
+		id: id.value,
 	};
 	try {
 		const response = await axiosInstance.patch('/twofa/authenticate', requestBody);
@@ -87,7 +87,7 @@ async function authenticate2fa() {
 		toast.add({
 			severity: "error",
 			summary: "error",
-			detail: "Failed to varify the digital code",
+			detail: "Failed to verify the digital code",
 			life: 3000,
 		});
 	}

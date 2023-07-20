@@ -5,6 +5,7 @@ import { AllOtherUsers, Prisma, User } from '@prisma/client';
 import { Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Socket } from 'socket.io';
+import * as argon2 from "argon2";
 
 @Injectable()
 export class AuthService {
@@ -15,20 +16,33 @@ export class AuthService {
 	) { }
 	private readonly logger: Logger = new Logger('AuthService');
 
-	async validateUser(profile: any): Promise<User> | null {
-		const user: User = await this.findUserById(profile.intraid);
-		if (!user) {
-			return this.createUser(profile);
-		}
+	// async validateUser(profile: any): Promise<User> | null {
+	// 	const user: User = await this.findUserById(profile.id);
+	// 	if (!user) {
+	// 		return this.createUser(profile);
+	// 	}
 
-		return user;
-	}
+	// 	return user;
+	// }
 
-	async findUserById(id: number): Promise<User> | null {
+	async findUserById(id: string): Promise<User> | null {
 		try {
 			const user: User = await this.prisma.user.findUnique({
 				where: {
-					intraId: id,
+					id: id,
+				},
+			});
+			return user;
+		} catch (error) {
+			throw new InternalServerErrorException(error.message);
+		}
+	}
+
+	async findUserByName(name: string): Promise<User> | null {
+		try {
+			const user: User = await this.prisma.user.findUnique({
+				where: {
+					name: name,
 				},
 			});
 			return user;
@@ -66,7 +80,7 @@ export class AuthService {
 	}
 
 	async signToken(user: User): Promise<{ access_token: string }> {
-		const payload = { name: user.intraName, sub: user.intraId };
+		const payload = { name: user.name, sub: user.id };
 
 		return {
 			access_token: await this.jwtService.signAsync(payload, {
@@ -102,7 +116,7 @@ export class AuthService {
 		return token;
 	}
 
-	async verifyToken(token: string): Promise<{ name: string; sub: number }> {
+	async verifyToken(token: string): Promise<{ name: string; sub: string }> {
 		try {
 			const secret: string = this.configService.get('JWT_SECRET');
 
@@ -112,7 +126,7 @@ export class AuthService {
 			});
 
 			const name: string = payload.name;
-			const sub: number = payload.sub;
+			const sub: string = payload.sub;
 			return { name, sub };
 		} catch (error) {
 			throw new UnauthorizedException('Token is invalid');
@@ -126,15 +140,15 @@ export class AuthService {
 		});
 	}
 
-	async createUser(profile: any): Promise<User> | null {
+	async createUser(name: string, password: string): Promise<User> | null {
 		const default_avatar: string = this.pick_random_default_avatar();
+		const hashed_password: string = await this.createHashedPassword(password);
 
 		try {
 			const user: User = await this.prisma.user.create({
 				data: {
-					name: profile.username,
-					intraId: profile.intraid,
-					intraName: profile.username,
+					name: name,
+					password: hashed_password,
 					avatar: default_avatar,
 					allOtherUsers: {
 						create: [],
@@ -144,8 +158,8 @@ export class AuthService {
 					},
 				},
 			});
-			this.updateUsersOfNewUser(user.intraId);
-			this.updateSelfWithOtherUsers(user.intraId);
+			this.updateUsersOfNewUser(user.id);
+			this.updateSelfWithOtherUsers(user.id);
 
 			return (user);
 		} catch (error) {
@@ -176,26 +190,28 @@ export class AuthService {
 		return avatar_array[random_number];
 	}
 
-	async updateSelfWithOtherUsers(intraId: number) {
+	async updateSelfWithOtherUsers(id: string) {
 		try {
 			const userlist: User[] = await this.prisma.user.findMany({
 				where: {
 					NOT: {
-						intraId: intraId,
+						id: id,
 					}
 				}
 			});
 
-			const intraIds: number[] = userlist.map(userlist => userlist.intraId);
+			const id: string[] = userlist.map(userlist => userlist.id);
 			let relationArray: AllOtherUsers[] = [];
 
-			intraIds.forEach((value: number) => {
+			id.forEach((value: string) => {
 				const otherUser = this.newRelationObject(value);
 				relationArray.push(otherUser);
 			});
 
 			await this.prisma.user.update({
-				where: { intraId: intraId },
+				where: {
+					id: id,
+				},
 				data: {
 					allOtherUsers: {
 						create: relationArray,
@@ -215,24 +231,24 @@ export class AuthService {
 		}
 	}
 
-	async updateUsersOfNewUser(intraId: number) {
+	async updateUsersOfNewUser(id: string) {
 		try {
 			const usersToUpdate = await this.prisma.user.findMany({
 				where: {
-					intraId: {
-						not: intraId,
+					id: {
+						not: id,
 					},
 				},
 				include: {
 					allOtherUsers: true,
 				},
 			});
-			const newRelationObject = this.newRelationObject(intraId)
+			const newRelationObject = this.newRelationObject(id)
 
 			const promises = usersToUpdate.map(async (user) => {
 				await this.prisma.user.update({
 					where: {
-						intraId: user.intraId,
+						id: user.id,
 					},
 					data: {
 						allOtherUsers: {
@@ -253,9 +269,27 @@ export class AuthService {
 		}
 	}
 
-	newRelationObject(intraId: number): any {
+	newRelationObject(id: string): any {
 		return {
-			otherIntraId: intraId,
+			otherUserId: id,
 		};
+	}
+
+	private async createHashedPassword(password: string): Promise<string> {
+		try {
+			const hashed_password = await argon2.hash(password);
+			return hashed_password
+		} catch (error: any) {
+			throw new InternalServerErrorException('Argon2 failed to hash password');
+		}
+	}
+
+	async checkPassword(user: User, password: string): Promise<boolean> {
+		const hashed_password: string = user.password;
+		try {
+			return argon2.verify(hashed_password, password);
+		} catch (error: any) {
+			throw new InternalServerErrorException('Argon2 failed to verify password');
+		}
 	}
 }

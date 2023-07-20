@@ -14,7 +14,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					wonGame: true,
@@ -36,7 +36,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					won3Game: true,
@@ -58,7 +58,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					won3GameRow: true,
@@ -80,7 +80,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					loseGame: true,
@@ -102,7 +102,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					lose3GameRow: true,
@@ -124,7 +124,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					playedGame: true,
@@ -145,7 +145,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					changedName: true,
@@ -166,7 +166,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					uploadedAvatar: true,
@@ -188,7 +188,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					added2FA: true,
@@ -210,7 +210,7 @@ export class AchievementsService {
 		try {
 			await this.prisma.achievements.update({
 				where: {
-					intraId: user.intraId, 
+					id: user.id, 
 				},
 				data: {
 					rank1: true,

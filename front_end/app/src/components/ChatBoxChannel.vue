@@ -81,7 +81,7 @@
 			<div v-if="inviteToChannel" class="user-list-container">
 				<label for="searchuser" class="form-label">Search User</label>
 				<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
-				<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
+				<div class="users-list" v-for="user in filteredList()" :key="user.id">
 					<div class="user-list-item d-inline-flex align-items-center">
 						<button type="button" class="btn btn-outline-light" @click="toggleUserSelection(user)">
 							{{ user.selected ? 'Cancel' : 'Select' }}
@@ -140,8 +140,8 @@
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<div v-for="member in allMembers" :key="member.intraId">
-							<div v-if="userIntraId == member.intraId">
+						<div v-for="member in allMembers" :key="member.id">
+							<div v-if="userId == member.id">
 								<p v-if="member.role == 'OWNER'">{{ member.name }}(Owner)</p>
 								<p v-if="member.role == 'ADMIN'">{{ member.name }}(Admin)</p>
 								<p v-if="member.role == 'MEMBER'">{{ member.name }}(Member)</p>
@@ -162,34 +162,34 @@
 								<ul class="dropdown-menu" aria-labelledby="user-dropdown"
 									v-if="userRole == 'OWNER' || userRole == 'ADMIN'">
 									<li><a class="dropdown-item" href="#">
-											<RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
+											<RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.id }">
 												View Profile</RouterLink>
 										</a></li>
 									<li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-											@click="banUser(member.intraId)">Ban</a></li>
+											@click="banUser(member.id)">Ban</a></li>
 									<li v-if="member.role != 'OWNER'"><a class="dropdown-item" href="#"
-											@click="muteUser(member.intraId)">Mute</a></li>
-									<li v-if="member.role !== 'OWNER' && isActive(member.intraId)"><a class="dropdown-item"
-											href="#" @click="kickUser(member.intraId)">Kick</a></li>
+											@click="muteUser(member.id)">Mute</a></li>
+									<li v-if="member.role !== 'OWNER' && isActive(member.id)"><a class="dropdown-item"
+											href="#" @click="kickUser(member.id)">Kick</a></li>
 									<li v-if="member.role == 'MEMBER'"><a class="dropdown-item" href="#"
-											@click="promoteMemberToAdmin(member.intraId)">Promote
+											@click="promoteMemberToAdmin(member.id)">Promote
 											member
 											to
 											admin</a></li>
 									<li v-if="member.role == 'ADMIN'"><a class="dropdown-item" href="#"
-											@click="demoteAdmintoMember(member.intraId)">Demote
+											@click="demoteAdmintoMember(member.id)">Demote
 											admin to
 											member</a></li>
-									<li v-if="isActive(member.intraId)"><a class="dropdown-item" href="#"
-											@click="inviteToGame(member.intraId)">Invite
+									<li v-if="isActive(member.id)"><a class="dropdown-item" href="#"
+											@click="inviteToGame(member.id)">Invite
 											to Game</a></li>
 								</ul>
 								<ul class="dropdown-menu" aria-labelledby="user-dropdown" v-else>
-									<li v-if="isActive(member.intraId)"><a class="dropdown-item" href="#"
-											@click="inviteToGame(member.intraId)">Invite
+									<li v-if="isActive(member.id)"><a class="dropdown-item" href="#"
+											@click="inviteToGame(member.id)">Invite
 											to Game</a></li>
 									<li><a class="dropdown-item" href="#">
-											<RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.intraId }">
+											<RouterLink class="nav-link" :to="{ path: '/profile/other/' + member.id }">
 												View Profile</RouterLink>
 										</a></li>
 								</ul>
@@ -247,7 +247,7 @@ const oldPassword = ref('');
 const newPassword = ref('');
 const hasEnteredPassword = ref<boolean>(true);
 const password = ref('');
-const userIntraId = ref<number>(storeUser.state.user.intraId);
+const userId = ref<string>(storeUser.state.user.id);
 const userRole = ref();
 let socket: Socket;
 
@@ -280,7 +280,7 @@ onMounted(async () => {
 				hasEnteredPassword.value = false;
 			}
 			const memberdata: Member = {
-				intraId: data.user.intraId,
+				id: data.user.id,
 				name: data.user.name,
 				avatar: data.user.avatar,
 				role: data.role,
@@ -302,7 +302,7 @@ onMounted(async () => {
 
 	socket.on('userJoined', (data) => {
 		const memberdata: Member = {
-			intraId: data.user.intraId,
+			id: data.user.id,
 			name: data.user.name,
 			avatar: data.user.avatar,
 			role: data.role,
@@ -312,12 +312,12 @@ onMounted(async () => {
 
 	socket.on('userLeft', (data) => {
 		const memberToRemove: Member = {
-			intraId: data.user.intraId,
+			id: data.user.id,
 			name: data.user.name,
 			avatar: data.user.avatar,
 			role: data.role,
 		};
-		const index = activeMembers.value.findIndex((activeMember) => activeMember.intraId === memberToRemove.intraId);
+		const index = activeMembers.value.findIndex((activeMember) => activeMember.id === memberToRemove.id);
 		if (index !== -1) {
 			activeMembers.value.splice(index, 1);
 		}
@@ -327,7 +327,7 @@ onMounted(async () => {
 		const members = data.map((item: any) => {
 			const { user, role } = item;
 			return {
-				intraId: user.intraId,
+				id: user.id,
 				name: user.name,
 				avatar: user.avatar,
 				role: role
@@ -371,7 +371,7 @@ onMounted(async () => {
 		}
 		const invite: Message = {
 			channelName: '',
-			intraId: data.user.intraId,
+			id: data.user.id,
 			name: data.user.name,
 			avatar: data.user.avatar,
 			text: gameid,
@@ -393,8 +393,8 @@ const isReady = computed(() => {
 	return !!member.value;
 });
 
-function isActive(intraId: number) {
-	return activeMembers.value.some((member) => member.intraId === intraId);
+function isActive(id: string) {
+	return activeMembers.value.some((member) => member.id === id);
 }
 
 function isMemberOwner() {
@@ -477,13 +477,13 @@ async function addUsersToChannel() {
 		});
 		return cleanup();
 	}
-	const intraIds = selectedUsers.map(user => user.intraId);
+	const userIds = selectedUsers.map(user => user.id);
 
 	try {
-		intraIds.forEach(async (intraId: number) => {
+		userIds.forEach(async (id: string) => {
 			const data = {
 				channelName: activeChannel.value,
-				otherIntraId: intraId,
+				otherUserId: id,
 			};
 			await axiosInstance.post('addAnotherUserToChannel', data);
 			await loadAllMembers();
@@ -503,7 +503,7 @@ async function addUsersToChannel() {
 function filteredList() {
 	return allUsers.value.filter((user) =>
 		user.name.toLowerCase().includes(input.value.toLowerCase()) &&
-		!allMembers.value.some((member) => member.intraId === user.intraId)
+		!allMembers.value.some((member) => member.id === user.id)
 	);
 }
 
@@ -516,7 +516,7 @@ async function getAllUsers(): Promise<void> {
 			const users = response.data;
 			allUsers.value = users.map(user => {
 				return {
-					intraId: user.intraId,
+					id: user.id,
 					name: user.name,
 					avatar: user.avatar,
 					selected: false,
@@ -691,7 +691,7 @@ function sendErrorMessage(mute: Punishment) {
 	}
 	const message: Message = {
 		channelName: '',
-		intraId: 0,
+		id: '',
 		name: '',
 		avatar: './src/assets/prohibited.jpeg',
 		text: text,
@@ -750,7 +750,7 @@ async function loadAllMembers(): Promise<void> {
 		const response = await axiosInstance.get('getMembersInChannel', { params: data });
 		allMembers.value = response.data;
 		for (let member of allMembers.value) {
-			if (member.intraId == userIntraId.value) {
+			if (member.id == userId.value) {
 				userRole.value = member.role
 			}
 		}
@@ -765,23 +765,23 @@ async function loadAllMembers(): Promise<void> {
 	}
 };
 
-async function kickUser(otherIntraId: number): Promise<void> {
-	socket.emit('kickUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
+async function kickUser(otherUserId: string): Promise<void> {
+	socket.emit('kickUser', { otherUserId: otherUserId, channelName: activeChannel.value });
 }
 
-async function banUser(otherIntraId: number): Promise<void> {
-	socket.emit('banUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
+async function banUser(otherUserId: string): Promise<void> {
+	socket.emit('banUser', { otherUserId: otherUserId, channelName: activeChannel.value });
 }
 
-async function muteUser(otherIntraId: number): Promise<void> {
-	socket.emit('muteUser', { otherIntraId: otherIntraId, channelName: activeChannel.value });
+async function muteUser(otherUserId: string): Promise<void> {
+	socket.emit('muteUser', { otherUserId: otherUserId, channelName: activeChannel.value });
 }
 
-async function promoteMemberToAdmin(otherIntraId: number): Promise<void> {
+async function promoteMemberToAdmin(otherUserId: string): Promise<void> {
 	try {
 		const data = {
 			channelName: activeChannel.value,
-			otherIntraId: otherIntraId,
+			otherUserId: otherUserId,
 		}
 		await axiosInstance.patch('promoteMemberToAdmin', data);
 		await loadAllMembers();
@@ -795,11 +795,11 @@ async function promoteMemberToAdmin(otherIntraId: number): Promise<void> {
 	}
 }
 
-async function demoteAdmintoMember(otherIntraId: number): Promise<void> {
+async function demoteAdmintoMember(otherUserId: string): Promise<void> {
 	try {
 		const data = {
 			channelName: activeChannel.value,
-			otherIntraId: otherIntraId,
+			otherUserId: otherUserId,
 		}
 		await axiosInstance.patch('demoteAdminToMember', data);
 		await loadAllMembers();
@@ -813,10 +813,10 @@ async function demoteAdmintoMember(otherIntraId: number): Promise<void> {
 	}
 }
 
-function inviteToGame(otherIntraId: number): void {
+function inviteToGame(otherUserId: string): void {
 	const data = {
 		channelName: activeChannel.value,
-		otherIntraId: otherIntraId,
+		otherUserId: otherUserId,
 	}
 	socket.emit('gameChallenge', data);
 }

@@ -14,12 +14,12 @@ export interface Game {
 export interface Players {
 	player1: {
 		clientId: string;
-		intraId: number;
+		id: string;
 		joined: boolean;
 	};
 	player2: {
 		clientId: string;
-		intraId: number;
+		id: string;
 		joined: boolean;
 	};
 }

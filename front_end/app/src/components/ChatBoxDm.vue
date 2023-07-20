@@ -18,7 +18,7 @@
 							<li><a class="dropdown-item" href="#" @click="leaveChannel()">Leave Channel</a>
 							</li>
 							<li><a class="dropdown-item" href="#">
-									<RouterLink class="nav-link" :to="{ path: '/profile/other/' + otherUserIntraId }">
+									<RouterLink class="nav-link" :to="{ path: '/profile/other/' + otherUserId }">
 										View Profile</RouterLink>
 								</a>
 							</li>
@@ -91,7 +91,7 @@ const messageText = ref<string>('');
 const allConnectedClients = ref<number[]>([]);
 const otherUserAvatar = ref<string>('');
 const otherUserName = ref<string>('');
-const otherUserIntraId = ref<number>();
+const otherUserId = ref<number>();
 const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 
 onBeforeMount(async () => {
@@ -119,7 +119,7 @@ onMounted(async () => {
 			await getDMChannel();
 			await loadAllMessages();
 			const memberdata: Member = {
-				intraId: data.user.intraId,
+				id: data.user.id,
 				name: data.user.name,
 				avatar: data.user.avatar,
 				role: data.role,
@@ -140,19 +140,19 @@ onMounted(async () => {
 	})
 
 	socket.on('userJoined', (data) => {
-		allConnectedClients.value.push(data.user.intraId);
+		allConnectedClients.value.push(data.user.id);
 	})
 
 	socket.on('userLeft', (data) => {
-		const index = allConnectedClients.value.findIndex((intraId) => intraId === data.user.intraId);
+		const index = allConnectedClients.value.findIndex((id) => id === data.user.id);
 		if (index !== -1) {
 			allConnectedClients.value.splice(index, 1);
 		}
 	})
 
 	socket.on('otherJoinedMembers', (data) => {
-		const allIntraIds: number[] = data.map((item: any) => item.intraId);
-		allConnectedClients.value = allIntraIds;
+		const allUserIds: string[] = data.map((item: any) => item.id);
+		allConnectedClients.value = allUserIds;
 	});
 
 	socket.on('message', (data) => {
@@ -190,7 +190,7 @@ onMounted(async () => {
 		}
 		const invite: Message = {
 			channelName: '',
-			intraId: data.user.intraId,
+			id: data.user.id,
 			name: data.user.name,
 			avatar: data.user.avatar,
 			text: gameid,
@@ -218,7 +218,7 @@ async function getDMChannel(): Promise<void> {
 
 		if (thisDm) {
 			const otherUser = thisDm.otherUser;
-			otherUserIntraId.value = otherUser.intraId;
+			otherUserId.value = otheruser.id;
 			otherUserName.value = otherUser.name;
 			otherUserAvatar.value = otherUser.avatar;
 		} else {
@@ -290,7 +290,7 @@ async function sendMessage() {
 }
 
 const isActive = computed(() => {
-	return allConnectedClients.value.some((intraId: number) => intraId === otherUserIntraId.value);
+	return allConnectedClients.value.some((id: string) => id === otherUserId.value);
 });
 
 const isReady = computed(() => {
@@ -300,7 +300,7 @@ const isReady = computed(() => {
 function inviteToGame(): void {
 	const data = {
 		channelName: activeChannel.value,
-		otherIntraId: otherUserIntraId,
+		otherUserId: otherUserId,
 	}
 	socket.emit('gameChallenge', data);
 }

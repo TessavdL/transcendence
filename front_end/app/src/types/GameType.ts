@@ -13,9 +13,9 @@ export interface Game {
 
 export interface Players {
 	player1: {
-		intraId: number,
+		id: string,
 	};
 	player2: {
-		intraId: number,
+		id: string,
 	};
 }

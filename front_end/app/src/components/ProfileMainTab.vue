@@ -25,7 +25,7 @@
 			</div>
 
 			<div class="tab-pane fade" id="achievement-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
-				<AchievementBadges :currentIntraId="props.currentIntraId" />
+				<AchievementBadges :currentId="props.currentId" />
 			</div>
 
 			<div class="tab-pane fade" id="ladder-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
@@ -46,7 +46,7 @@ import LadderTable from './LadderTable.vue';
 import { HOST } from "@/constants/constants";
 
 const props = defineProps({
-	currentIntraId: Number,
+	currentId: String,
 	currentName: String,
 	currentAvatar: String as PropType<string | null>
 });
@@ -61,7 +61,7 @@ const axiosInstance = axios.create({
 });
 
 onMounted(async () => {
-	if (props.currentIntraId === storeUser.state.user.intraId) {
+	if (props.currentId === storeUser.state.user.id) {
 		await getMatchHistoryCurrent();
 	} else {
 		await getMatchHistoryOther();
@@ -85,7 +85,7 @@ async function getMatchHistoryCurrent() {
 
 async function getMatchHistoryOther() {
 	try {
-		const response = await axiosInstance.get('/user/get_match_history_by_intraid?intraId=' + props.currentIntraId);
+		const response = await axiosInstance.get('/user/get_match_history_by_id?id=' + props.currentId);
 		matches.value = response.data;
 	} catch (error) {
 		toast.add({

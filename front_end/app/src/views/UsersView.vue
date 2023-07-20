@@ -41,7 +41,7 @@
 
 				<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 users-main">
 					<div class="card-group">
-						<div v-for="user in filteredUsers" :key="user.intraId">
+						<div v-for="user in filteredUsers" :key="user.id">
 							<UserInfoCard :user="user" />
 						</div>
 					</div>
@@ -77,7 +77,7 @@ async function getUsers() {
 			users.value = response.data;
 		})
 		.catch(() => {
-			return ;
+			console.log("failed get users infomation");
 		});
 };
 

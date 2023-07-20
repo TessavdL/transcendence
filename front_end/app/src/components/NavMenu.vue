@@ -30,7 +30,7 @@
                                 aria-expanded="false">
                                 <img :src="storeUser.state.user.avatar" alt="Avatar"
                                     class="avatar d-inline-block align-text-center">
-                                {{ storeUser.state.user.username }}
+                                {{ storeUser.state.user.name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
                                 <li>

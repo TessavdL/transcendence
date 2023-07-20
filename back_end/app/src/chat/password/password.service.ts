@@ -83,7 +83,7 @@ export class PasswordService {
 	}
 
 	private async checkCredentials(user: User, channelName: string, password: string) {
-		if (await this.roleService.getRole(user.intraId, channelName) !== 'OWNER') {
+		if (await this.roleService.getRole(user.id, channelName) !== 'OWNER') {
 			throw new BadRequestException('User is not the owner of the channel and does not have the rights to change password');
 		}
 		if (await this.channelService.getChannelType(channelName) === 'DM') {

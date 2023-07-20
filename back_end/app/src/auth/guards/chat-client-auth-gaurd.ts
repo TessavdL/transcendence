@@ -9,8 +9,8 @@ export class ChatClientGuard implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         const client = context.switchToWs().getClient<Socket>();
-        const intraId = this.sharedService.clientToIntraId.get(client.id);
-        if (intraId !== undefined) {
+        const id: string = this.sharedService.clientIdToUserId.get(client.id);
+        if (id !== undefined) {
             return true;
         }
         return false;

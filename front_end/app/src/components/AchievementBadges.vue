@@ -16,7 +16,7 @@ import { BadgesType, badgesPicture, badgesTitle, badgesdescription } from '@/typ
 import { HOST } from "@/constants/constants";
 
 const props = defineProps({
-	currentIntraId: Number,
+	currentId: String,
 });
 
 const toast = useToast();
@@ -47,7 +47,7 @@ onMounted(async () => {
 
 async function getAchievement() {
 	try {
-		const response = await axiosInstance.get('/user/achievements/' + props.currentIntraId);
+		const response = await axiosInstance.get('/user/achievements/' + props.currentId);
 		badges.value = parseAchievements(response.data.achievements);
 	} catch (error) {
 		toast.add({

@@ -51,7 +51,7 @@ export class TwofaController {
 
 	@Patch('authenticate')
 	async verify_code_from_login(@Body() twofaAuthenticateDto: TwofaAuthenticateDto, @Res({ passthrough: true }) res: Response): Promise<boolean> {
-		const user: User = await this.authService.findUserById(twofaAuthenticateDto.intraId);
+		const user: User = await this.authService.findUserById(twofaAuthenticateDto.id);
 		if (!user) {
 			throw new UnauthorizedException('Two factor authentication failed: Unknown user');
 		}

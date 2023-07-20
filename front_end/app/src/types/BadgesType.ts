@@ -84,7 +84,7 @@ export function badgesdescription(badgeType: BadgesType | undefined): string {
         case BadgesType.PLAYED_GAME:
             return "has played the Pong game";
         case BadgesType.CHANGE_NAME:
-            return "has changed username";
+            return "has changed name";
         case BadgesType.UPLOAD_AVATAR:
             return "has uploaded an avatar";                              
         case BadgesType.ADDED_2FA:

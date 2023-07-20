@@ -140,7 +140,7 @@ export default {
 		});
 
 		this.socket.on('playerisSet', async (players: Players) => {
-			if (storeUser.state.user.intraId === players.player1.intraId) {
+			if (storeUser.state.user.id === players.player1.id) {
 				this.player = 'playerone';
 			}
 			else {

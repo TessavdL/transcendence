@@ -17,18 +17,23 @@
 			</div>
 		</div>
 		<div v-else>
-			<LogInButton />
+			<LoginButton v-if="!showSignupView" @switchToSignup="showSignupView = true" />
+      		<SignupButton v-else @switchToLogin="showSignupView = false" />
 		</div>
 	</div>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import storeUser from "@/store";
-import LogInButton from "@/components/LogInButton.vue";
+import LoginButton from "@/components/LogInButton.vue";
+import SignupButton from "@/components/SignupButton.vue";
 
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const showSignupView = ref(false);
+
 const playGame = () => {
 	router.push({
 		name: "Matchmaking",

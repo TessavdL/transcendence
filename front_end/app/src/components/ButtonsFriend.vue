@@ -31,7 +31,7 @@ import { HOST } from "@/constants/constants"
 
 const props = defineProps({
     friendStatus: String,
-    intraId: String
+    id: String
 });
 
 const confirm = useConfirm();
@@ -65,7 +65,7 @@ const acceptFriend = () => {
 }
 
 const friendRequestBody = {
-    otherIntraId: Number(props.intraId)
+    otherUserId: String(props.id)
 }
 
 async function sendFriendRequest(type: string) {

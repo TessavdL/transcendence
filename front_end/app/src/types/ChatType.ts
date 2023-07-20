@@ -13,7 +13,7 @@ export interface Channel {
 
 export interface Message {
 	channelName: string;
-	intraId: number;
+	id: string;
 	name: string;
 	avatar: string;
 	text: string;
@@ -21,7 +21,7 @@ export interface Message {
 }
 
 export interface User {
-	intraId: number;
+	id: string;
 	name: string;
 	avatar: string;
 }
@@ -29,12 +29,12 @@ export interface User {
 export interface DMChannel {
 	channelName: string;
 	otherUserAvatar: string;
-	otherUserIntraId: number;
+	otherUserId: string;
 	otherUserName: string;
 }
 
 export interface Member {
-	intraId: number;
+	id: string;
 	name: string;
 	avatar: string;
 	role: "OWNER" | "ADMIN" | "MEMBER";
@@ -46,7 +46,7 @@ export interface Punishment {
 }
 
 export interface UserFromList {
-	intraId: number;
+	id: string;
 	name: string;
 	avatar: string;
 	selected: boolean;

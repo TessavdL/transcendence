@@ -18,40 +18,40 @@ export class MessageService {
 		});
 
 		const otherUsers: {
-			intraId: number;
+			id: string;
 			blockedStatus: boolean;
-			otherIntraId: number;
+			otherUserId: string;
 		}[] = await this.prisma.allOtherUsers.findMany({
 			where: {
-				intraId: user.intraId,
+				id: user.id,
 			},
 			select: {
-				intraId: true,
+				id: true,
 				blockedStatus: true,
-				otherIntraId: true,
+				otherUserId: true,
 			},
 		});
 
 		const filteredMessages: Message[] = [];
 
 		messages.forEach((message: (UserMessage & { user: User; })) => {
-			const messageIntraId: number = message.user.intraId;
+			const messageUserId: string = message.user.id;
 
 			const goodUser: {
-				intraId: number;
+				id: string;
 				blockedStatus: boolean;
-				otherIntraId: number;
+				otherUserId: string;
 			} = otherUsers.find((user: {
-				intraId: number;
+				id: string;
 				blockedStatus: boolean;
-				otherIntraId: number;
+				otherUserId: string;
 			}) => {
-				return (user.intraId === user.intraId && user.otherIntraId === messageIntraId && user.blockedStatus === false);
+				return (user.id === user.id && user.otherUserId === messageUserId && user.blockedStatus === false);
 			});
-			if (messageIntraId === user.intraId || goodUser) {
+			if (messageUserId === user.id || goodUser) {
 				filteredMessages.push({
 					channelName: channelName,
-					intraId: message.intraId,
+					id: message.id,
 					name: message.user.name,
 					avatar: message.user.avatar,
 					text: message.text,
@@ -63,16 +63,16 @@ export class MessageService {
 		return filteredMessages;
 	}
 
-	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
+	async handleChannelMessage(id: string, channelName: string, text: string): Promise<Message> {
 		const user: User = await this.prisma.user.findUnique({
 			where: {
-				intraId: intraId,
+				id: id,
 			}
 		});
 
 		const message: Message = {
 			channelName: channelName,
-			intraId: user.intraId,
+			id: user.id,
 			name: user.name,
 			avatar: user.avatar,
 			text: text,
@@ -80,14 +80,14 @@ export class MessageService {
 		};
 
 		try {
-			this.addMessageToChannel(user.intraId, channelName, text);
+			this.addMessageToChannel(user.id, channelName, text);
 			return message;
 		} catch (error: any) {
 			throw new Error(error.message);
 		}
 	}
 
-	async addMessageToChannel(intraId: number, channelName: string, text: string): Promise<void> {
+	async addMessageToChannel(id: string, channelName: string, text: string): Promise<void> {
 		const channel: Channel = await this.prisma.channel.findUnique({
 			where: {
 				channelName: channelName,
@@ -102,10 +102,14 @@ export class MessageService {
 				data: {
 					text: text,
 					channel: {
-						connect: { channelName },
+						connect: {
+							channelName,
+						},
 					},
 					user: {
-						connect: { intraId },
+						connect: {
+							id
+						},
 					}
 				},
 			});

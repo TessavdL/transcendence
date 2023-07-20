@@ -8,11 +8,11 @@ import { BANMINUTES, BANSECONDS, MUTEMINUTES, MUTESECONDS } from '../constants';
 export class PunishmentService {
 	constructor(private readonly prisma: PrismaService) { }
 
-	async canBePunished(intraId: number, otherIntraId: number, channelName: string): Promise<boolean> {
+	async canBePunished(id: string, otherUserId: string, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
-				intraId: {
-					in: [intraId, otherIntraId],
+				id: {
+					in: [id, otherUserId],
 				},
 				channelName: channelName,
 			},
@@ -22,8 +22,8 @@ export class PunishmentService {
 			throw new BadRequestException('Could not find user and otheruser');
 		}
 
-		const userRole: Role = memberships.find((member: Membership) => member.intraId === intraId).role;
-		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
+		const userRole: Role = memberships.find((member: Membership) => member.id === id).role;
+		const otherUserRole: Role = memberships.find((member: Membership) => member.id === otherUserId).role;
 
 		return this.hasAuthority(userRole, otherUserRole);
 	}
@@ -38,11 +38,11 @@ export class PunishmentService {
 		return rank[userRole] > rank[otherUserRole];
 	}
 
-	async banUser(intraId: number, channelName: string): Promise<void> {
+	async banUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: { id: id, channelName: channelName },
 				},
 				data: {
 					banStatus: true,
@@ -51,7 +51,7 @@ export class PunishmentService {
 			});
 
 			setTimeout(async () => {
-				await this.unbanUser(intraId, channelName);
+				await this.unbanUser(id, channelName);
 			},
 				60 * BANMINUTES * 1000,
 			);
@@ -60,11 +60,11 @@ export class PunishmentService {
 		}
 	}
 
-	async unbanUser(intraId: number, channelName: string): Promise<void> {
+	async unbanUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: { id: id, channelName: channelName },
 				},
 				data: {
 					banStatus: false,
@@ -76,11 +76,11 @@ export class PunishmentService {
 		}
 	}
 
-	async muteUser(intraId: number, channelName: string): Promise<void> {
+	async muteUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: { id: id, channelName: channelName },
 				},
 				data: {
 					muteStatus: true,
@@ -89,7 +89,7 @@ export class PunishmentService {
 			});
 
 			setTimeout(async () => {
-				await this.unmuteUser(intraId, channelName);
+				await this.unmuteUser(id, channelName);
 			},
 				60 * MUTEMINUTES * 1000,
 			);
@@ -98,11 +98,11 @@ export class PunishmentService {
 		}
 	}
 
-	async unmuteUser(intraId: number, channelName: string): Promise<void> {
+	async unmuteUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: { id: id, channelName: channelName },
 				},
 				data: {
 					muteStatus: false,
@@ -114,11 +114,14 @@ export class PunishmentService {
 		}
 	}
 
-	async isMemberBanned(intraId: number, channelName: string): Promise<Punishment> {
+	async isMemberBanned(id: string, channelName: string): Promise<Punishment> {
 		try {
 			const { banStatus, banTimer }: { banStatus: boolean, banTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						id: id,
+						channelName: channelName,
+					},
 				},
 				select: {
 					banStatus: true,
@@ -146,11 +149,11 @@ export class PunishmentService {
 		}
 	}
 
-	async isMemberMuted(intraId: number, channelName: string): Promise<Punishment> {
+	async isMemberMuted(id: string, channelName: string): Promise<Punishment> {
 		try {
 			const { muteStatus, muteTimer }: { muteStatus: boolean, muteTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: { id: id, channelName: channelName },
 				},
 				select: {
 					muteStatus: true,

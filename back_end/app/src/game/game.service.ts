@@ -34,31 +34,31 @@ export class GameService {
 		return (game);
 	}
 
-	assignPlayers(clientId: string, intraId: number, roomName: string): Players | null {
+	assignPlayers(clientId: string, id: string, roomName: string): Players | null {
 		let playerSet: Players;
-		let player1: { clientId: string, intraId: number, joined: boolean };
-		let player2: { clientId: string, intraId: number, joined: boolean };
+		let player1: { clientId: string, id: string, joined: boolean };
+		let player2: { clientId: string, id: string, joined: boolean };
 		const players: Players = this.gameSharedService.playerData.get(roomName);
-		if (players && players.player1.intraId === intraId) {
+		if (players && players.player1.id === id) {
 			if (!(players.player1.clientId === '' || players.player1.clientId === clientId)) {
 				return (null);
 			}
 			player1 = {
 				clientId: clientId,
-				intraId: intraId,
+				id: id,
 				joined: true,
 			};
 			player2 = players.player2;
 			this.gameSharedService.playerData.set(roomName, { player1, player2 });
 			playerSet = { player1, player2 };
 		}
-		else if (players && players.player2.intraId === intraId) {
+		else if (players && players.player2.id === id) {
 			if (!(players.player2.clientId === '' || players.player2.clientId === clientId)) {
 				return (null);
 			}
 			player2 = {
 				clientId: clientId,
-				intraId: intraId,
+				id: id,
 				joined: true,
 			};
 			player1 = players.player1;
@@ -189,17 +189,17 @@ export class GameService {
 				winner = false;
 			}
 
-			const player1: User = await this.authService.findUserById(players.player1.intraId);
-			const player2: User = await this.authService.findUserById(players.player2.intraId);
+			const player1: User = await this.authService.findUserById(players.player1.id);
+			const player2: User = await this.authService.findUserById(players.player2.id);
 
 			if (winner) {
 				await this.prisma.matchHistory.create({
 					data: {
-						winnerIntraId: player1.intraId,
+						winnerid: player1.id,
 						winnerScore: player1Score,
 						winnerName: player1.name,
 						winnerAvatar: player1.avatar,
-						loserIntraId: player2.intraId,
+						loserid: player2.id,
 						loserScore: player2Score,
 						loserName: player2.name,
 						loserAvatar: player2.avatar,
@@ -209,11 +209,11 @@ export class GameService {
 			} else {
 				await this.prisma.matchHistory.create({
 					data: {
-						winnerIntraId: player2.intraId,
+						winnerid: player2.id,
 						winnerScore: player2Score,
 						winnerName: player2.name,
 						winnerAvatar: player2.avatar,
-						loserIntraId: player1.intraId,
+						loserid: player1.id,
 						loserScore: player1Score,
 						loserName: player1.name,
 						loserAvatar: player1.avatar,
@@ -228,8 +228,8 @@ export class GameService {
 
 	async update_win_loss_elo(winner: User, loser: User): Promise<void> {
 		const { newWinnerElo, newLoserElo }: { newWinnerElo: number, newLoserElo: number } = this.calculate_new_elo(winner.elo, loser.elo);
-		await this.update_loser(loser.intraId, newLoserElo);
-		await this.update_winner(winner.intraId, newWinnerElo);
+		await this.update_loser(loser.id, newLoserElo);
+		await this.update_winner(winner.id, newWinnerElo);
 	}
 
 	private calculate_new_elo(winnerElo: number, loserElo: number): { newWinnerElo: number, newLoserElo: number } {
@@ -243,11 +243,11 @@ export class GameService {
 		}
 	}
 
-	private async update_winner(winnerIntraId: number, newWinnerElo: number): Promise<void> {
+	private async update_winner(winnerid: string, newWinnerElo: number): Promise<void> {
 		try {
 			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
-					intraId: winnerIntraId,
+					id: winnerid,
 				},
 				data: {
 					wins: {
@@ -274,7 +274,7 @@ export class GameService {
 				await this.achievementsService.checkWon3GameRow(user);
 			}
 			const leaderboard: User[] = await this.userService.getLeaderboard();
-			if (leaderboard[0].intraId === user.intraId) {
+			if (leaderboard[0].id === user.id) {
 				await this.achievementsService.checkRank1(user);
 			}
 		} catch (error: any) {
@@ -287,11 +287,11 @@ export class GameService {
 		}
 	}
 
-	private async update_loser(loserIntraId: number, newLoserElo: number): Promise<void> {
+	private async update_loser(loserid: string, newLoserElo: number): Promise<void> {
 		try {
 			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
-					intraId: loserIntraId,
+					id: loserid,
 				},
 				data: {
 					losses: {

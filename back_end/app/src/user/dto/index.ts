@@ -1,3 +1,3 @@
-export * from './other-user-intra.dto';
-export * from './update-username-dto';
+export * from './other-user-id-dto';
+export * from './update-name-dto';
 export * from './upload-avatar-dto'

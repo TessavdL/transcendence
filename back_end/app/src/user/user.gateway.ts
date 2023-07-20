@@ -43,7 +43,7 @@ export class UserGateway
 
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
-			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			const payload: { name: string; sub: string } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
@@ -51,10 +51,10 @@ export class UserGateway
 			client.disconnect();
 		}
 		try {
-			if (this.isActive(client.id, user.intraId) === false) {
-				await this.userService.setActivityStatus(user.intraId, ActivityStatus.ONLINE);
+			if (this.isActive(client.id, user.id) === false) {
+				await this.userService.setActivityStatus(user.id, ActivityStatus.ONLINE);
 			}
-			this.userSharedService.clientToIntraId.set(client.id, user.intraId);
+			this.userSharedService.clientIdToUserId.set(client.id, user.id);
 			this.logger.log(`Client connected: ${client.id}`);
 		} catch (error: any) {
 			this.server.to(client.id).emit('error', error?.message || 'An error occured in user.gateway handleConnection');
@@ -63,11 +63,11 @@ export class UserGateway
 
 	async handleDisconnect(@ConnectedSocket() client: Socket): Promise<void> {
 		try {
-			const intraId: number = this.userSharedService.clientToIntraId.get(client.id);
-			if (this.isActive(client.id, intraId) === false) {
-				await this.userService.setActivityStatus(intraId, ActivityStatus.OFFLINE);
+			const id: string = this.userSharedService.clientIdToUserId.get(client.id);
+			if (this.isActive(client.id, id) === false) {
+				await this.userService.setActivityStatus(id, ActivityStatus.OFFLINE);
 			}
-			this.userSharedService.clientToIntraId.delete(client.id);
+			this.userSharedService.clientIdToUserId.delete(client.id);
 			client.disconnect();
 			this.logger.log(`Client disconnected: ${client.id}`);
 		} catch (error: any) {
@@ -75,9 +75,9 @@ export class UserGateway
 		}
 	}
 
-	private isActive(clientId: string, intraId: number): boolean {
-		this.userSharedService.clientToIntraId.forEach((value: number, clientId: string) => {
-			if (value === intraId && clientId !== clientId) {
+	private isActive(clientId: string, id: string): boolean {
+		this.userSharedService.clientIdToUserId.forEach((value: string, clientId: string) => {
+			if (value === id && clientId !== clientId) {
 				return true;
 			}
 		})

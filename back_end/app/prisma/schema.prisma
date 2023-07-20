@@ -41,20 +41,18 @@ generator client {
 }
 
 model User {
-	id				Int				@id @default(autoincrement())
+	id				String			@id @default(uuid())
 	createdAt		DateTime		@default(now())
 	updatedAt		DateTime		@updatedAt
+	name			String			@unique
 	avatar			String?
 	twofaStatus		Boolean			@default(false)
 	twofaSecret		String			@default("")
-	name			String			@unique
 	wins			Int				@default(0)
 	winStreak		Int				@default(0)
 	losses			Int				@default(0)
 	lossStreak		Int				@default(0)
 	elo				Int				@default(1500)
-	intraId			Int				@unique
-	intraName		String			@unique
 	activityStatus	ActivityStatus  @default(ONLINE)
 	allOtherUsers	AllOtherUsers[]
 	achievements	Achievements?
@@ -64,8 +62,8 @@ model User {
 
 model MatchHistory {
 	id					Int @id @default(autoincrement())
-	winnerIntraId		Int
-	loserIntraId		Int
+	winneruserId		Int
+	loseruserId		Int
 	winnerScore			Int
 	loserScore			Int
 	winnerName			String
@@ -76,18 +74,18 @@ model MatchHistory {
 
 model AllOtherUsers {
 	id				Int				@id @default(autoincrement())
-	intraId			Int
-	otherIntraId	Int
-	user			User			@relation(fields: [intraId], references: [intraId])
+	userId			String
+	otherUserId		Int
+	user			User			@relation(fields: [userId], references: [id])
 	blockedStatus	Boolean			@default(false)
 	friendStatus	FriendStatus	@default(NOT_FRIENDS)
 
-	@@unique([intraId, otherIntraId])
+	@@unique([userId, otherUserId])
 }
 
 model Achievements {
 	id				Int		@id @default(autoincrement())
-	intraId			Int		@unique
+	userId			String	@unique
 	wonGame			Boolean @default(false)
 	won3Game		Boolean @default(false)
 	won3GameRow		Boolean @default(false)
@@ -98,7 +96,7 @@ model Achievements {
 	uploadedAvatar	Boolean @default(false)
 	added2FA		Boolean @default(false)
 	rank1			Boolean @default(false)
-	user			User	@relation(fields: [intraId], references: [intraId])
+	user			User	@relation(fields: [userId], references: [id])
 }
 
 model Channel {
@@ -118,12 +116,12 @@ model Membership {
 	banTimer	DateTime?
 	muteStatus	Boolean		@default(false)
 	muteTimer	DateTime?
-	user		User		@relation("UserMembership", fields: [intraId], references: [intraId])
-	intraId		Int
+	user		User		@relation("UserMembership", fields: [userId], references: [id])
+	userId		String
 	channel		Channel		@relation("ChannelMembership", fields: [channelName], references: [channelName], onDelete: Cascade)
 	channelName	String
 
-	@@unique([intraId, channelName])
+	@@unique([userId, channelName])
 }
 
 model UserMessage {
@@ -131,6 +129,6 @@ model UserMessage {
 	text		String
 	channel		Channel	@relation(fields: [channelName], references: [channelName], onDelete: Cascade)
 	channelName	String
-	user		User	@relation("UserMessage", fields: [intraId], references: [intraId])
-	intraId		Int
+	user		User	@relation("UserMessage", fields: [userId], references: [id])
+	userId		String
 }

@@ -5,14 +5,14 @@
 				<ProfileSideBar :userProfile="userProfile" />
 
 				<div class="profile-buttons">
-					<ButtonsFriend v-if="isInfoGot" :friendStatus="userProfile.friendStatus" :intraId="props.intraId" />
-					<ButtonsBlock v-if="isInfoGot" :blockedState="userProfile.blockedState" :intraId="props.intraId" />
+					<ButtonsFriend v-if="isInfoGot" :friendStatus="userProfile.friendStatus" :id="props.id" />
+					<ButtonsBlock v-if="isInfoGot" :blockedState="userProfile.blockedState" :id="props.id" />
 				</div>
 
 			</div>
 
 			<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 profile-main">
-				<ProfileMainTab :currentIntraId="userProfile.intraId" :currentName="userProfile.username"
+				<ProfileMainTab :currentid="userProfile.id" :currentName="userProfile.name"
 					:currentAvatar="userProfile.avatar" />
 			</div>
 
@@ -30,13 +30,13 @@ import ProfileMainTab from "@/components/ProfileMainTab.vue";
 import { HOST } from "@/constants/constants";
 
 const props = defineProps({
-	intraId: String,
+	id: String,
 });
 
 const userProfile = ref({
-	intraId: Number(props.intraId),
+	id: Number(props.id),
 	avatar: "",
-	username: "",
+	name: "",
 	activityStatus: "ONLINE",
 	blockedState: false,
 	friendStatus: "NOT_FRIENDS",
@@ -55,19 +55,19 @@ onMounted(async () => {
 
 async function getUserProfile() {
 	await axios
-		.get(`http://${HOST}:3001/user/` + props.intraId, {
+		.get(`http://${HOST}:3001/user/` + props.id, {
 			withCredentials: true,
 		})
 		.then(async (response) => {
-			userProfile.value.intraId = response.data.intraId;
+			userProfile.value.id = response.data.id;
 			userProfile.value.avatar = `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar;
-			userProfile.value.username = response.data.username;
+			userProfile.value.name = response.data.name;
 			userProfile.value.activityStatus = response.data.activityStatus;
 			userProfile.value.blockedState = response.data.blockedState;
 			userProfile.value.friendStatus = response.data.friendStatus;
 		})
 		.catch(() => {
-			return ;
+			console.log("cannot get users profile infomation");
 		});
 };
 
@@ -78,7 +78,7 @@ async function getUserMatchInfo() {
 		})
 		.then(async (response) => {
 			for (let i = 0; i < response.data.length; i++) {
-				if (response.data[i].intraId === Number(props.intraId)) {
+				if (response.data[i].id === Number(props.id)) {
 					userProfile.value.win = response.data[i].wins;
 					userProfile.value.loss = response.data[i].losses;
 					userProfile.value.ladderLevel = response.data[i].elo;
@@ -86,7 +86,8 @@ async function getUserMatchInfo() {
 			}
 		})
 		.catch((error) => {
-			return ;
+			console.log("cannot get users match infomation");
+			console.log(error);
 		});
 };
 

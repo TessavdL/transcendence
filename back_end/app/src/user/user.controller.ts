@@ -2,13 +2,12 @@ import { Body, Controller, Get, Post, Req, UseGuards, Param, UseInterceptors, Ba
 import { Achievements, MatchHistory, User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { OtherUserIntraDto } from './dto/other-user-intra.dto';
 import { FriendRequestList, UserElement } from './types';
 import { UserService } from './user.service';
 import { AvatarInterceptor } from './interceptor/avatar.interceptor';
 import { UPLOADS_DIRECTORY } from './utils/constants';
 import { GetUser } from 'src/decorators/get-user.decorator';
-import { UpdateUsernameDto } from './dto/update-username-dto';
+import { OtherUserIdDto, UpdateNameDto } from './dto';
 
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -26,18 +25,18 @@ export class UserController {
 	}
 
 	@Post('block_user')
-	async blockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (await this.userService.blockUser(request.user, otherUserIntraDto.otherIntraId));
+	async blockUser(@Req() request, @Body() otherUserIdDto: OtherUserIdDto) {
+		return (await this.userService.blockUser(request.user, otherUserIdDto.otherUserId));
 	}
 
 	@Post('unblock_user')
-	async unblockUser(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (await this.userService.unblockUser(request.user, otherUserIntraDto.otherIntraId));
+	async unblockUser(@Req() request, @Body() otherUserIdDto: OtherUserIdDto) {
+		return (await this.userService.unblockUser(request.user, otherUserIdDto.otherUserId));
 	}
 
 	@Post('friend_request')
-	async handleFriendRequest(@Req() request, @Body() otherUserIntraDto: OtherUserIntraDto) {
-		return (await this.userService.handleFriendRequest(request.user, otherUserIntraDto.otherIntraId));
+	async handleFriendRequest(@Req() request, @Body() otherUserIdDto: OtherUserIdDto) {
+		return (await this.userService.handleFriendRequest(request.user, otherUserIdDto.otherUserId));
 	}
 
 	@Get('usersexceptself')
@@ -62,13 +61,13 @@ export class UserController {
 
 	@Get('get_match_history')
 	async getMatchHistory(@GetUser() user: User): Promise<MatchHistory[]> {
-		return (await this.userService.getMatchHistory(user.intraId));
+		return (await this.userService.getMatchHistory(user.id));
 	}
 
-	@Get('get_match_history_by_intraid')
-	async getMatchHistoryByIntraId(@Query() query): Promise<MatchHistory[]> {
-		const otherIntraId: number = parseInt(query.intraId);
-		return (await this.userService.getMatchHistory(otherIntraId));
+	@Get('get_match_history_by_id')
+	async getMatchHistoryById(@Query() query): Promise<MatchHistory[]> {
+		const otherUserId: string = query.id;
+		return (await this.userService.getMatchHistory(otherUserId));
 	}
 
 	@Get('get_leaderboard')
@@ -77,25 +76,25 @@ export class UserController {
 	}
 
 	@Get(':id')
-	async getUserElementBasedOnIntraId(@Req() request, @Param() params): Promise<UserElement> {
+	async getUserElementBasedOnId(@Req() request, @Param() params): Promise<UserElement> {
 		if (!params || !params.id) {
 			throw new BadRequestException();
 		}
 		const user: User = request.user;
-		const otherIntraId: number = parseInt(params.id);
-		return (await this.userService.getUserElementBasedOnIntraId(user, otherIntraId));
+		const otherUserId: string = params.id;
+		return (await this.userService.getUserElementBasedOnId(user, otherUserId));
 	}
 
 	@Get('achievements/:id')
 	async getOtherUserAchievements(@Req() request, @Param() params): Promise<(User & { achievements: Achievements })> {
 		const user: User = request.user;
-		const otherIntraId: number = parseInt(params.id);
-		return (await this.userService.getOtherUserAchievements(user, otherIntraId));
+		const otherUserId: string = params.id;
+		return (await this.userService.getOtherUserAchievements(user, otherUserId));
 	}
 
-	@Put('update_username')
-	async updateUsername(@GetUser() user: User, @Body() updateUsernameDto: UpdateUsernameDto) {
-		return (await this.userService.updateUsername(user, updateUsernameDto.username))
+	@Put('update_name')
+	async updateName(@GetUser() user: User, @Body() UpdateNameDto: UpdateNameDto) {
+		return (await this.userService.updateName(user, UpdateNameDto.name))
 	}
 
 	@Post('avatar')
@@ -109,7 +108,7 @@ export class UserController {
 		}
 		const filePath = `${UPLOADS_DIRECTORY}/${file.filename}`;
 
-		await this.userService.updateAvatar(user.intraId, filePath);
+		await this.userService.updateAvatar(user.id, filePath);
 		return (filePath);
 	}
 

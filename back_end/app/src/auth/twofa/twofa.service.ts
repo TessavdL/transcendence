@@ -18,7 +18,7 @@ export class TwofaService {
 		try {
 			const { twofaStatus }: { twofaStatus: boolean } = await this.prisma.user.findUnique({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				select: {
 					twofaStatus: true,
@@ -34,7 +34,7 @@ export class TwofaService {
 		try {
 			const userAndAchievements: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				data: {
 					twofaStatus: status,
@@ -57,7 +57,7 @@ export class TwofaService {
 		try {
 			await this.prisma.user.update({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				data: {
 					twofaSecret: secret,
@@ -80,7 +80,7 @@ export class TwofaService {
 	createQRCodeString(user: User, secret: string): string {
 		try {
 			const appName: string = this.configService.get('TWO_FACTOR_AUTHENTICATION_APP_NAME')
-			return authenticator.keyuri(user.intraName, appName, secret);
+			return authenticator.keyuri(user.name, appName, secret);
 		} catch (error: any) {
 			throw new InternalServerErrorException('Authenticator failed to make key uri')
 		}

@@ -25,7 +25,7 @@ const router = useRouter();
 const toast = useToast();
 const confirm = useConfirm();
 
-const intraId = ref<number>(-1);
+const id = ref<string>("");
 const qrcodeUrl = ref<string>("");
 
 const axiosInstance = axios.create({
@@ -60,7 +60,6 @@ function RedirectToVarify() {
 		},
 	});
 }
-
 
 </script>
 

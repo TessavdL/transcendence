@@ -5,7 +5,7 @@
         </div>
                 
         <div class="user-name">
-            <h3>{{ props.userProfile.username }}</h3>
+            <h3>{{ props.userProfile.name }}</h3>
         </div>
 
         <div class="user-status">

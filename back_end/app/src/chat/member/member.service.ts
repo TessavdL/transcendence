@@ -7,11 +7,14 @@ import { Member } from '../types';
 export class MemberService {
 	constructor(private readonly prisma: PrismaService) { }
 
-	async getMemberWithUser(channelName: string, intraId: number): Promise<(Membership & { user: User; })> {
+	async getMemberWithUser(channelName: string, id: string): Promise<(Membership & { user: User; })> {
 		try {
 			const member: (Membership & { user: User; }) = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName
+					},
 				},
 				include: {
 					user: true,
@@ -42,7 +45,7 @@ export class MemberService {
 	async getMembersInChannel(channelName: string): Promise<Member[]> {
 		const membershipsWithUser: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
 		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User; })) => ({
-			intraId: member.user.intraId,
+			id: member.user.id,
 			name: member.user.name,
 			avatar: member.user.avatar,
 			role: member.role,

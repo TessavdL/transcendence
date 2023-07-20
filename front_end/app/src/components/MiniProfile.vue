@@ -2,7 +2,7 @@
     <div class="match-history">
         <div class="mini-profile">
             <img :src=props.avatar class="avatar-pic-mini" alt="avatar">
-            <p>{{ props.username }}</p>
+            <p>{{ props.name }}</p>
         </div>
     </div>
 </template>
@@ -11,7 +11,7 @@
 import { ref, defineProps } from 'vue';
 
 const props = defineProps({
-    username: String,
+    name: String,
     avatar: String,
 });
 </script>

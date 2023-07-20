@@ -30,7 +30,7 @@
 								<i class="bi bi-plus-lg" style="font-size: 1.5rem; color: #ffffff;"
 									@click="openRoute('/chat/ChatUserList')"></i>
 							</h2>
-							<div class="channel-list" v-for="channel in myDMChannels" :key="channel.otherUserIntraId">
+							<div class="channel-list" v-for="channel in myDMChannels" :key="channel.otherUserId">
 								<span @click="openDm(channel.channelName)">{{ channel.otherUserName }}</span>
 							</div>
 						</li>
@@ -156,7 +156,7 @@ async function getMyDMChannels(): Promise<void> {
 		channels.forEach((channel: any) => {
 			newDMChannels.push({
 				channelName: channel.channel.channelName,
-				otherUserIntraId: channel.otherUser.intraId,
+				otherUserId: channel.otherUser.id,
 				otherUserName: channel.otherUser.name,
 				otherUserAvatar: channel.otherUser.avatar,
 			});

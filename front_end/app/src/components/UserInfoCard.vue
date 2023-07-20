@@ -1,14 +1,14 @@
 <template>
     <div class="card info-card" style="width: 12rem; background-color: #094b5f;">
         <div>
-            <RouterLink :to="{ name: 'ProfileOther', params: { intraId: props.user.intraId } }">
+            <RouterLink :to="{ name: 'ProfileOther', params: { id: props.user.id } }">
                 <img :src="`http://${HOST}:3001/user/get_avatar?avatar=` + props.user.avatar"
                     class="card-img-top avatar-pic" alt="avatar">
             </RouterLink>
         </div>
 
         <div class="card-body">
-            <h3 class="card-title"> {{ props.user.username }}</h3>
+            <h3 class="card-title"> {{ props.user.name }}</h3>
             <div class="user-status">
                 <div v-if="props.user.activityStatus === 'ONLINE'">
                     <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i> Online
@@ -22,10 +22,10 @@
             </div>
 
             <div class="friend-buttons">
-                <ButtonsFriend :friendStatus="props.user.friendStatus" :intraId="String(props.user.intraId)" />
+                <ButtonsFriend :friendStatus="props.user.friendStatus" :id="props.user.id" />
             </div>
             <div class="block-buttons">
-                <ButtonsBlock :blockedState="props.user.blockedState" :intraId="String(props.user.intraId)" />
+                <ButtonsBlock :blockedState="props.user.blockedState" :id="props.user.id)" />
             </div>
 
         </div>

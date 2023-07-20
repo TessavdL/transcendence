@@ -15,7 +15,7 @@ export class UserService {
 		try {
 			const return_user = await this.prisma.user.findUnique({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				include: {
 					achievements: true,
@@ -29,7 +29,7 @@ export class UserService {
 
 	async getUserElements(user: User): Promise<UserElement[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
-		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserWithAllOtherUsers(user.id);
 		const userElements: UserElement[] = await Promise.all(userlist.map(otherUser => this.createUserElement(otherUser, userWithAllOtherUsers)));
 
 		return (userElements);
@@ -40,7 +40,7 @@ export class UserService {
 			const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.prisma.user.findMany({
 				where: {
 					NOT: {
-						intraId: user.intraId,
+						id: user.id,
 					},
 				},
 				include: {
@@ -56,11 +56,11 @@ export class UserService {
 	async createUserElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User & { allOtherUsers: AllOtherUsers[]; }): Promise<UserElement> {
 		const singleElement: UserElement = {
 			avatar: otherUser.avatar,
-			intraId: otherUser.intraId,
-			username: otherUser.name,
+			id: otherUser.id,
+			name: otherUser.name,
 			activityStatus: otherUser.activityStatus,
-			blockedState: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).blockedStatus,
-			friendStatus: user.allOtherUsers.find(x => x.otherIntraId === otherUser.intraId).friendStatus,
+			blockedState: user.allOtherUsers.find(x => x.otherUserId === otherUser.id).blockedStatus,
+			friendStatus: user.allOtherUsers.find(x => x.otherUserId === otherUser.id).friendStatus,
 		}
 
 		return (singleElement);
@@ -68,7 +68,7 @@ export class UserService {
 
 	async getFriendRequests(user: User): Promise<FriendRequestList[]> {
 		const userlist: (User & { allOtherUsers: AllOtherUsers[]; })[] = await this.getUserListExceptSelf(user);
-		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserWithAllOtherUsers(user.id);
 		const friendRequestList: FriendRequestList[] = await Promise.all(userlist.filter(friend => friend.allOtherUsers.find(x => x.friendStatus === 'REQUESTED')).map(otherUser => this.createFriendRequestListElement(otherUser, userWithAllOtherUsers)))
 
 		return (friendRequestList);
@@ -76,21 +76,21 @@ export class UserService {
 
 	async createFriendRequestListElement(otherUser: (User & { allOtherUsers: AllOtherUsers[]; }), user: User & { allOtherUsers: AllOtherUsers[]; }): Promise<FriendRequestList> {
 		const singleElement: FriendRequestList = {
-			intraId: otherUser.intraId,
-			username: otherUser.intraName,
+			id: otherUser.id,
+			name: otherUser.name,
 			avatar: otherUser.avatar,
 		}
 
 		return (singleElement);
 	}
 
-	async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+	async blockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserId: string) {
 		try {
 			await this.prisma.allOtherUsers.update({
 				where: {
-					intraId_otherIntraId: {
-						intraId: user.intraId,
-						otherIntraId: otherUserIntraId,
+					userId_otherUserId: {
+						userId: user.id,
+						otherUserId: otherUserId,
 					}
 				},
 				data: {
@@ -108,13 +108,13 @@ export class UserService {
 		}
 	}
 
-	async unblockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+	async unblockUser(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserId: string) {
 		try {
 			await this.prisma.allOtherUsers.update({
 				where: {
-					intraId_otherIntraId: {
-						intraId: user.intraId,
-						otherIntraId: otherUserIntraId,
+					userId_otherUserId: {
+						userId: user.id,
+						otherUserId: otherUserId,
 					}
 				},
 				data: {
@@ -132,13 +132,13 @@ export class UserService {
 		}
 	}
 
-	async handleFriendRequest(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
-		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherUserIntraId);
+	async handleFriendRequest(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserId: string) {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserWithAllOtherUsers(otherUserId);
 
-		if (otherUser.allOtherUsers.find(x => x.otherIntraId === user.intraId).friendStatus === 'REQUESTED') {
+		if (otherUser.allOtherUsers.find(x => x.otherUserId === user.id).friendStatus === 'REQUESTED') {
 			return (this.befriendBothUsers(user, otherUser));
 		}
-		return (this.setRequestToPending(user, otherUserIntraId));
+		return (this.setRequestToPending(user, otherUserId));
 	}
 
 	async befriendBothUsers(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUser: (User & { allOtherUsers: AllOtherUsers[]; })) {
@@ -147,12 +147,12 @@ export class UserService {
 				where: {
 					OR: [
 						{
-							intraId: user.intraId,
-							otherIntraId: otherUser.intraId,
+							id: user.id,
+							otherUserId: otherUser.id,
 						},
 						{
-							intraId: otherUser.intraId,
-							otherIntraId: user.intraId,
+							id: otherUser.id,
+							otherUserId: user.id,
 						},
 					]
 				},
@@ -171,13 +171,13 @@ export class UserService {
 		}
 	}
 
-	async setRequestToPending(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserIntraId: number) {
+	async setRequestToPending(user: (User & { allOtherUsers: AllOtherUsers[]; }), otherUserId: string) {
 		try {
 			await this.prisma.allOtherUsers.update({
 				where: {
-					intraId_otherIntraId: {
-						intraId: user.intraId,
-						otherIntraId: otherUserIntraId,
+					userId_otherUserId: {
+						id: user.id,
+						otherUserId: otherUserId,
 					},
 				},
 				data: {
@@ -186,9 +186,9 @@ export class UserService {
 			});
 			await this.prisma.allOtherUsers.update({
 				where: {
-					intraId_otherIntraId: {
-						intraId: otherUserIntraId,
-						otherIntraId: user.intraId,
+					userId_otherUserId: {
+						id: otherUserId,
+						otherUserId: user.id,
 					},
 				},
 				data: {
@@ -206,11 +206,11 @@ export class UserService {
 		}
 	}
 
-	async getActivityStatus(intraId: number): Promise<ActivityStatus> {
+	async getActivityStatus(id: string): Promise<ActivityStatus> {
 		try {
 			const user: User = await this.prisma.user.findUnique({
 				where: {
-					intraId: intraId,
+					id: id,
 				},
 			});
 			return user.activityStatus;
@@ -224,11 +224,11 @@ export class UserService {
 		}
 	}
 
-	async setActivityStatus(intraId: number, status: ActivityStatus): Promise<void> {
+	async setActivityStatus(id: string, status: ActivityStatus): Promise<void> {
 		try {
 			await this.prisma.user.update({
 				where: {
-					intraId: intraId,
+					id: id,
 				},
 				data: {
 					activityStatus: status,
@@ -236,7 +236,7 @@ export class UserService {
 			});
 			const user: User = await this.prisma.user.findUnique({
 				where: {
-					intraId: intraId,
+					id: id,
 				},
 			});
 		} catch (error: any) {
@@ -250,13 +250,9 @@ export class UserService {
 	}
 
 	async createDummyUser(): Promise<void> {
-		const randomUserName = this.generateString(7);
-		const randomIntraId = this.generateNumber(5);
-
-		this.authService.createUser({
-			username: randomUserName,
-			intraid: randomIntraId,
-		});
+		const randomName: string = "dummy" + this.generateString(7);
+		const randomPassword: string = "Hello123";
+		this.authService.createUser(randomName, randomPassword);
 	}
 
 	private generateString(length: number): string {
@@ -270,22 +266,11 @@ export class UserService {
 		return result;
 	}
 
-	private generateNumber(length: number): number {
-		const characters = '0123456789';
-		let result = '';
-		const charactersLength = characters.length;
-		for (let i = 0; i < length; i++) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
-		}
-
-		return parseInt(result);
-	}
-
-	async getUserBasedOnIntraId(intraId: number): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
+	async getUserWithAllOtherUsers(id: string): Promise<(User & { allOtherUsers: AllOtherUsers[]; })> {
 		try {
 			const user: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.prisma.user.findUnique({
 				where: {
-					intraId: intraId,
+					id: id,
 				},
 				include: {
 					allOtherUsers: true,
@@ -302,19 +287,19 @@ export class UserService {
 		}
 	}
 
-	async getUserElementBasedOnIntraId(user: User, otherIntraId: number): Promise<UserElement> {
-		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(otherIntraId);
-		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserBasedOnIntraId(user.intraId);
+	async getUserElementBasedOnId(user: User, otherUserId: string): Promise<UserElement> {
+		const otherUser: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserWithAllOtherUsers(otherUserId);
+		const userWithAllOtherUsers: (User & { allOtherUsers: AllOtherUsers[]; }) = await this.getUserWithAllOtherUsers(user.id);
 		const userElement: UserElement = await this.createUserElement(otherUser, userWithAllOtherUsers);
 
 		return (userElement);
 	}
 
-	async getOtherUserAchievements(user: User, otherIntraId: number): Promise<( User & { achievements: Achievements })> {
+	async getOtherUserAchievements(user: User, otherUserId: string): Promise<( User & { achievements: Achievements })> {
 		try {
 			const return_user: (User & { achievements: Achievements }) = await this.prisma.user.findUnique({
 				where: {
-					intraId: otherIntraId,
+					id: otherUserId,
 				},
 				include: {
 					achievements: true,
@@ -331,16 +316,16 @@ export class UserService {
 		return new StreamableFile(file);
 	}
 
-	async getMatchHistory(intraId: number): Promise<MatchHistory[]> {
+	async getMatchHistory(id: string): Promise<MatchHistory[]> {
 		try {
 			const matchHistory: MatchHistory[] = await this.prisma.matchHistory.findMany({
 				where: {
 					OR: [
 						{
-							winnerIntraId: intraId,
+							winnerUserId: id,
 						},
 						{
-							loserIntraId: intraId,
+							loserUserId: id,
 						},
 					],
 				},
@@ -364,20 +349,20 @@ export class UserService {
 		}
 	}
 
-	async updateUsername(user: User, newUsername: string) {
+	async updateName(user: User, name: string) {
 		try {
 			const updatedUser: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				data: {
-					name: newUsername,
+					name: name,
 				},
 				include: {
 					achievements: true,
 				},
 			});
-			await this.updateUsernameInMatchHistory(user, newUsername);
+			await this.updateNameInMatchHistory(user, name);
 			this.achievementsService.checkChangedName(updatedUser);
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -385,29 +370,29 @@ export class UserService {
 					throw new NotFoundException('Can\'t update username, user doesn\'t exist');
 				}
 				if (error.code === 'P2002') {
-					throw new ForbiddenException(`Username change failed, the following username is already taken: ${newUsername}`);
+					throw new ForbiddenException(`Username change failed, the following username is already taken: ${name}`);
 				}
 			}
 			throw new InternalServerErrorException(error.message);
 		}
 	}
 
-	async updateUsernameInMatchHistory(user: User, newUsername: string): Promise<void> {
+	async updateNameInMatchHistory(user: User, name: string): Promise<void> {
 		try {
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					winnerIntraId: user.intraId,
+					winnerid: user.id,
 				},
 				data: {
-					winnerName: newUsername,
+					winnerName: name,
 				}
 			});
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					loserIntraId: user.intraId,
+					loserid: user.id,
 				},
 				data: {
-					loserName: newUsername,
+					loserName: name,
 				}
 			});
 		} catch (error) {
@@ -415,11 +400,11 @@ export class UserService {
 		}
 	}
 
-	async updateAvatar(intraId: number, filePath: string): Promise<void> {
+	async updateAvatar(id: string, filePath: string): Promise<void> {
 		try {
 			const user: (User & { achievements: Achievements }) = await this.prisma.user.update({
 				where: { 
-					intraId: intraId
+					id: id,
 				},
 				data: {
 					avatar: filePath
@@ -428,7 +413,7 @@ export class UserService {
 					achievements: true,
 				},
 			});
-			await this.updateAvatarInMatchHistory(intraId, filePath);
+			await this.updateAvatarInMatchHistory(id, filePath);
 			await this.achievementsService.checkUploadedAvatar(user);
 		} catch (error: any) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -440,11 +425,11 @@ export class UserService {
 		}
 	}
 
-	async updateAvatarInMatchHistory(intraId: number, filePath: string): Promise<void> {
+	async updateAvatarInMatchHistory(id: string, filePath: string): Promise<void> {
 		try {
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					winnerIntraId: intraId,
+					winnerUserId: id,
 				},
 				data: {
 					winnerAvatar: filePath,
@@ -452,7 +437,7 @@ export class UserService {
 			});
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					loserIntraId: intraId,
+					loserUserId: id,
 				},
 				data: {
 					loserAvatar: filePath,

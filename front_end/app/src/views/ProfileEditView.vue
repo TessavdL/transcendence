@@ -3,10 +3,10 @@
 		<form @submit.prevent="submitProfileForm">
 
 			<div class="row mb-3 form-item">
-				<label for="inputUsername" class="col-sm-2 col-form-label form-label">User Name</label>
+				<label for="inputname" class="col-sm-2 col-form-label form-label">User Name</label>
 				<div class="col-sm-10 col-sm-offset-2">
-					<input type="text" class="form-control" id="inputUsername" maxlength="10" pattern="[a-zA-Z0-9\-]+"
-						v-model="username">
+					<input type="text" class="form-control" id="inputname" maxlength="10" pattern="[a-zA-Z0-9\-]+"
+						v-model="name">
 					<div id="emailHelp" class="form-text">maxima 10 charaters, only letters and numbers allowed</div>
 				</div>
 			</div>
@@ -58,25 +58,25 @@ import { HOST } from "@/constants/constants";
 const router = useRouter();
 const toast = useToast();
 
-const username = ref<string>(storeUser.state.user.username);
+const name = ref<string>(storeUser.state.user.name);
 const avatar = ref<string>(storeUser.state.user.avatar);
 const twoFactor = ref<boolean>(storeUser.state.user.twoFactorEnabled);
-const usernameValid = ref<boolean>(true);
+const nameValid = ref<boolean>(true);
 
 const axiosInstance = axios.create({
 	baseURL: `http://${HOST}:3001`,
 	withCredentials: true,
 });
 
-function warnUserNameInvalid(message: string) {
+function warnnameInvalid(message: string) {
 	toast.add({
 		severity: "error",
 		summary: "Error",
 		detail: message,
 		life: 3000,
 	});
-	usernameValid.value = false;
-	setTimeout(() => (usernameValid.value = true), 3000);
+	nameValid.value = false;
+	setTimeout(() => (nameValid.value = true), 3000);
 }
 
 const selectedFile = ref(null);
@@ -102,10 +102,10 @@ function fileSelected(event: any) {
 }
 
 async function submitProfileForm() {
-	if (username.value.length === 0) {
-		warnUserNameInvalid("User name can not be empty")
-	} else if (username.value !== storeUser.state.user.username) {
-		await update_username(username.value)
+	if (name.value.length === 0) {
+		warnnameInvalid("User name can not be empty")
+	} else if (name.value !== storeUser.state.user.name) {
+		await update_name(name.value)
 	}
 	if (selectedFile.value) {
 		await update_avatar();
@@ -130,15 +130,15 @@ async function submitProfileForm() {
 }
 
 
-async function update_username(username: string) {
-	const requestBody = { username: username }
+async function update_name(name: string) {
+	const requestBody = { name: name }
 	try {
-		const response = await axiosInstance.put('/user/update_username', requestBody);
-		storeUser.state.user.username = username;
+		const response = await axiosInstance.put('/user/update_name', requestBody);
+		storeUser.state.user.name = name;
 		toast.add({
 			severity: "success",
 			summary: "success",
-			detail: "Username has been changed",
+			detail: "name has been changed",
 			life: 3000,
 		});
 	} catch (error: any) {

@@ -31,7 +31,7 @@
 				<div class="user-list-container">
 					<label for="searchuser" class="form-label">Search User</label>
 					<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
-					<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
+					<div class="users-list" v-for="user in filteredList()" :key="user.id">
 						<div class="user-list-item d-inline-flex align-items-center">
 							<button type="button" class="btn btn-outline-light" @click="toggleUserSelection(user)">
 								{{ user.selected ? 'Cancel' : 'Select' }}
@@ -164,7 +164,7 @@ async function getAllUsers(): Promise<void> {
 			const users = response.data;
 			allUsers.value = users.map((user: any) => {
 				return {
-					intraId: user.intraId,
+					id: user.id,
 					name: user.name,
 					avatar: user.avatar,
 					selected: false,
@@ -189,13 +189,13 @@ function filteredList() {
 
 async function addSelectedUsers() {
 	const selectedUsers = allUsers.value.filter(user => user.selected);
-	const intraIds = selectedUsers.map(user => user.intraId);
+	const userIds = selectedUsers.map(user => user.id);
 
 	try {
-		intraIds.forEach(async (intraId: number) => {
+		userIds.forEach(async (id: string) => {
 			const data = {
 				channelName: channelName.value,
-				otherIntraId: intraId,
+				otherId: id,
 			};
 			await axiosInstance.post('chat/addAnotherUserToChannel', data);
 		});

@@ -26,7 +26,7 @@ const toast = useToast();
 
 const props = defineProps({
     blockedState: Boolean,
-    intraId: String,
+    id: String,
 });
 
 const componentKey = ref(0);
@@ -57,7 +57,7 @@ const unblockUser = () => {
 }
 
 const blockRequestBody = {
-    otherIntraId: Number(props.intraId)
+    otherUserId: String(props.id)
 }
 
 async function sendBlockRequest(endpoint: String) {

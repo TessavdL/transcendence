@@ -1,7 +1,7 @@
-import { IsInt, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateDMChannelDto {
-	@IsInt()
+	@IsString()
 	@IsNotEmpty()
-	otherIntraId: number;
+	otherUserId: string;
 }

@@ -29,7 +29,7 @@ export class ChatController {
 	// promise could be void?
 	@Post('createChannel')
 	async createChannel(@GetUser() user: User, @Body() createChannelDto: CreateChannelDto): Promise<string> {
-		const channelName = await this.channelService.createChannel(createChannelDto.channelMode, createChannelDto.channelName, user.intraId);
+		const channelName = await this.channelService.createChannel(createChannelDto.channelMode, createChannelDto.channelName, user.id);
 		if (createChannelDto.channelMode === 'PROTECTED') {
 			this.passwordService.setPasswordAndSetChannelModeToProtected(user, channelName, createChannelDto.password);
 		}
@@ -38,22 +38,22 @@ export class ChatController {
 
 	@Post('createDMChannel')
 	async createDMChannel(@GetUser() user: User, @Body() createDMChannelDto: CreateDMChannelDto): Promise<string> {
-		return await this.channelService.createDMChannel(user, createDMChannelDto.otherIntraId);
+		return await this.channelService.createDMChannel(user, createDMChannelDto.otherUserId);
 	}
 
 	@Post('addUserToChannel')
 	async addUserToChannel(@GetUser() user: User, @Body() addUserToChannelDto: AddUserToChannelDto): Promise<void> {
-		return await this.channelService.addUserToChannel(user.intraId, addUserToChannelDto.channelName);
+		return await this.channelService.addUserToChannel(user.id, addUserToChannelDto.channelName);
 	}
 
 	@Post('addAnotherUserToChannel')
 	async addAnotherUserToChannel(@Body() addAnotherUserToChannelDto: AddAnotherUserToChannelDto): Promise<void> {
-		return await this.channelService.addUserToChannel(addAnotherUserToChannelDto.otherIntraId, addAnotherUserToChannelDto.channelName);
+		return await this.channelService.addUserToChannel(addAnotherUserToChannelDto.otherUserId, addAnotherUserToChannelDto.channelName);
 	}
 
 	@Delete('removeUserFromChannel')
 	async removeUserFromChannel(@GetUser() user: User, @Body() removeUserFromChannelDto: RemoveUserFromChannelDto): Promise<void> {
-		return await this.channelService.removeUserFromChannel(user.intraId, removeUserFromChannelDto.channelName);
+		return await this.channelService.removeUserFromChannel(user.id, removeUserFromChannelDto.channelName);
 	}
 
 	@Get('getChannelType')
@@ -120,15 +120,15 @@ export class ChatController {
 	@Patch('promoteMemberToAdmin')
 	async promoteMember(@GetUser() user: User, @Body() promoteMemberToAdminDto: PromoteMemberToAdminDto): Promise<void> {
 		const channelName: string = promoteMemberToAdminDto.channelName;
-		const otherIntraId: number = promoteMemberToAdminDto.otherIntraId;
-		return await this.roleService.promoteMemberToAdmin(user, promoteMemberToAdminDto.channelName, promoteMemberToAdminDto.otherIntraId);
+		const otherUserId: string = promoteMemberToAdminDto.otherUserId;
+		return await this.roleService.promoteMemberToAdmin(user, promoteMemberToAdminDto.channelName, promoteMemberToAdminDto.otherUserId);
 	}
 
 	@Patch('demoteAdminToMember')
 	async demoteAdmin(@GetUser() user: User, @Body() demoteAdminToMember: PromoteMemberToAdminDto): Promise<void> {
 		const channelName: string = demoteAdminToMember.channelName;
-		const otherIntraId: number = demoteAdminToMember.otherIntraId;
-		return await this.roleService.demoteAdminToMember(user, channelName, otherIntraId);
+		const otherUserId: string = demoteAdminToMember.otherUserId;
+		return await this.roleService.demoteAdminToMember(user, channelName, otherUserId);
 	}
 
 	// PUNISHMENT
@@ -136,29 +136,29 @@ export class ChatController {
 	// uses query, should do more input checking?
 	@Get('amIBanned')
 	async amIBanned(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
-		return await this.punishmentService.isMemberBanned(user.intraId, params.channelName);
+		return await this.punishmentService.isMemberBanned(user.id, params.channelName);
 	}
 
 	// uses query, should do more input checking?
 	// so far unused
 	// remove?
 	@Get('isMemberBanned')
-	async isMemberBanned(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
-		return await this.punishmentService.isMemberBanned(params.intraId, params.channelName);
+	async isMemberBanned(@Query() params: { id: string, channelName: string }): Promise<Punishment> {
+		return await this.punishmentService.isMemberBanned(params.id, params.channelName);
 	}
 
 	// uses query, should do more input checking?
 	@Get('amIMuted')
 	async amIMuted(@GetUser() user: User, @Query() params: { channelName: string }): Promise<Punishment> {
-		return await this.punishmentService.isMemberMuted(user.intraId, params.channelName);
+		return await this.punishmentService.isMemberMuted(user.id, params.channelName);
 	}
 
 	// uses query, should do more input checking?
 	// so far unused
 	// remove?
 	@Get('isMemberMuted')
-	async isMemberMuted(@Query() params: { intraId: number, channelName: string }): Promise<Punishment> {
-		return await this.punishmentService.isMemberMuted(params.intraId, params.channelName);
+	async isMemberMuted(@Query() params: { id: string, channelName: string }): Promise<Punishment> {
+		return await this.punishmentService.isMemberMuted(params.id, params.channelName);
 	}
 
 	@All('*')

@@ -39,7 +39,7 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 		let user: User;
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
-			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			const payload: { name: string; sub: string } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization Failed' });
@@ -47,14 +47,14 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 			client.disconnect();
 			return;
 		}
-		this.matchMakingSharedService.clientToIntraId.set(client.id, user.intraId);
+		this.matchMakingSharedService.clientToUserId.set(client.id, user.id);
 		client.emit('hasConnected');
 		this.logger.log(`Client connection accepted: ${client.id}`);
 	}
 
 	@UseGuards(MatchmakingClientGuard)
 	handleDisconnect(client: Socket): void {
-		this.matchMakingSharedService.clientToIntraId.delete(client.id);
+		this.matchMakingSharedService.clientToUserId.delete(client.id);
 		if (this.otherclient === client.id) {
 			this.otherclient = '';
 		}
@@ -73,17 +73,17 @@ export class MatchmakingGateway implements OnGatewayInit, OnGatewayConnection, O
 
 		// create game
 		const roomName: string = this.generateString(8);
-		const player1: { clientId: string, intraId: number, joined: boolean } = {
+		const player1: { clientId: string, id: string, joined: boolean } = {
 			clientId: '',
-			intraId: this.matchMakingSharedService.clientToIntraId.get(this.otherclient),
+			id: this.matchMakingSharedService.clientToUserId.get(this.otherclient),
 			joined: false,
 		};
-		const player2: { clientId: string, intraId: number, joined: boolean } = {
+		const player2: { clientId: string, id: string, joined: boolean } = {
 			clientId: '',
-			intraId: this.matchMakingSharedService.clientToIntraId.get(client.id),
+			id: this.matchMakingSharedService.clientToUserId.get(client.id),
 			joined: false,
 		};
-		if (player1.intraId === player2.intraId) {
+		if (player1.id === player2.id) {
 			client.to(this.otherclient).emit('error', { message: 'You cannot play against yourself' });
 			client.emit('error', { message: 'You cannot play against yourself' });
 			this.otherclient = '';

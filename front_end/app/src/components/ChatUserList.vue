@@ -2,8 +2,8 @@
 	<div class="user-list-containner">
 		<label for="searchuser" class="form-label">Search User</label>
 		<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
-		<div class="users-list" v-for="user in filteredList()" :key="user.intraId">
-			<div class="user-list-item d-inline-flex align-items-center" @click="createDMChannel(user.intraId, user.name)">
+		<div class="users-list" v-for="user in filteredList()" :key="user.id">
+			<div class="user-list-item d-inline-flex align-items-center" @click="createDMChannel(user.id, user.name)">
 				<img :src="avatarPrefix + user.avatar" class="avatar-pic-mini" alt="avatar">
 				<span class="user-name align-text-bottom" style="cursor: pointer;">
 					{{ user.name }}
@@ -74,7 +74,7 @@ async function getAllUsers(): Promise<void> {
 			const users = response.data;
 			allUsers.value = users.map(user => {
 				return {
-					intraId: user.intraId,
+					id: user.id,
 					name: user.name,
 					avatar: user.avatar,
 				};
@@ -100,19 +100,19 @@ const emit = defineEmits<{
 	(event: "isActionSuccess"): boolean;
 }>();
 
-function isDMExist(intraId: number) {
+function isDMExist(id: string) {
 	for (const ele of myDms.value) {
-		if (ele.channelName.includes(String(intraId))) {
+		if (ele.channelName.includes(id)) {
 			return true;
 		}
 	}
 	return false;
 }
 
-async function createDMChannel(intraId: number, otherUserName: string) {
-	if (isDMExist(intraId) === false) {
+async function createDMChannel(id: string, otherUserName: string) {
+	if (isDMExist(id) === false) {
 		await axios
-			.post(`http://${HOST}:3001/chat/createDMChannel`, { otherIntraId: intraId }, {
+			.post(`http://${HOST}:3001/chat/createDMChannel`, { otherUserId: id }, {
 				withCredentials: true,
 			})
 			.then(async (response) => {

@@ -1,11 +1,11 @@
-import { IsString, IsNotEmpty, IsInt } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class PromoteMemberToAdminDto {
 	@IsString()
 	@IsNotEmpty()
 	channelName: string;
 
-	@IsInt()
+	@IsString()
 	@IsNotEmpty()
-	otherIntraId: number;
+	otherUserId: string;
 }

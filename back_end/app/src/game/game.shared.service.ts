@@ -3,6 +3,6 @@ import { Players } from "./types";
 
 @Injectable()
 export class GameSharedService {
-	clientToIntraId: Map<string, number> = new Map<string, number>();
+	clientToUserId: Map<string, string> = new Map<string, string>();
 	playerData: Map<string, Players> = new Map<string, Players>();
 }

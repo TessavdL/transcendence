@@ -9,8 +9,8 @@ export class GameClientGuard implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
         const client = context.switchToWs().getClient<Socket>();
-        const intraId = this.gameSharedService.clientToIntraId.get(client.id);
-        if (intraId !== undefined) {
+        const id: string = this.gameSharedService.clientToUserId.get(client.id);
+        if (id !== undefined) {
             return true;
         }
         return false;

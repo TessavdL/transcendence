@@ -11,7 +11,7 @@ export class ChannelService {
 		private readonly roleService: RoleService,
 	) { }
 
-	async createChannel(channelMode: ChannelMode, channelName: string, intraId: number): Promise<string> {
+	async createChannel(channelMode: ChannelMode, channelName: string, id: string): Promise<string> {
 		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel) {
 			throw new BadRequestException('Channel already exists');
@@ -29,7 +29,7 @@ export class ChannelService {
 							role: 'OWNER',
 							user: {
 								connect: {
-									intraId: intraId
+									id: id
 								},
 							},
 						},
@@ -42,13 +42,13 @@ export class ChannelService {
 		}
 	}
 
-	async createDMChannel(user: User, otherIntraId: number): Promise<string> {
-		const getChannelName = (intraId: number, otherIntraId: number): string => {
-			let members: string[] = [intraId.toString(), otherIntraId.toString()];
+	async createDMChannel(user: User, otherUserId: string): Promise<string> {
+		const getChannelName = (id: string, otherUserId: string): string => {
+			let members: string[] = [user.id, otherUserId];
 			members = members.sort();
-			return `${members.at(0)}&${members.at(1)}`;
+			return `${members.[0]}&${members[1]}`;
 		}
-		const channelName: string = getChannelName(user.intraId, otherIntraId);
+		const channelName: string = getChannelName(user.id, otherUserId);
 
 		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel) {
@@ -65,21 +65,21 @@ export class ChannelService {
 						create: {
 							user: {
 								connect: {
-									intraId: user.intraId
+									id: user.id,
 								},
 							},
 						},
 					},
 				},
 			});
-			await this.addUserToChannel(otherIntraId, channelName);
+			await this.addUserToChannel(otherUserId, channelName);
 			return channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException('Prisma failed to create dmchannel');
 		}
 	}
 
-	async addUserToChannel(intraId: number, channelName: string): Promise<void> {
+	async addUserToChannel(id: string, channelName: string): Promise<void> {
 		const channel: Channel = await this.getChannel(channelName);
 		if (!channel) {
 			throw new BadRequestException(`Channel ${channelName} was not found`);
@@ -87,7 +87,7 @@ export class ChannelService {
 
 		const isInChannel: boolean = !!await this.prisma.membership.findFirst({
 			where: {
-				intraId: intraId,
+				id: id,
 				channelName: channelName,
 			},
 		});
@@ -100,7 +100,7 @@ export class ChannelService {
 				data: {
 					user: {
 						connect: {
-							intraId: intraId,
+							id: id,
 						},
 					},
 					channel: {
@@ -115,17 +115,17 @@ export class ChannelService {
 		}
 	}
 
-	async removeUserFromChannel(intraId: number, channelName: string): Promise<void> {
+	async removeUserFromChannel(id: string, channelName: string): Promise<void> {
 		try {
-			const role: Role = await this.roleService.getRole(intraId, channelName);
+			const role: Role = await this.roleService.getRole(id, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
 			if (count === 1) {
 				return this.deleteChannel(channelName);
 			}
 			await this.prisma.membership.delete({
 				where: {
-					intraId_channelName: {
-						intraId: intraId,
+					userId_channelName: {
+						userId: id,
 						channelName: channelName,
 					}
 				}
@@ -164,7 +164,7 @@ export class ChannelService {
 		try {
 			const memberships: { channelName: string; }[] = await this.prisma.membership.findMany({
 				where: {
-					intraId: user.intraId,
+					id: user.id,,
 				},
 				select: {
 					channelName: true,
@@ -190,7 +190,7 @@ export class ChannelService {
 						channelType: 'DM',
 						memberships: {
 							some: {
-								intraId: user.intraId,
+								id: user.id,,
 							},
 						},
 					},
@@ -198,7 +198,7 @@ export class ChannelService {
 						memberships: {
 							where: {
 								NOT: {
-									intraId: user.intraId,
+									id: user.id,,
 								},
 							},
 							include: {
@@ -274,8 +274,8 @@ export class ChannelService {
 			}
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: {
-						intraId: member.intraId,
+					id_channelName: {
+						id: member.id,
 						channelName: channelName,
 					},
 				},

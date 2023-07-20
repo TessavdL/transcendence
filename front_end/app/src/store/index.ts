@@ -8,9 +8,8 @@ const storeUser = createStore({
 		isAuthenticated: false,
 		is2FA: false,
 		user: {
-			id: 0,
-			intraId: 0,
-			username: "",
+			id: "",
+			name: "",
 			avatar: "",
 			twoFactorEnabled: false,
 			gameMode: "normal",
@@ -26,11 +25,8 @@ const storeUser = createStore({
 		updateId(state, id) {
 			state.user.id = id;
 		},
-		updateIntraId(state, intraId) {
-			state.user.intraId = intraId;
-		},
-		updateUserName(state, name) {
-			state.user.username = name;
+		updateName(state, name) {
+			state.user.name = name;
 		},
 		updateUserAvatar(state, avatar) {
 			state.user.avatar = avatar;
@@ -67,12 +63,11 @@ const storeUser = createStore({
 					.then(async (response) => {
 						// commit("setAuthenticated");
 						// commit("updateId", response.data.id);
-						// commit("updateIntraId", response.data.intraId);
-						// commit("updateUserName", response.data.name);
+						// commit("updateName", response.data.name);
 						// commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
 						// commit("updateTwoFactor", response.data.twofaStatus);
 						// commit("setAuthenticated");
-						commit("updateIntraId", response.data.intraId);
+						commit("updateId", response.data.id);
 						commit("updateTwoFactor", response.data.twofaStatus);
 						if (response.data.twofaStatus && !this.state.is2FA) {
 							router.push({ name: "twofactorvarify" });
@@ -80,11 +75,13 @@ const storeUser = createStore({
 						else {
 							commit("setAuthenticated");
 							commit("updateId", response.data.id);
-							commit("updateIntraId", response.data.intraId);
-							commit("updateUserName", response.data.name);
+							commit("updateName", response.data.name);
 							commit("updateUserAvatar", `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar);
 							commit("updateTwoFactor", response.data.twofaStatus);
 						}
+					})
+					.catch (error => {
+						console.log('user not authorized');
 					})
 			}
 		},

@@ -16,7 +16,7 @@ export class ChatService {
 
 	private readonly logger: Logger = new Logger('UserService initialized');
 
-	async createChannel(channelMode: ChannelMode, channelName: string, password: string, intraId: number): Promise<string> {
+	async createChannel(channelMode: ChannelMode, channelName: string, password: string, id: string): Promise<string> {
 		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel)
 			throw new HttpException({ reason: `Channel ${channelName} already exists` }, HttpStatus.BAD_REQUEST);
@@ -40,7 +40,7 @@ export class ChatService {
 							role: 'OWNER',
 							user: {
 								connect: {
-									intraId: intraId
+									id: id,
 								},
 							},
 						},
@@ -53,13 +53,13 @@ export class ChatService {
 		}
 	}
 
-	async createDMChannel(user: User, otherIntraId: number): Promise<string> {
-		const getChannel = (intraId: number, otherIntraId: number): string => {
-			let members: string[] = [intraId.toString(), otherIntraId.toString()];
+	async createDMChannel(user: User, otherUserId: string): Promise<string> {
+		const getChannel = (id: string, otherUserId: string): string => {
+			let members: string[] = [id, otherUserId];
 			members = members.sort();
-			return (`${members.at(0)}&${members.at(1)}`);
+			return (`${members[0]}&${members[1]}`);
 		}
-		const channelName: string = getChannel(user.intraId, otherIntraId);
+		const channelName: string = getChannel(user.id, otherUserId);
 
 		const existingChannel: Channel = await this.getChannel(channelName);
 		if (existingChannel)
@@ -75,21 +75,21 @@ export class ChatService {
 						create: {
 							user: {
 								connect: {
-									intraId: user.intraId
+									id: user.id
 								},
 							},
 						},
 					},
 				},
 			});
-			await this.addUserToChannel(otherIntraId, channelName);
+			await this.addUserToChannel(otherUserId, channelName);
 			return channelName;
 		} catch (error: any) {
 			throw new InternalServerErrorException(error.message);
 		}
 	}
 
-	async addUserToChannel(intraId: number, channelName: string): Promise<void> {
+	async addUserToChannel(id: string, channelName: string): Promise<void> {
 		try {
 			const channel: Channel = await this.getChannel(channelName);
 			if (!channel) {
@@ -98,7 +98,7 @@ export class ChatService {
 
 			const isInChannel: boolean = !!await this.prisma.membership.findFirst({
 				where: {
-					intraId: intraId,
+					id: id,
 					channelName: channelName,
 				},
 			});
@@ -110,7 +110,7 @@ export class ChatService {
 				data: {
 					user: {
 						connect: {
-							intraId: intraId,
+							id: id,
 						},
 					},
 					channel: {
@@ -125,17 +125,17 @@ export class ChatService {
 		}
 	}
 
-	async removeUserFromChannel(intraId: number, channelName: string): Promise<void> {
+	async removeUserFromChannel(id: string, channelName: string): Promise<void> {
 		try {
-			const role: Role = await this.getRole(intraId, channelName);
+			const role: Role = await this.getRole(id, channelName);
 			const count: number = await this.getAmountOfMembersInChannel(channelName);
 			if (count === 1) {
 				return (this.deleteChannel(channelName));
 			}
 			await this.prisma.membership.delete({
 				where: {
-					intraId_channelName: {
-						intraId: intraId,
+					userId_channelName: {
+						userId: id,
 						channelName: channelName,
 					}
 				}
@@ -177,8 +177,8 @@ export class ChatService {
 			}
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: {
-						intraId: member.intraId,
+					userId_channelName: {
+						userId: member.userId,
 						channelName: channelName,
 					},
 				},
@@ -209,11 +209,14 @@ export class ChatService {
 		}
 	}
 
-	async getMemberWithUser(channelName: string, intraId: number): Promise<(Membership & { user: User; })> {
+	async getMemberWithUser(channelName: string, id: string): Promise<(Membership & { user: User; })> {
 		try {
 			const member: (Membership & { user: User; }) = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				include: {
 					user: true,
@@ -254,7 +257,7 @@ export class ChatService {
 		try {
 			const memberships: { channelName: string }[] = await this.prisma.membership.findMany({
 				where: {
-					intraId: user.intraId,
+					id: user.id,
 				},
 				select: {
 					channelName: true,
@@ -280,7 +283,7 @@ export class ChatService {
 						channelType: 'DM',
 						memberships: {
 							some: {
-								intraId: user.intraId,
+								id: user.id,
 							},
 						},
 					},
@@ -288,7 +291,7 @@ export class ChatService {
 						memberships: {
 							where: {
 								NOT: {
-									intraId: user.intraId,
+									id: user.id,
 								},
 							},
 							include: {
@@ -316,7 +319,7 @@ export class ChatService {
 
 	async getMessages(channelName: string): Promise<Message[]> {
 		try {
-			const channel: Channel & { userMessages: (UserMessage & { user: { intraId: number; name: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
+			const channel: Channel & { userMessages: (UserMessage & { user: { id: string; name: string; avatar: string; }; })[]; } = await this.prisma.channel.findUnique({
 				where: {
 					channelName: channelName,
 				},
@@ -325,7 +328,7 @@ export class ChatService {
 						include: {
 							user: {
 								select: {
-									intraId: true,
+									id: true,
 									name: true,
 									avatar: true,
 								},
@@ -337,7 +340,7 @@ export class ChatService {
 
 			const messages: Message[] = channel.userMessages.map((mes) => ({
 				channelName: channelName,
-				intraId: mes.intraId,
+				id: mes.id,
 				name: mes.user.name,
 				avatar: mes.user.avatar,
 				text: mes.text,
@@ -359,29 +362,29 @@ export class ChatService {
 			},
 		});
 
-		const otherUsers: { intraId: number, blockedStatus: boolean; otherIntraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+		const otherUsers: { id: string, blockedStatus: boolean; otherUserId: string; }[] = await this.prisma.allOtherUsers.findMany({
 			where: {
-				intraId: user.intraId,
+				id: user.id,
 			},
 			select: {
-				intraId: true,
+				id: true,
 				blockedStatus: true,
-				otherIntraId: true,
+				otherUserId: true,
 			},
 		});
 
 		const filteredMessages: Message[] = [];
 
 		messages.forEach((message) => {
-			const messageIntraId: number = message.user.intraId;
+			const messageid: string = message.user.id;
 
 			const goodUser = otherUsers.find((user) => {
-				return (user.intraId === user.intraId && user.otherIntraId === messageIntraId && user.blockedStatus === false);
+				return (user.id === user.id && user.otherUserId === messageid && user.blockedStatus === false);
 			});
-			if (messageIntraId === user.intraId || goodUser) {
+			if (messageid === user.id || goodUser) {
 				filteredMessages.push({
 					channelName: channelName,
-					intraId: message.intraId,
+					id: message.id,
 					name: message.user.name,
 					avatar: message.user.avatar,
 					text: message.text,
@@ -393,12 +396,12 @@ export class ChatService {
 		return filteredMessages;
 	}
 
-	async handleChannelMessage(intraId: number, channelName: string, text: string): Promise<Message> {
-		const user: User = await this.prisma.user.findUnique({ where: { intraId: intraId } });
+	async handleChannelMessage(id: string, channelName: string, text: string): Promise<Message> {
+		const user: User = await this.prisma.user.findUnique({ where: { id: id, } });
 
 		const message: Message = {
 			channelName: channelName,
-			intraId: user.intraId,
+			id: user.id,
 			name: user.name,
 			avatar: user.avatar,
 			text: text,
@@ -406,14 +409,14 @@ export class ChatService {
 		};
 
 		try {
-			this.addMessageToChannel(user.intraId, channelName, text);
+			this.addMessageToChannel(user.id, channelName, text);
 			return (message);
 		} catch (error: any) {
 			throw new WsException(error.message);
 		}
 	}
 
-	async addMessageToChannel(intraId: number, channelName: string, text: string): Promise<void> {
+	async addMessageToChannel(id: string, channelName: string, text: string): Promise<void> {
 		const channel = await this.prisma.channel.findUnique({
 			where: {
 				channelName
@@ -431,7 +434,7 @@ export class ChatService {
 						connect: { channelName },
 					},
 					user: {
-						connect: { intraId },
+						connect: { id },
 					}
 				},
 			});
@@ -508,7 +511,7 @@ export class ChatService {
 	}
 
 	private async checkCredentials(user: User, channelName: string, password: string) {
-		if (await this.getRole(user.intraId, channelName) !== 'OWNER') {
+		if (await this.getRole(user.id, channelName) !== 'OWNER') {
 			throw new HttpException('User is not the owner of the channel and does not have the rights to change password', HttpStatus.BAD_REQUEST);
 		}
 		if (await this.getChannelType(channelName) === 'DM') {
@@ -532,12 +535,12 @@ export class ChatService {
 		}
 	}
 
-	private async getRole(intraId: number, channelName: string): Promise<Role> {
+	private async getRole(id: string, channelName: string): Promise<Role> {
 		try {
 			const membership: Membership = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: {
-						intraId: intraId,
+					userId_channelName: {
+						id: id,
 						channelName: channelName,
 					},
 				},
@@ -545,7 +548,7 @@ export class ChatService {
 			const role: Role = membership.role;
 			return (role);
 		} catch (error: any) {
-			throw new HttpException(`Cannot find membership of user with intraId: ${intraId} to ${channelName}`, HttpStatus.BAD_REQUEST);
+			throw new HttpException(`Cannot find membership of user with id: ${id} to ${channelName}`, HttpStatus.BAD_REQUEST);
 		}
 	}
 
@@ -566,7 +569,7 @@ export class ChatService {
 	async getMembersInChannel(channelName: string): Promise<Member[]> {
 		const membershipsWithUser: (Membership & { user: User; })[] = await this.getMembersWithUser(channelName);
 		const members: Member[] = membershipsWithUser.map((member: (Membership & { user: User })) => ({
-			intraId: member.user.intraId,
+			id: member.user.id,
 			name: member.user.name,
 			avatar: member.user.avatar,
 			role: member.role,
@@ -574,9 +577,9 @@ export class ChatService {
 		return members;
 	}
 
-	async promoteMemberToAdmin(user: User, channelName: string, otherIntraId: number): Promise<void> {
-		const userRole: Role = await this.getRole(user.intraId, channelName);
-		const otherUserRole: Role = await this.getRole(otherIntraId, channelName);
+	async promoteMemberToAdmin(user: User, channelName: string, otherUserId: string): Promise<void> {
+		const userRole: Role = await this.getRole(user.id, channelName);
+		const otherUserRole: Role = await this.getRole(otherUserId, channelName);
 		if (userRole !== 'OWNER') {
 			throw new HttpException('User is not the owner of the channel and does not have the rights to promote member', HttpStatus.BAD_REQUEST);
 		}
@@ -586,8 +589,8 @@ export class ChatService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: {
-						intraId: otherIntraId,
+					userId_channelName: {
+						id: otherUserId,
 						channelName: channelName,
 					},
 				},
@@ -601,9 +604,9 @@ export class ChatService {
 		}
 	}
 
-	async demoteAdminToMember(user: User, channelName: string, otherIntraId: number): Promise<void> {
-		const userRole: Role = await this.getRole(user.intraId, channelName);
-		const otherUserRole: Role = await this.getRole(otherIntraId, channelName);
+	async demoteAdminToMember(user: User, channelName: string, otherUserId: string): Promise<void> {
+		const userRole: Role = await this.getRole(user.id, channelName);
+		const otherUserRole: Role = await this.getRole(otherUserId, channelName);
 		if (userRole !== 'OWNER') {
 			throw new HttpException('User is not the owner of the channel and does not have the rights to demote admin', HttpStatus.BAD_REQUEST);
 		}
@@ -614,8 +617,8 @@ export class ChatService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: {
-						intraId: otherIntraId,
+					userId_channelName: {
+						id: otherUserId,
 						channelName: channelName,
 					},
 				},
@@ -628,11 +631,11 @@ export class ChatService {
 		}
 	}
 
-	async canBePunished(intraId: number, otherIntraId: number, channelName: string): Promise<boolean> {
+	async canBePunished(id: string, otherUserId: string, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
-				intraId: {
-					in: [intraId, otherIntraId],
+				id: {
+					in: [id, otherUserId],
 				},
 				channelName: channelName,
 			},
@@ -642,8 +645,8 @@ export class ChatService {
 			throw new HttpException('Could not find user and otheruser', HttpStatus.BAD_REQUEST);
 		}
 
-		const userRole: Role = memberships.find((member: Membership) => member.intraId === intraId).role;
-		const otherUserRole: Role = memberships.find((member: Membership) => member.intraId === otherIntraId).role;
+		const userRole: Role = memberships.find((member: Membership) => member.userId === id).role;
+		const otherUserRole: Role = memberships.find((member: Membership) => member.userId === otherUserId).role;
 
 		return this.hasAuthority(userRole, otherUserRole);
 	}
@@ -658,11 +661,14 @@ export class ChatService {
 		return rank[userRole] > rank[otherUserRole];
 	}
 
-	async banUser(intraId: number, channelName: string): Promise<void> {
+	async banUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					banStatus: true,
@@ -671,7 +677,7 @@ export class ChatService {
 			});
 
 			setTimeout(async () => {
-				await this.unbanUser(intraId, channelName);
+				await this.unbanUser(id, channelName);
 			},
 				60 * BANMINUTES * 1000,
 			);
@@ -680,11 +686,14 @@ export class ChatService {
 		}
 	}
 
-	async unbanUser(intraId: number, channelName: string): Promise<void> {
+	async unbanUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					banStatus: false,
@@ -696,11 +705,14 @@ export class ChatService {
 		}
 	}
 
-	async muteUser(intraId: number, channelName: string): Promise<void> {
+	async muteUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					muteStatus: true,
@@ -709,7 +721,7 @@ export class ChatService {
 			});
 
 			setTimeout(async () => {
-				await this.unmuteUser(intraId, channelName);
+				await this.unmuteUser(id, channelName);
 			},
 				60 * MUTEMINUTES * 1000,
 			);
@@ -718,11 +730,14 @@ export class ChatService {
 		}
 	}
 
-	async unmuteUser(intraId: number, channelName: string): Promise<void> {
+	async unmuteUser(id: string, channelName: string): Promise<void> {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					muteStatus: false,
@@ -734,11 +749,14 @@ export class ChatService {
 		}
 	}
 
-	async isMemberBanned(intraId: number, channelName: string): Promise<Punishment> {
+	async isMemberBanned(id: string, channelName: string): Promise<Punishment> {
 		try {
 			const { banStatus, banTimer }: { banStatus: boolean, banTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				select: {
 					banStatus: true,
@@ -766,11 +784,14 @@ export class ChatService {
 		}
 	}
 
-	async isMemberMuted(intraId: number, channelName: string): Promise<Punishment> {
+	async isMemberMuted(id: string, channelName: string): Promise<Punishment> {
 		try {
 			const { muteStatus, muteTimer }: { muteStatus: boolean, muteTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
-					intraId_channelName: { intraId: intraId, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				select: {
 					muteStatus: true,
@@ -798,22 +819,22 @@ export class ChatService {
 		}
 	}
 
-	async getNonBlockedClientIds(senderIntraId: number, senderclientId: string, allClientIds: string[]): Promise<string[]> {
+	async getNonBlockedClientIds(senderid: string, senderclientId: string, allClientIds: string[]): Promise<string[]> {
 		const nonBlockedClientIds: string[] = [senderclientId];
 
-		const relationships: { intraId: number; }[] = await this.prisma.allOtherUsers.findMany({
+		const relationships: { id: string; }[] = await this.prisma.allOtherUsers.findMany({
 			where: {
-				otherIntraId: senderIntraId,
+				otherUserId: senderid,
 				blockedStatus: false,
 			},
 			select: {
-				intraId: true,
+				id: true,
 			},
 		});
 
 		for (const clientId of allClientIds) {
-			const intraId = this.sharedMap.clientToIntraId.get(clientId);
-			if (intraId && intraId !== senderIntraId && relationships.some((relationship) => { return relationship.intraId === intraId })) {
+			const id = this.sharedMap.clientToid.get(clientId);
+			if (id && id !== senderid && relationships.some((relationship) => { return relationship.id === id })) {
 				nonBlockedClientIds.push(clientId);
 			}
 		}

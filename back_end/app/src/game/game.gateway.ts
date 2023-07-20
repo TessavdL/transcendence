@@ -27,11 +27,11 @@ export class GameGateway
 		private readonly userService: UserService,
 	) {
 		this.clientToRoomName = new Map<string, string>();
-		this.intraIdToClientId = new Map<number, string>();
+		this.userIdToClientId = new Map<number, string>();
 	}
 	private readonly logger: Logger = new Logger('GameGateway');
 	private clientToRoomName: Map<string, string>;
-	private intraIdToClientId: Map<number, string>;
+	private userIdToClientId: Map<number, string>;
 
 	@WebSocketServer()
 	server: Server;
@@ -45,14 +45,14 @@ export class GameGateway
 		let user: User;
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
-			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			const payload: { name: string; sub: string } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
-		await this.userService.setActivityStatus(user.intraId, ActivityStatus.INGAME);
+		await this.userService.setActivityStatus(user.id, ActivityStatus.INGAME);
 		client.emit('hasConnected');
 	}
 
@@ -61,15 +61,15 @@ export class GameGateway
 		let user: User;
 		try {
 			const token: string = this.authService.getJwtTokenFromSocket(client);
-			const payload: { name: string; sub: number } = await this.authService.verifyToken(token);
+			const payload: { name: string; sub: string } = await this.authService.verifyToken(token);
 			user = await this.jwtStrategy.validate(payload);
 		} catch (error: any) {
 			this.server.to(client.id).emit('unauthorized', { message: 'Authorization is required before a connection can be made' });
 			this.logger.error(`Client connection refused: ${client.id}`);
 			client.disconnect();
 		}
-		this.gameSharedService.clientToIntraId.set(client.id, user.intraId);
-		this.intraIdToClientId.set(user.intraId, client.id);
+		this.gameSharedService.clientToUserId.set(client.id, user.id);
+		this.userIdToClientId.set(user.id, client.id);
 		const game: Game = this.gameService.gameData();
 		client.emit('gameData', game);
 		client.emit('readyToJoin');
@@ -77,12 +77,12 @@ export class GameGateway
 
 	@UseGuards(GameClientGuard)
 	async handleDisconnect(client: Socket) {
-		const intraId: number = this.gameSharedService.clientToIntraId.get(client.id);
-		if (intraId) {
-			await this.userService.setActivityStatus(intraId, ActivityStatus.ONLINE);
+		const id: string = this.gameSharedService.clientToUserId.get(client.id);
+		if (id) {
+			await this.userService.setActivityStatus(id, ActivityStatus.ONLINE);
 		}
 		this.logger.log(`Client disconnect id = ${client.id}`);
-		this.gameSharedService.clientToIntraId.delete(client.id);
+		this.gameSharedService.clientToUserId.delete(client.id);
 		const roomName = this.clientToRoomName.get(client.id);
 		if (roomName) {
 			const playerData = this.gameSharedService.playerData.get(roomName);
@@ -98,14 +98,14 @@ export class GameGateway
 		}
 		client.disconnect();
 		this.clientToRoomName.delete(client.id);
-		this.intraIdToClientId.delete(intraId);
+		this.userIdToClientId.delete(id);
 	}
 
 	@UseGuards(GameClientGuard)
 	@SubscribeMessage('assignPlayers')
 	assignPlayers(@ConnectedSocket() client: Socket, @MessageBody() roomName: string) {
-		const intraId: number = this.gameSharedService.clientToIntraId.get(client.id);
-		const players: Players = this.gameService.assignPlayers(client.id, intraId, roomName);
+		const id: string = this.gameSharedService.clientToUserId.get(client.id);
+		const players: Players = this.gameService.assignPlayers(client.id, id, roomName);
 
 		if (players === null) {
 			client.emit('error', { message: 'Invalid player' });
@@ -113,11 +113,11 @@ export class GameGateway
 		}
 		client.join(roomName);
 		this.clientToRoomName.set(client.id, roomName);
-		if (this.gameSharedService.playerData.get(roomName).player1.intraId === intraId && players.player2.joined === true) {
+		if (this.gameSharedService.playerData.get(roomName).player1.id === id && players.player2.joined === true) {
 			client.emit('playerisSet', players);
 			client.to(roomName).emit('playerisSet', players);
 		}
-		else if (this.gameSharedService.playerData.get(roomName).player2.intraId === intraId && players.player1.joined === true) {
+		else if (this.gameSharedService.playerData.get(roomName).player2.id === id && players.player1.joined === true) {
 			client.emit('playerisSet', players);
 			client.to(roomName).emit('playerisSet', players);
 		}

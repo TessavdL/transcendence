@@ -1,7 +1,7 @@
 import { Channel, User } from "@prisma/client";
 
 export interface Member {
-	intraId: number;
+	id: string
 	name: string;
 	avatar: string;
 	role: "OWNER" | "ADMIN" | "MEMBER";
@@ -9,7 +9,7 @@ export interface Member {
 
 export interface Message {
 	channelName: string;
-	intraId: number;
+	id: string
 	name: string;
 	avatar: string;
 	text: string;
