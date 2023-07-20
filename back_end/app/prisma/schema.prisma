@@ -45,6 +45,7 @@ model User {
 	createdAt		DateTime		@default(now())
 	updatedAt		DateTime		@updatedAt
 	name			String			@unique
+	password		String
 	avatar			String?
 	twofaStatus		Boolean			@default(false)
 	twofaSecret		String			@default("")
@@ -62,8 +63,8 @@ model User {
 
 model MatchHistory {
 	id					Int @id @default(autoincrement())
-	winneruserId		Int
-	loseruserId		Int
+	winnerUserId		String
+	loserUserId			String
 	winnerScore			Int
 	loserScore			Int
 	winnerName			String
@@ -75,7 +76,7 @@ model MatchHistory {
 model AllOtherUsers {
 	id				Int				@id @default(autoincrement())
 	userId			String
-	otherUserId		Int
+	otherUserId		String
 	user			User			@relation(fields: [userId], references: [id])
 	blockedStatus	Boolean			@default(false)
 	friendStatus	FriendStatus	@default(NOT_FRIENDS)

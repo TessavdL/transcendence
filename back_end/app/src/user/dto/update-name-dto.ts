@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, Matches, MaxLength, MinLength } from "class-validator";
 
-export class UpdateName {
+export class UpdateNameDto {
     @IsString()
     @IsNotEmpty()
     @MinLength(2)

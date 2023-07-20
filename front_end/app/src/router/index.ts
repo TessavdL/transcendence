@@ -113,12 +113,14 @@ const router = createRouter({
 
 // Check if the user is logged in 
 const checkLogInState = async function () {
+	console.log("in check login state");
 	if (storeUser.state.isAuthenticated === false) {
 		await storeUser.dispatch("login");
 	}
 };
 
 router.beforeEach(async (to) => {
+	console.log("in before each");
 	if (
 		to.name !== "twofactorenable" &&
 		to.name !== "twofactorvarify"

@@ -11,5 +11,6 @@ RUN chown node:node ./
 EXPOSE 3001
 
 CMD npm install && \
+    npx prisma migrate dev && \
     npx prisma generate && \
     npm run start:dev

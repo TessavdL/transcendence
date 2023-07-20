@@ -25,7 +25,7 @@
                 <ButtonsFriend :friendStatus="props.user.friendStatus" :id="props.user.id" />
             </div>
             <div class="block-buttons">
-                <ButtonsBlock :blockedState="props.user.blockedState" :id="props.user.id)" />
+                <ButtonsBlock :blockedState="props.user.blockedState" :id="props.user.id" />
             </div>
 
         </div>
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps } from 'vue';
+import { defineProps } from 'vue';
 import ButtonsFriend from '@/components/ButtonsFriend.vue';
 import ButtonsBlock from '@/components/ButtonsBlock.vue';
 import { HOST } from '@/constants/constants';

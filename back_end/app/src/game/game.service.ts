@@ -195,11 +195,11 @@ export class GameService {
 			if (winner) {
 				await this.prisma.matchHistory.create({
 					data: {
-						winnerid: player1.id,
+						winnerUserId: player1.id,
 						winnerScore: player1Score,
 						winnerName: player1.name,
 						winnerAvatar: player1.avatar,
-						loserid: player2.id,
+						loserUserId: player2.id,
 						loserScore: player2Score,
 						loserName: player2.name,
 						loserAvatar: player2.avatar,
@@ -209,11 +209,11 @@ export class GameService {
 			} else {
 				await this.prisma.matchHistory.create({
 					data: {
-						winnerid: player2.id,
+						winnerUserId: player2.id,
 						winnerScore: player2Score,
 						winnerName: player2.name,
 						winnerAvatar: player2.avatar,
-						loserid: player1.id,
+						loserUserId: player1.id,
 						loserScore: player1Score,
 						loserName: player1.name,
 						loserAvatar: player1.avatar,

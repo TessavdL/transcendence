@@ -17,8 +17,20 @@
 			</div>
 		</div>
 		<div v-else>
-			<LoginButton v-if="!showSignupView" @switchToSignup="showSignupView = true" />
-      		<SignupButton v-else @switchToLogin="showSignupView = false" />
+			<div v-if="loginView">		
+				<LoginButton/>
+				<button type="button" class="btn btn-outline-primary play-button"
+					style="color:#09252f; background-color: #ffffff; border: 2px solid #09252f;" @click="toggleView">
+					Sign up
+				</button>
+			</div>
+			<div v-else>
+				<SignupButton />
+				<button type="button" class="btn btn-outline-primary play-button"
+					style="color:#09252f; background-color: #ffffff; border: 2px solid #09252f;" @click="toggleView">
+					Log in
+				</button>
+			</div>
 		</div>
 	</div>
 </template>
@@ -32,12 +44,16 @@ import SignupButton from "@/components/SignupButton.vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
-const showSignupView = ref(false);
+const loginView = ref<boolean>(true);
 
 const playGame = () => {
 	router.push({
 		name: "Matchmaking",
 	})
+}
+
+function toggleView() {
+	loginView.value = !loginView.value;
 }
 
 </script>

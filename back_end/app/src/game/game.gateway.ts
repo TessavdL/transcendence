@@ -27,11 +27,11 @@ export class GameGateway
 		private readonly userService: UserService,
 	) {
 		this.clientToRoomName = new Map<string, string>();
-		this.userIdToClientId = new Map<number, string>();
+		this.userIdToClientId = new Map<string, string>();
 	}
 	private readonly logger: Logger = new Logger('GameGateway');
 	private clientToRoomName: Map<string, string>;
-	private userIdToClientId: Map<number, string>;
+	private userIdToClientId: Map<string, string>;
 
 	@WebSocketServer()
 	server: Server;

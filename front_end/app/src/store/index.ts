@@ -56,6 +56,7 @@ const storeUser = createStore({
 	actions: {
 		async login({ commit }) {
 			if (storeUser.getters.isAuthenticated === false) {
+				console.log("in store login");
 				await axios
 					.get(`http://${HOST}:3001/user`, {
 						withCredentials: true,

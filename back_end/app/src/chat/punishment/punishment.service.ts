@@ -11,7 +11,7 @@ export class PunishmentService {
 	async canBePunished(id: string, otherUserId: string, channelName: string): Promise<boolean> {
 		const memberships: Membership[] = await this.prisma.membership.findMany({
 			where: {
-				id: {
+				userId: {
 					in: [id, otherUserId],
 				},
 				channelName: channelName,
@@ -22,8 +22,8 @@ export class PunishmentService {
 			throw new BadRequestException('Could not find user and otheruser');
 		}
 
-		const userRole: Role = memberships.find((member: Membership) => member.id === id).role;
-		const otherUserRole: Role = memberships.find((member: Membership) => member.id === otherUserId).role;
+		const userRole: Role = memberships.find((member: Membership) => member.userId === id).role;
+		const otherUserRole: Role = memberships.find((member: Membership) => member.userId === otherUserId).role;
 
 		return this.hasAuthority(userRole, otherUserRole);
 	}
@@ -42,7 +42,10 @@ export class PunishmentService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					userId_channelName: { id: id, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					banStatus: true,
@@ -64,7 +67,10 @@ export class PunishmentService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					userId_channelName: { id: id, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					banStatus: false,
@@ -80,7 +86,10 @@ export class PunishmentService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					userId_channelName: { id: id, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName
+					},
 				},
 				data: {
 					muteStatus: true,
@@ -102,7 +111,10 @@ export class PunishmentService {
 		try {
 			await this.prisma.membership.update({
 				where: {
-					userId_channelName: { id: id, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName,
+					},
 				},
 				data: {
 					muteStatus: false,
@@ -119,7 +131,7 @@ export class PunishmentService {
 			const { banStatus, banTimer }: { banStatus: boolean, banTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
 					userId_channelName: {
-						id: id,
+						userId: id,
 						channelName: channelName,
 					},
 				},
@@ -153,7 +165,10 @@ export class PunishmentService {
 		try {
 			const { muteStatus, muteTimer }: { muteStatus: boolean, muteTimer: Date } = await this.prisma.membership.findUnique({
 				where: {
-					userId_channelName: { id: id, channelName: channelName },
+					userId_channelName: {
+						userId: id,
+						channelName: channelName
+					},
 				},
 				select: {
 					muteStatus: true,

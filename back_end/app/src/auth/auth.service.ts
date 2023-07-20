@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException, Logger, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException, Res, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AllOtherUsers, Prisma, User } from '@prisma/client';
@@ -15,15 +15,6 @@ export class AuthService {
 		private readonly jwtService: JwtService,
 	) { }
 	private readonly logger: Logger = new Logger('AuthService');
-
-	// async validateUser(profile: any): Promise<User> | null {
-	// 	const user: User = await this.findUserById(profile.id);
-	// 	if (!user) {
-	// 		return this.createUser(profile);
-	// 	}
-
-	// 	return user;
-	// }
 
 	async findUserById(id: string): Promise<User> | null {
 		try {
@@ -55,15 +46,19 @@ export class AuthService {
 		user: User,
 		@Res({ passthrough: true }) res: Response,
 	): Promise<void> {
+		try {
+			const token: { access_token: string } = await this.signToken(user);
 
-		const token: { access_token: string } = await this.signToken(user);
-
-		res.cookie('jwt', token.access_token, {
-			httpOnly: true,
-			domain: `${process.env.HOST}`,
-		});
-
-		res.redirect(`http://${process.env.HOST}:5173`);
+			res.cookie('jwt', token.access_token, {
+				httpOnly: true,
+				domain: `${process.env.HOST}`,
+			});
+	
+			console.log("do we get ehre?");
+			// res.redirect(302, `http://${process.env.HOST}:5173`);
+		} catch(error) {
+			console.log({error});
+		}
 	}
 
 	async setBearerTokenForTwofa(
@@ -163,7 +158,19 @@ export class AuthService {
 
 			return (user);
 		} catch (error) {
-			throw new InternalServerErrorException(error.message);
+			if (
+				error instanceof Prisma.PrismaClientKnownRequestError &&
+				error.code === 'P2002' &&
+				error.meta?.hasOwnProperty('target') &&
+				error.meta?.target[0] === 'name'
+			) 
+			{
+				throw new BadRequestException({ message: `User with ${name} already exists`});
+			}	
+			else {
+				throw new InternalServerErrorException(error.message);
+			}
+			
 		}
 	}
 
@@ -200,10 +207,10 @@ export class AuthService {
 				}
 			});
 
-			const id: string[] = userlist.map(userlist => userlist.id);
+			const userIds: string[] = userlist.map(userlist => userlist.id);
 			let relationArray: AllOtherUsers[] = [];
 
-			id.forEach((value: string) => {
+			userIds.forEach((value: string) => {
 				const otherUser = this.newRelationObject(value);
 				relationArray.push(otherUser);
 			});

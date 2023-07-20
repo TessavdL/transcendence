@@ -147,11 +147,11 @@ export class UserService {
 				where: {
 					OR: [
 						{
-							id: user.id,
+							userId: user.id,
 							otherUserId: otherUser.id,
 						},
 						{
-							id: otherUser.id,
+							userId: otherUser.id,
 							otherUserId: user.id,
 						},
 					]
@@ -176,7 +176,7 @@ export class UserService {
 			await this.prisma.allOtherUsers.update({
 				where: {
 					userId_otherUserId: {
-						id: user.id,
+						userId: user.id,
 						otherUserId: otherUserId,
 					},
 				},
@@ -187,7 +187,7 @@ export class UserService {
 			await this.prisma.allOtherUsers.update({
 				where: {
 					userId_otherUserId: {
-						id: otherUserId,
+						userId: otherUserId,
 						otherUserId: user.id,
 					},
 				},
@@ -381,7 +381,7 @@ export class UserService {
 		try {
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					winnerid: user.id,
+					winnerUserId: user.id,
 				},
 				data: {
 					winnerName: name,
@@ -389,7 +389,7 @@ export class UserService {
 			});
 			await this.prisma.matchHistory.updateMany({
 				where: {
-					loserid: user.id,
+					loserUserId: user.id,
 				},
 				data: {
 					loserName: name,

@@ -10,7 +10,7 @@
         <label for="password">Password:</label>
         <input type="password" id="password" v-model="password" required />
       </div>
-      <button class="btn btn-info login-button" type="submit" onclick="login(username, password)">Login</button>
+      <button class="btn btn-info login-button" type="submit">Login</button>
     </form>
   </div>
 </template>
@@ -20,23 +20,35 @@ import { ref } from "vue";
 import { HOST } from '@/constants/constants';
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
+import { useRouter } from "vue-router";
+import storeUser from "@/store";
 
 const axiosInstance = axios.create({
-  baseURL: `http://${HOST}/auth`,
+  baseURL: `http://${HOST}:3001/auth`,
 });
 const toast = useToast();
+const router = useRouter();
 
-const username: string = ref<string>("");
-const password: string = ref<string>("");
+function redirectHome() {
+    router.push({
+        name: 'Home',
+    });
+}
+
+const username = ref<string>("");
+const password = ref<string>("");
 
 async function login() {
   const data = {
-    name: username,
-    password: password,
+    name: username.value,
+    password: password.value,
   }
   try {
     await axiosInstance.post("login", data);
+    console.log("we get back from login");
+    storeUser.dispatch("login");
   } catch (error: any) {
+    console.log("an error occured in login");
     let errorMessage: string;
     if (error.response && error.response.status === 401) {
       errorMessage = error.response.data.message;

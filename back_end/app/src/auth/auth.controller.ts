@@ -15,20 +15,22 @@ export class AuthController {
 	) { }
 
 	@Post("login")
-	async login(@Body loginDto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<void> {
-		const user: User = this.authService.findUserByName(loginDto.name);
+	async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<void> {
+		console.log("in login", loginDto);
+		const user: User = await this.authService.findUserByName(loginDto.name);
 		if (!user) {
-			throw ForbiddenException({ message: "Invalid credentials" });
+			throw new ForbiddenException({ message: "Invalid credentials" });
 		}
-		const validPassword: boolean = await this.authService.checkPassword(loginDto.name, loginDto.password);
+		const validPassword: boolean = await this.authService.checkPassword(user, loginDto.password);
 		if (validPassword === false) {
-			throw ForbiddenException({ message: "Invalid credentials" });
+			throw new ForbiddenException({ message: "Invalid credentials" });
 		}
 		return this.authService.setBearerToken(user, res);
 	}
 
 	@Post("signup")
 	async signup(@Body() signupDto: SignupDto, @Res({ passthrough: true }) res: Response): Promise<void> {
+		console.log("in signup", signupDto);
 		const user: User = await this.authService.createUser(signupDto.name, signupDto.password);
 		return this.authService.setBearerToken(user, res);
 	}
@@ -42,6 +44,7 @@ export class AuthController {
 	@UseGuards(JwtAuthGuard)
 	@All('*')
 	handleWildcard() {
-	  throw new NotFoundException('Endpoint not found');
+		console.log("invalid endpoint");
+	throw new NotFoundException('Endpoint not found');
 	}
 }

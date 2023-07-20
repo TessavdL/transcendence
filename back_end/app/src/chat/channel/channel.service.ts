@@ -46,7 +46,7 @@ export class ChannelService {
 		const getChannelName = (id: string, otherUserId: string): string => {
 			let members: string[] = [user.id, otherUserId];
 			members = members.sort();
-			return `${members.[0]}&${members[1]}`;
+			return `${members[0]}&${members[1]}`;
 		}
 		const channelName: string = getChannelName(user.id, otherUserId);
 
@@ -87,7 +87,7 @@ export class ChannelService {
 
 		const isInChannel: boolean = !!await this.prisma.membership.findFirst({
 			where: {
-				id: id,
+				userId: id,
 				channelName: channelName,
 			},
 		});
@@ -164,7 +164,7 @@ export class ChannelService {
 		try {
 			const memberships: { channelName: string; }[] = await this.prisma.membership.findMany({
 				where: {
-					id: user.id,,
+					userId: user.id,
 				},
 				select: {
 					channelName: true,
@@ -190,7 +190,7 @@ export class ChannelService {
 						channelType: 'DM',
 						memberships: {
 							some: {
-								id: user.id,,
+								userId: user.id,
 							},
 						},
 					},
@@ -198,7 +198,7 @@ export class ChannelService {
 						memberships: {
 							where: {
 								NOT: {
-									id: user.id,,
+									userId: user.id,
 								},
 							},
 							include: {
@@ -274,8 +274,8 @@ export class ChannelService {
 			}
 			await this.prisma.membership.update({
 				where: {
-					id_channelName: {
-						id: member.id,
+					userId_channelName: {
+						userId: member.userId,
 						channelName: channelName,
 					},
 				},
