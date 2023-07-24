@@ -49,7 +49,7 @@ const router = createRouter({
 			component: ProfileCurrentView,
 		},
 		{
-			path: '/profile/other/:id',
+			path: '/profile/other/:intraId',
 			name: 'ProfileOther',
 			component: ProfileOtherView,
 			props: true,
@@ -113,23 +113,22 @@ const router = createRouter({
 
 // Check if the user is logged in 
 const checkLogInState = async function () {
-	console.log("in check login state");
 	if (storeUser.state.isAuthenticated === false) {
 		await storeUser.dispatch("login");
 	}
 };
 
 router.beforeEach(async (to) => {
-	console.log("in before each");
-	if (
-		to.name !== "twofactorenable" &&
-		to.name !== "twofactorvarify"
-		) {
+	if (to.name !== "twofactorenable" && to.name !== "twofactorvarify") {
 		await checkLogInState();
 		if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
 			router.push({ name: "Home" });
 		}
 	}
+	// await checkLogInState();
+	// if (to.name !== "Home" && storeUser.state.isAuthenticated === false) {
+	// 	router.push({ name: "Home" });
+	// }
 });
 
 export default router

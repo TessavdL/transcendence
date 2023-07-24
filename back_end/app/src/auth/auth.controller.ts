@@ -1,12 +1,9 @@
-import { All, Controller, Get, Post, Body, NotFoundException, ForbiddenException, Res, UseGuards } from '@nestjs/common';
+import { All, Controller, Get, Post, Body, NotFoundException, ForbiddenException, Res } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './guards';
 import { GetUser } from 'src/decorators/get-user.decorator';
 import { LoginDto, SignupDto } from './dto';
-
-
 
 @Controller('auth')
 export class AuthController {
@@ -32,16 +29,13 @@ export class AuthController {
 	async signup(@Body() signupDto: SignupDto, @Res({ passthrough: true }) res: Response): Promise<void> {
 		console.log("in signup", signupDto);
 		const user: User = await this.authService.createUser(signupDto.name, signupDto.password);
-		return this.authService.setBearerToken(user, res);
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@Get('logout')
 	logout(@GetUser() user: User, @Res({ passthrough: true }) res: Response) {
 		return this.authService.logout(user, res);
 	}
 
-	@UseGuards(JwtAuthGuard)
 	@All('*')
 	handleWildcard() {
 		console.log("invalid endpoint");

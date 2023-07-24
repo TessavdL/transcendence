@@ -46,19 +46,14 @@ export class AuthService {
 		user: User,
 		@Res({ passthrough: true }) res: Response,
 	): Promise<void> {
-		try {
-			const token: { access_token: string } = await this.signToken(user);
+		console.log(`${process.env.HOST}`);
+		
+		const token: { access_token: string } = await this.signToken(user);
 
-			res.cookie('jwt', token.access_token, {
-				httpOnly: true,
-				domain: `${process.env.HOST}`,
-			});
-	
-			console.log("do we get ehre?");
-			// res.redirect(302, `http://${process.env.HOST}:5173`);
-		} catch(error) {
-			console.log({error});
-		}
+		res.cookie('jwt', token.access_token, {
+			httpOnly: true,
+			domain: process.env.HOST, // Make sure process.env.HOST is set correctly for "localhost"
+		  });
 	}
 
 	async setBearerTokenForTwofa(
@@ -80,7 +75,7 @@ export class AuthService {
 		return {
 			access_token: await this.jwtService.signAsync(payload, {
 				expiresIn: '24h',
-				secret: this.configService.get('JWT_SECRET'),
+				secret: process.env.JWT_SECRET,
 			}),
 		};
 	}

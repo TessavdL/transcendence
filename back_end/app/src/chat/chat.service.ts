@@ -31,7 +31,7 @@ export class ChatService {
 
 		for (const clientId of allClientIds) {
 			const id = this.chatSharedService.clientIdToUserId.get(clientId);
-			if (id && id !== senderid && relationships.some((relationship) => { return relationship.id === id })) {
+			if (id && id !== senderid && relationships.some((relationship) => { return relationship.userId === id })) {
 				nonBlockedClientIds.push(clientId);
 			}
 		}

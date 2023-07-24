@@ -21,9 +21,6 @@ import { HOST } from '@/constants/constants';
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
 
-const axiosInstance = axios.create({
-	baseURL: `http://${HOST}:3001/auth`,
-});
 const toast = useToast();
 
 const username = ref<string>('');
@@ -35,7 +32,7 @@ async function signup() {
 		password: password.value,
 	}
 	try {
-		await axiosInstance.post("signup", data);
+		await axios.post(`http://${HOST}:3001/auth/signup`, data);
 	} catch (error: any) {
 		const errorMessage = error?.response?.data?.message ?? "An error has occured while signin up";
 		toast.add({

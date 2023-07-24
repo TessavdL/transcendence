@@ -19,6 +19,8 @@ import "bootstrap/dist/js/bootstrap.js";
 
 const app = createApp(App)
 
+
+
 app.use(storeUser);
 
 app.use(router);
@@ -27,5 +29,4 @@ app.use(PrimeVue);
 app.use(ConfirmationService);
 app.use(ToastService);
 app.directive("tooltip", Tooltip);
-
 app.mount('#app')

@@ -56,7 +56,6 @@ const storeUser = createStore({
 	actions: {
 		async login({ commit }) {
 			if (storeUser.getters.isAuthenticated === false) {
-				console.log("in store login");
 				await axios
 					.get(`http://${HOST}:3001/user`, {
 						withCredentials: true,
@@ -64,7 +63,8 @@ const storeUser = createStore({
 					.then(async (response) => {
 						// commit("setAuthenticated");
 						// commit("updateId", response.data.id);
-						// commit("updateName", response.data.name);
+						// commit("updateIntraId", response.data.intraId);
+						// commit("updateUserName", response.data.name);
 						// commit("updateUserAvatar", "http://localhost:3001/user/get_avatar?avatar=" + response.data.avatar);
 						// commit("updateTwoFactor", response.data.twofaStatus);
 						// commit("setAuthenticated");
@@ -80,12 +80,12 @@ const storeUser = createStore({
 							commit("updateUserAvatar", `http://${HOST}:3001/user/get_avatar?avatar=` + response.data.avatar);
 							commit("updateTwoFactor", response.data.twofaStatus);
 						}
-					})
-					.catch (error => {
-						console.log('user not authorized');
-					})
-			}
-		},
+                    })
+                    .catch(() => {
+                        console.log("user is not unauthorized");
+                    });
+            }
+        },
 		async enable2F({ commit }) {
 			commit("updateTwoFactor", true);
 		},

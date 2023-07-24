@@ -18,6 +18,7 @@ export class MessageService {
 		});
 
 		const otherUsers: {
+			userId: string;
 			blockedStatus: boolean;
 			otherUserId: string;
 		}[] = await this.prisma.allOtherUsers.findMany({
@@ -25,6 +26,7 @@ export class MessageService {
 				userId: user.id,
 			},
 			select: {
+				userId: true,
 				blockedStatus: true,
 				otherUserId: true,
 			},
@@ -36,13 +38,15 @@ export class MessageService {
 			const messageUserId: string = message.user.id;
 
 			const goodUser: {
+				userId: string;
 				blockedStatus: boolean;
 				otherUserId: string;
-			} = otherUsers.find((user: {
+			} = otherUsers.find((otherUser: {
+				userId: string;
 				blockedStatus: boolean;
 				otherUserId: string;
 			}) => {
-				return (user.otherUserId === messageUserId && user.blockedStatus === false);
+				return (otherUser.userId === user.id && otherUser.otherUserId === messageUserId && otherUser.blockedStatus === false);
 			});
 			if (messageUserId === user.id || goodUser) {
 				filteredMessages.push({

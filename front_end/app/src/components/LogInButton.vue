@@ -20,21 +20,13 @@ import { ref } from "vue";
 import { HOST } from '@/constants/constants';
 import axios from "axios";
 import { useToast } from "primevue/usetoast";
-import { useRouter } from "vue-router";
 import storeUser from "@/store";
 
 const axiosInstance = axios.create({
-  baseURL: `http://${HOST}:3001/auth`,
-});
+  baseURL: `http://${HOST}:3001`,
+  withCredentials: true,
+})
 const toast = useToast();
-const router = useRouter();
-
-function redirectHome() {
-    router.push({
-        name: 'Home',
-    });
-}
-
 const username = ref<string>("");
 const password = ref<string>("");
 
@@ -44,8 +36,10 @@ async function login() {
     password: password.value,
   }
   try {
-    await axiosInstance.post("login", data);
-    console.log("we get back from login");
+    // console.log(`${HOST}`);
+    const response = await axiosInstance.post("/auth/login", data);
+    // Log the response headers
+    console.log('Response Headers:', response.headers);
     storeUser.dispatch("login");
   } catch (error: any) {
     console.log("an error occured in login");

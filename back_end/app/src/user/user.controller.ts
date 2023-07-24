@@ -15,8 +15,8 @@ export class UserController {
 	constructor(private userService: UserService, private prisma: PrismaService) { }
 
 	@Get('/')
-	async getUser(@GetUser() user: User): Promise<User> {
-		return (await this.userService.getUserWithAchievements(user));
+	async getUser(@Req() request): Promise<User> {
+		return (await this.userService.getUserWithAchievements(request.user));
 	}
 
 	@Get('users')
