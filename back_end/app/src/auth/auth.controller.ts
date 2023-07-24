@@ -1,4 +1,4 @@
-import { All, Controller, Get, Post, Body, NotFoundException, ForbiddenException, Res } from '@nestjs/common';
+import { All, Controller, Get, Post, Body, NotFoundException, ForbiddenException, Res, UnauthorizedException } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -13,21 +13,19 @@ export class AuthController {
 
 	@Post("login")
 	async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response): Promise<void> {
-		console.log("in login", loginDto);
 		const user: User = await this.authService.findUserByName(loginDto.name);
 		if (!user) {
-			throw new ForbiddenException({ message: "Invalid credentials" });
+			throw new UnauthorizedException({ message: "Invalid credentials" });
 		}
 		const validPassword: boolean = await this.authService.checkPassword(user, loginDto.password);
 		if (validPassword === false) {
-			throw new ForbiddenException({ message: "Invalid credentials" });
+			throw new UnauthorizedException({ message: "Invalid credentials" });
 		}
 		return this.authService.setBearerToken(user, res);
 	}
 
 	@Post("signup")
 	async signup(@Body() signupDto: SignupDto, @Res({ passthrough: true }) res: Response): Promise<void> {
-		console.log("in signup", signupDto);
 		const user: User = await this.authService.createUser(signupDto.name, signupDto.password);
 	}
 
@@ -38,7 +36,6 @@ export class AuthController {
 
 	@All('*')
 	handleWildcard() {
-		console.log("invalid endpoint");
-	throw new NotFoundException('Endpoint not found');
+		throw new NotFoundException('Endpoint not found');
 	}
 }

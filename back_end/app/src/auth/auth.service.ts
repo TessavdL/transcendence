@@ -46,8 +46,6 @@ export class AuthService {
 		user: User,
 		@Res({ passthrough: true }) res: Response,
 	): Promise<void> {
-		console.log(`${process.env.HOST}`);
-		
 		const token: { access_token: string } = await this.signToken(user);
 
 		res.cookie('jwt', token.access_token, {
@@ -160,7 +158,7 @@ export class AuthService {
 				error.meta?.target[0] === 'name'
 			) 
 			{
-				throw new BadRequestException({ message: `User with ${name} already exists`});
+				throw new BadRequestException({ message: `User with username ${name} already exists`});
 			}	
 			else {
 				throw new InternalServerErrorException(error.message);

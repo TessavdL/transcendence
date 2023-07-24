@@ -177,8 +177,8 @@ export class GameService {
 	async endGame(player1Score: number, player2Score: number, roomName: string): Promise<void> {
 		try {
 			const players: Players = this.gameSharedService.playerData.get(roomName);
-			if (!players) {
-				return;
+			if (players === undefined || players.player1 === undefined || players.player2 === undefined || !players.player1.id || !players.player2.id) {
+				return ;
 			}
 			this.gameSharedService.playerData.delete(roomName);
 			let winner: boolean;

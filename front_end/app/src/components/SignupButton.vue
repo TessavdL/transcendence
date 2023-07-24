@@ -1,15 +1,17 @@
 <template>
     <div>
-        <h3 class="logout-msg">Please sign up by filling in a username and password</h3>
+        <h3 class="logout-msg">Please sign up by filling this form</h3>
         <form @submit.prevent="signup">
- 	       <div>
-              <label for="username">Username:</label>
-              <input type="text" id="username" v-model="username" required />
-    	    </div>
-         	<div>
-            <label for="password">Password:</label>
-            <input type="password" id="password" v-model="password" required />
-          	</div>
+			<div class="input-group">
+        <div>
+          <label for="username"></label>
+          <input type="text" id="username" class="form-control" placeholder="Enter username" v-model="username" required />
+          </div>
+          <div>
+          <label for="password"></label>
+          <input type="password" placeholder="Enter password" id="password" class="form-control" v-model="password" required />
+        </div>      
+      </div>
           <button class="btn btn-info login-button" type="submit">Sign up</button>
         </form>
     </div>
@@ -34,12 +36,21 @@ async function signup() {
 	try {
 		await axios.post(`http://${HOST}:3001/auth/signup`, data);
 	} catch (error: any) {
-		const errorMessage = error?.response?.data?.message ?? "An error has occured while signin up";
+		const response = error?.response?.data?.message ?? "An error has occured while signin up";
+		let errorMessage: string = "";
+		if (typeof response === "object") {
+			response.forEach((message: string) => {
+				errorMessage += message;
+			});
+		}
+		else {
+			errorMessage = response;
+		}
 		toast.add({
 			severity: "error",
 			summary: "Error",
 			detail: errorMessage,
-			life: 3000,
+			life: 8000,
 		}); 
 	}
 }
@@ -57,5 +68,13 @@ async function signup() {
 	margin: 30px auto;
 	font-size: 30px;
 	border-radius: 10px;
+}
+
+.input-group {
+	display: flex;
+  justify-content: center;
+	gap: 10px;
+	margin-bottom: 10px;
+  color: white;
 }
 </style>

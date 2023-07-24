@@ -49,7 +49,7 @@ const router = createRouter({
 			component: ProfileCurrentView,
 		},
 		{
-			path: '/profile/other/:intraId',
+			path: '/profile/other/:id',
 			name: 'ProfileOther',
 			component: ProfileOtherView,
 			props: true,

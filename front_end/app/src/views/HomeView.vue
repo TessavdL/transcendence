@@ -19,16 +19,13 @@
 		<div v-else>
 			<div v-if="loginView">		
 				<LoginButton/>
-				<button type="button" class="btn btn-outline-primary play-button"
-					style="color:#09252f; background-color: #ffffff; border: 2px solid #09252f;" @click="toggleView">
-					Sign up
-				</button>
+				<p style="color:white;">If you are a new user, please click <a href="#" @click="toggleView">here</a> to sign up</p>
 			</div>
 			<div v-else>
 				<SignupButton />
 				<button type="button" class="btn btn-outline-primary play-button"
 					style="color:#09252f; background-color: #ffffff; border: 2px solid #09252f;" @click="toggleView">
-					Log in
+					Back
 				</button>
 			</div>
 		</div>
