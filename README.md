@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html><div class="welcome">
   <h1>Hi there, welcome to <i>Pong</i> 👋</h1>
+  <div>
+  
+![image](https://github.com/TessavdL/transcendence/assets/72658914/e7898960-ff1e-434b-a4cc-e6beb936e8de)
+  </div>
+  
   <subtitle><i>Pong</i> (also known as transcendence in the 42 curriculum) is a web application for the classic arcade game <i>Pong</i>.<br>
 <i>Pong</i> is implemented as a <code>Docker</code> container. 
 The <code>Docker</code> container acts as a server that runs the <i>Pong</i> web application.
@@ -13,6 +18,10 @@ The <code>NestJS</code> backend handles HTTP endpoints, WebSocket Gateways, and 
 
 <div class="user">
   <h2>User</h2>
+  <div>
+    
+![image](https://github.com/TessavdL/transcendence/assets/72658914/00f32e09-1593-4e0f-84bd-78d93b8ba13e)
+  </div>
   Users can find information on other users on the user page. They can see each other's username, avatar and activity status.
   The activity status can be online, in a game or offline.
   If someone wants more information on a user they can click their profile and it will also display their match history and ranking.
@@ -29,6 +38,12 @@ The <code>NestJS</code> backend handles HTTP endpoints, WebSocket Gateways, and 
 
 <div class="chat">
   <h2>Chat</h2>
+
+<div><br>
+
+![image](https://github.com/TessavdL/transcendence/assets/72658914/67e1c6b4-36ea-40e1-a1ed-01d7fe292fd3)
+</div>
+  
   The chat of <i>Pong</i> allows users to do the following:
   <ul>
     <li>Create chat channels with different access levels: public, protected, or private.</li>
@@ -57,7 +72,12 @@ The <code>NestJS</code> backend handles HTTP endpoints, WebSocket Gateways, and 
 </div>
 
 <div class="game">
-  <h2>Game</h2>  
+  <h2>Game</h2>
+  <div>
+
+![image](https://github.com/TessavdL/transcendence/assets/72658914/bcc57378-58a5-4f4d-825d-60cc6a426c7f)
+  </div>
+
   <div class="matchmaking">
     <h4>Matchmaking</h4>
     If a player wishes to play a game they can press <code>Play</code> in on the home page.
