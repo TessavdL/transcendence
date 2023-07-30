@@ -8,7 +8,7 @@
         </div>
 
         <div class="card-body">
-            <h3 class="card-title"> {{ props.user.name }}</h3>
+            <h3 class="card-title" style="min-height: 4rem;"> {{ props.user.name }}</h3>
             <div class="user-status">
                 <div v-if="props.user.activityStatus === 'ONLINE'">
                     <i class="bi bi-circle-fill" style="font-size: 1rem; color: green;"></i> Online

@@ -44,7 +44,7 @@ export class ChannelService {
 
 	async createDMChannel(user: User, otherUserId: string): Promise<string> {
 		const getChannelName = (id: string, otherUserId: string): string => {
-			let members: string[] = [user.id, otherUserId];
+			let members: string[] = [id, otherUserId];
 			members = members.sort();
 			return `${members[0]}&${members[1]}`;
 		}

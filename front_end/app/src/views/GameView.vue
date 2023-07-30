@@ -1,8 +1,8 @@
 <template>
-	<div>
-		<!-- <button for togglemode -->
-		<input type="checkbox" id="checkbox" @click="toggleColorMode">
-		<label for="checkbox">
+	<div class="container-main">
+		<div class="container-color-toggle">
+			<input type="checkbox" id="checkbox" @click="toggleColorMode">
+			<label for="checkbox">
 			<div class="s">
 				<div class="d"></div>
 				<div class="d"></div>
@@ -14,62 +14,74 @@
 				<div class="d"></div>
 				<div class="d"></div>
 			</div>
-		</label>
-		{{ isColorMode ? '' : '' }}
-		<div :class="isColorMode ? 'mode-color' : 'mode'">
-			<h2>Change Game Mode</h2>
+			</label>
+			<!-- <div v-if="isColorMode">
+				<div class="mode-color">
+					<h2>Change Game Mode</h2>
+				</div>
+			</div>
+			<div v-else>
+				<div class="mode">
+					<h2>Change Game Mode</h2>
+				</div>
+			</div> -->
 		</div>
-		<!-- condition to check if it is color mode thank you dagmar-->
-		<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
-			<div class="start-button-container"
-				v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
-				<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
-				}}
-					<span></span>
-					<span></span>
-					<span></span>
-					<span></span>
-				</a>
-			</div>
-			<div class="start-button-container"
-				v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
-				<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
-				}}
-					<span></span>
-					<span></span>
-					<span></span>
-					<span></span>
-				</a>
-			</div>
-			<div>
-				<div class="wave"></div>
-			</div>
-			<div :class="isColorMode ? 'scoreboard-color' : 'scoreboard'">
-				<div :class="isColorMode ? 'score-player1-color' : 'score-player1'">Player One:
-					<span id="player-1-score">{{ game.player1Score }}</span>
+
+		<div class="container-game">
+			<div v-if="game" :class="isColorMode ? 'pong-game-color' : 'pong-game-classic'">
+				<div class="start-button-container"
+					v-if="isPlayerOne && game.turnPlayerOne && !game.gameStarted && !isGameOver">
+					<a class="start-button" style="--color:#e9d930;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
+					}}
+						<span></span>
+						<span></span>
+						<span></span>
+						<span></span>
+					</a>
 				</div>
-				<div :class="isColorMode ? 'score-player2-color' : 'score-player2'">Player Two:
-					<span id="player-2-score">{{ game.player2Score }}</span>
+				<div class="start-button-container"
+					v-if="!isPlayerOne && game.turnPlayerTwo && !game.gameStarted && !isGameOver">
+					<a class="start-button" style="--color:#e8eb2c;" @click="toggleGame">{{ game.gameStarted ? 'Stop' : 'Start'
+					}}
+						<span></span>
+						<span></span>
+						<span></span>
+						<span></span>
+					</a>
 				</div>
-			</div>
-			<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'"
-				:style="{ top: game.player1Position + 'px' }"></div>
-			<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position"
-				:style="{ top: game.player2Position + 'px' }"></div>
-			<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
-				:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }"></div>
-			<div>
-				<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
-					<h2>Game Over</h2>
-					<p>Opponent left the game.</p>
-					<p>You win!</p>
+				<div>
+					<div class="wave"></div>
 				</div>
-				<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
-					<h2>Game Over</h2>
-					<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+				<div :class="isColorMode ? 'scoreboard-color' : 'scoreboard'">
+					<div :class="isColorMode ? 'score-player1-color' : 'score-player1'">Player One:
+						<span id="player-1-score">{{ game.player1Score }}</span>
+					</div>
+					<div :class="isColorMode ? 'score-player2-color' : 'score-player2'">Player Two:
+						<span id="player-2-score">{{ game.player2Score }}</span>
+					</div>
 				</div>
-				<div v-else-if="playerInvalid" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
-					<h2>Game Over</h2>
+				<div :class="isColorMode ? 'player1-paddle-color' : 'player1-paddle'"
+					:style="{ top: game.player1Position + 'px' }">
+				</div>
+				<div :class="isColorMode ? 'player2-paddle-color' : 'player2-paddle'" v-if="game.player2Position"
+					:style="{ top: game.player2Position + 'px' }">
+				</div>
+				<div :class="isColorMode ? 'ball-round' : 'ball-classic'"
+					:style="{ top: game.ballPosition.top + 'px', left: game.ballPosition.left + 'px' }">
+				</div>
+				<div>
+					<div v-if="playerDisconnect" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+						<h2>Game Over</h2>
+						<p>Opponent left the game.</p>
+						<p>You win!</p>
+					</div>
+					<div v-else-if="isGameOver" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+						<h2>Game Over</h2>
+						<p>Player {{ game.player1Score === 3 ? 'One' : 'Two' }} wins!</p>
+					</div>
+					<div v-else-if="playerInvalid" :class="isColorMode ? 'game-over-color-canvas' : 'game-over-canvas'">
+						<h2>Game Over</h2>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -428,5 +440,22 @@ export default {
 	bottom: 0;
 	left: 0;
 	z-index: -1;
+}
+
+.container-main {
+	display: flex;
+	flex-direction: column;
+	top: 71px;
+}
+.container-color-toggle {
+	position: absolute;
+	top: 0;
+  	left: 50%;
+  	transform: translateX(-50%);
+}
+
+.container-game {
+	display: block;
+	position: absolute;
 }
 </style>

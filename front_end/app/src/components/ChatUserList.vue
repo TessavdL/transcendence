@@ -3,7 +3,7 @@
 		<label for="searchuser" class="form-label">Search User</label>
 		<input class="search-bar form-control" id="searchuser" type="text" v-model="input" />
 		<div class="users-list" v-for="user in filteredList()" :key="user.id">
-			<div class="user-list-item d-inline-flex align-items-center" @click="createDMChannel(user.id, user.name)">
+			<div class="user-list-item d-inline-flex align-items-center" @click="createDMChannel(user.id)">
 				<img :src="avatarPrefix + user.avatar" class="avatar-pic-mini" alt="avatar">
 				<span class="user-name align-text-bottom" style="cursor: pointer;">
 					{{ user.name }}
@@ -19,51 +19,52 @@
 <script setup lang="ts">
 import axios from "axios";
 import { ref, onMounted, defineEmits } from "vue";
-import type { User, Channel } from "../types/ChatType";
+import type { User, Channel, DMChannel } from "../types/ChatType";
 import { useToast } from "primevue/usetoast";
 import { ErrorType, errorMessage } from "@/types/ErrorType";
 import { HOST } from "../constants/constants";
+import storeUser from "@/store";
 
+const axiosInstance = axios.create({
+	baseURL: `http://${HOST}:3001`,
+	withCredentials: true,
+});
 const toast = useToast();
 
 const allUsers = ref<User[]>([]);
-const myDms = ref<Channel[]>([]);
+const myDMChannels = ref<DMChannel[]>([]);
 
 let input = ref("");
 const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 
 onMounted(async () => {
 	await getAllUsers();
-	await getMyDms();
+	await getMyDMChannels();
 });
 
-async function getMyDms(): Promise<void> {
-	await axios
-		.get(`http://${HOST}:3001/chat/getAllChannels`, {
-			withCredentials: true,
-		})
-		.then(async (response) => {
-			const channels = response.data;
-			const DmChannels: Channel[] = channels.filter((type) => {
-				return (type.channelType === 'DM');
+async function getMyDMChannels(): Promise<void> {
+	try {
+		const response = await axiosInstance.get('chat/getMyDMChannelsWithUser');
+		const channels = response.data;
+		const newDMChannels: DMChannel[] = [];
+		channels.forEach((channel: any) => {
+			newDMChannels.push({
+				channelName: channel.channel.channelName,
+				otherUserId: channel.otherUser.id,
+				otherUserName: channel.otherUser.name,
+				otherUserAvatar: channel.otherUser.avatar,
 			});
-			myDms.value = DmChannels.map(channel => {
-				return {
-					id: channel.id,
-					channelName: channel.channelName,
-					channelMode: channel.channelMode,
-				};
-			});
-		})
-		.catch((error: any) => {
-			toast.add({
+		});
+		myDMChannels.value = [...newDMChannels];
+	} catch (error: any) {
+		toast.add({
 			severity: "error",
 			summary: "Error",
 			detail: errorMessage(ErrorType.GENERAL),
 			life: 3000,
 		});
-	});
-};
+	}
+}
 
 async function getAllUsers(): Promise<void> {
 	await axios
@@ -72,7 +73,7 @@ async function getAllUsers(): Promise<void> {
 		})
 		.then(async (response) => {
 			const users = response.data;
-			allUsers.value = users.map(user => {
+			allUsers.value = users.map((user: User) => {
 				return {
 					id: user.id,
 					name: user.name,
@@ -100,16 +101,12 @@ const emit = defineEmits<{
 	(event: "isActionSuccess"): boolean;
 }>();
 
-function isDMExist(id: string) {
-	for (const ele of myDms.value) {
-		if (ele.channelName.includes(id)) {
-			return true;
-		}
-	}
-	return false;
+function isDMExist(id: string): boolean {
+	const otherUserIdsInDms: string[] = myDMChannels.value.map((dmChannel: DMChannel) => dmChannel.otherUserId);
+	return otherUserIdsInDms.includes(id);
 }
 
-async function createDMChannel(id: string, otherUserName: string) {
+async function createDMChannel(id: string) {
 	if (isDMExist(id) === false) {
 		await axios
 			.post(`http://${HOST}:3001/chat/createDMChannel`, { otherUserId: id }, {

@@ -88,10 +88,10 @@ const activeChannelType = ref<string>('');
 const allMessages = ref<Message[]>([]);
 const member = ref<Member>();
 const messageText = ref<string>('');
-const allConnectedClients = ref<number[]>([]);
+const allConnectedClients = ref<string[]>([]);
 const otherUserAvatar = ref<string>('');
 const otherUserName = ref<string>('');
-const otherUserId = ref<number>();
+const otherUserId = ref<string>();
 const avatarPrefix = ref(`http://${HOST}:3001/user/get_avatar?avatar=`);
 
 onBeforeMount(async () => {
@@ -152,7 +152,7 @@ onMounted(async () => {
 
 	socket.on('otherJoinedMembers', (data) => {
 		const allUserIds: string[] = data.map((item: any) => item.id);
-		allConnectedClients.value = allUserIds;
+		allConnectedClients.value = [...allUserIds];
 	});
 
 	socket.on('message', (data) => {
@@ -218,7 +218,7 @@ async function getDMChannel(): Promise<void> {
 
 		if (thisDm) {
 			const otherUser = thisDm.otherUser;
-			otherUserId.value = otheruser.id;
+			otherUserId.value = otherUser.id;
 			otherUserName.value = otherUser.name;
 			otherUserAvatar.value = otherUser.avatar;
 		} else {
